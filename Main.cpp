@@ -2,9 +2,7 @@
 //
 
 #include "stdafx.h"
-#include <xysoap.h>
-#include <json.h>
-#include  <dbghelp.h > 
+
 #include "RobotDef.h"
 #include "Main.h"
 #include "Server.h"

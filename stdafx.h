@@ -6,7 +6,7 @@
 #include <tcns.h>
 #include <xyapi.h>
 #include <afxinet.h>
-// TODO: 在此处引用程序要求的附加头
+#include <mutex>
 #include <string>
 #include <vector>
 #include <unordered_set>
@@ -17,6 +17,9 @@
 #include <iostream>
 #include <functional> 
 #include <ctime>
+#include <json.h>
+#include <xysoap.h>
+#include <dbghelp.h> 
 
 #include <xygext2.h>
 #include <DefSocketClient.h>
@@ -29,3 +32,4 @@
 
 #include <IPPort.h>		//开放IPPort.h，去掉TcyPort.h 20150506
 
+//@zhuhangmin 20192015 请勿在预编译中加入任何具体业务逻辑相关文件！！
