@@ -295,7 +295,7 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
     n = 0;
     {
         CAutoLock lock(&m_csRobot);
-        LogonHallMap filterRobotMap;
+        std::unordered_map<UserID, CRobotClient*> filterRobotMap;
         //filter user 
         for (auto&& it = robot_map_.begin(); it != robot_map_.end() && n < nMaxCount; it++) {
             if (!it->second->IsLogon()) {
@@ -371,7 +371,6 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
                 }
             }
             n++;
-            room_want_robot_map_[nRoomId].insert(it->second); //添加进入房间失败的机器人 去 等待列表
             nErr++; /*continue;*/
         }
 
@@ -476,12 +475,10 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec
                         assert(false);
                     }
                 }
-                room_want_robot_map_[nRoomId].insert(it_->second);
             }
 
             n++;
             SetRoomID(it_->second->GetUserID(), nRoomId);
-            room_want_robot_map_[nRoomId].erase(it_->second);
 
 
             //@zhuhangmin 触发自动匹配
@@ -1186,7 +1183,7 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
                     }
                 }
                 auto room_robot_size = GetRoomCurrentRobotSize(roomid);
-                auto wait_robot_size = room_want_robot_map_[it_2->first].size();
+                auto wait_robot_size = 0;
                 auto setting_size = it_2->second.nCtrlVal;
                 UWL_INF("[ROOM STATUS] room id = %d , already %d,  need %d,  playing %d, waitting %d",
                         it_2->second.nRoomId, room_robot_size, wait_robot_size, robotInPlaying, robotInWaiting);
@@ -1207,15 +1204,7 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
         }
     }
 
-    RobotSet vecWantClient;
-    {
-        CAutoLock lock(&m_csRobot);
-        for (auto&& it = room_want_robot_map_.begin(); it != room_want_robot_map_.end(); it++) {
-            for (auto&& itCli = it->second.begin(); itCli != it->second.end(); itCli++) {
-                vecWantClient.insert(*itCli);
-            }
-        }
-    }
+    RobotSet  vecWantClient;
     for (auto&& it : vecWantClient) {
         ApplyRobotForRoom(g_gameID, it->m_nWantRoomId, TInt32Vec{it->GetUserID()});
     }

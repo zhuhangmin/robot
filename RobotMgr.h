@@ -8,7 +8,6 @@ public:
     typedef std::unordered_map<AccountID, stRobotUnit>			AccountSettingMap;
 
     typedef std::unordered_set<CRobotClient*>					RobotSet;
-    typedef std::unordered_map<UserID, CRobotClient*>			LogonHallMap;
     typedef std::unordered_map<AccountID, CRobotClient*>		AccountRobotMap;
 
     typedef std::unordered_map<RoomID, stActiveCtrl>			RoomSettingMap;
@@ -125,7 +124,6 @@ protected:
     CCritSec        m_csTknRobot;
     RobotMap robot_map_; //管理所有robot信息
     RoomCurUsersMap room_cur_users_; //房间中当前玩家数(包括机器人和真人)
-    RoomRobotSetMap   room_want_robot_map_;//入房间失败的机器人,等待重进
 
 
 };
