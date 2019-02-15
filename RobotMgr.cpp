@@ -79,7 +79,8 @@ bool CRobotMgr::InitSetting() {
         int32_t nRoomId = rooms[n]["RoomId"].asInt();
         int32_t nCtrlMode = rooms[n]["CtrlMode"].asInt();
         int32_t nCtrlValue = rooms[n]["Value"].asInt();
-        room_setting_map_[nRoomId] = stActiveCtrl{nRoomId, nCtrlMode, nCtrlValue, 0};
+        room_setting_map_[nRoomId] = stActiveCtrl{nRoomId, nCtrlMode, nCtrlValue};
+        room_cur_users_[nRoomId] = 0
     }
 
     auto robots = root["robots"];
@@ -740,9 +741,9 @@ void	CRobotMgr::OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr) {
     ITEM_COUNT* pItemCount = (ITEM_COUNT*) pDataPtr;
     ITEM_USERS* pItemUsers = (ITEM_USERS*) ((PBYTE) pDataPtr + sizeof(ITEM_COUNT));
     for (int32_t i = 0; i < pItemCount->nCount; i++, pItemUsers++) {
-        for (auto&& it_ = room_setting_map_.begin(); it_ != room_setting_map_.end(); it_++) {
-            if (it_->second.nRoomId == pItemUsers->nItemID)
-                it_->second.nCurrNum = pItemUsers->nUsers;
+        for (auto&& it_ = room_cur_users_.begin(); it_ != room_cur_users_.end(); it_++) {
+            if (it_->first == pItemUsers->nItemID)
+                it_->second = pItemUsers->nUsers;
         }
     }
 }
@@ -1161,8 +1162,8 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
                 gr.nRoomID[gr.nRoomCount] = it_2->second.nRoomId;
 
                 //@zhuhangmin
-                auto curRoomUsers = it_2->second.nCurrNum;
-                auto curRoomID = it_2->second.nRoomId;
+                /*auto curRoomUsers = it_2->second.nCurrNum;
+                auto curRoomID = it_2->second.nRoomId;*/
                 //auto curInterval = GetIntervalTime(curRoomUsers);
                 //zhuhangmin
 

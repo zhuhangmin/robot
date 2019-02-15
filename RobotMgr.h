@@ -17,6 +17,7 @@ public:
     typedef std::unordered_map<RoomID, stRoomData>				RoomDataMap;
 
     using RobotMap = std::unordered_map<UserID, CRobotClient*>;
+    using RoomCurUsersMap = std::unordered_map<RoomID, int32_t>
 
 public:
     // 开始|结束
@@ -125,5 +126,6 @@ protected:
     //@zhuhangmin
     RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
     RobotMap robot_map_; //@zhuhangmin 20190215 管理所有robot信息
+    RoomCurUsersMap room_cur_users_; //房间中当前玩家数
 };
 #define TheRobotMgr CRobotMgr::Instance()

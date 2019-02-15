@@ -75,12 +75,8 @@ enum EConnType :uint32_t {
     ECT_GAME,
     ECT_MAX
 };
-struct THREAD_INFO {
-    void* lpVoid;
-    int	  nIndex;
-};
-typedef THREAD_INFO *LPTHREAD_INFO;
 
+//配置类 只读
 class stRobotUnit {
 public:
     int32_t		account;
@@ -88,6 +84,7 @@ public:
     std::string nickName;
     std::string portraitUrl;
 };
+
 // 每个房间里面机器人的申请控制模式
 enum EACtrlMode :uint32_t {
     EACM_Hold = 0, // 房间内机器人总是维持固定的数量
@@ -99,7 +96,7 @@ struct stActiveCtrl {
     int32_t nRoomId;
     int32_t nCtrlMode;
     int32_t nCtrlVal;
-    int32_t nCurrNum; // 当前人数
+    //int32_t nCurrNum; // 当前人数
 };
 
 struct stRoomData {
