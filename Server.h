@@ -12,8 +12,7 @@ public:
     BOOL InitBase();
     BOOL StartServer();
 
-protected:
+private:
     virtual void TimerThreadProc();
-
     virtual void OnThreadTimer(std::time_t nCurrTime);
 };

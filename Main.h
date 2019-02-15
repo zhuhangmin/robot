@@ -17,16 +17,11 @@ extern std::string		g_curExePath;
 extern TCHAR			g_szLicFile[MAX_PATH];
 extern TCHAR			g_szIniFile[MAX_PATH];
 
-
-//extern TTokenSockMap	g_mapTokenSock;
-extern CCritSec			g_csTokenSock;
-
 extern HANDLE			g_hExitServer;
 
 extern UThread			g_thrdTimer;
 
 //////////////////
 extern DWORD	GetLocalIPByRemote(LPTSTR szIp, int nPort);
-extern SOCKET	FindSocket(const LONG token);
 
 extern CString  ExecHttpRequestPost(const CString& strUrl, const CString& strParams);

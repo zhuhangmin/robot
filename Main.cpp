@@ -22,9 +22,6 @@ std::string			g_curExePath;
 TCHAR				g_szLicFile[MAX_PATH];//许可证文件
 TCHAR				g_szIniFile[MAX_PATH];//配置文件
 
-//TTokenSockMap		g_mapTokenSock;
-CCritSec			g_csTokenSock;
-
 HANDLE				g_hExitServer = NULL;
 
 UThread				g_thrdTimer;
@@ -64,12 +61,6 @@ DWORD GetLocalIPByRemote(LPTSTR szIp, int nPort) {
     if (dwRemotePort == 0)
         dwRemotePort = PORT_ROOM_SERVER;
     return xydyGetLocalIPByRemote(stRemoteIP.v4_addr.sin_addr.s_addr, dwRemotePort);
-}
-SOCKET FindSocket(const LONG token) {
-    /*   CAutoLock lock(&g_csTokenSock);
-       auto it = g_mapTokenSock.find(token);
-       return  it != g_mapTokenSock.end() ? it->second : 0;*/
-    return 0;
 }
 
 CString ExecHttpRequestPost(const CString& strUrl, const CString& strParams) {

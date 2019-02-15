@@ -12,11 +12,9 @@ public:
 
     void SaveStatus();
 
-    // Control parameters
     int m_iStartParam;
     int m_iIncParam;
 
-    // Current state
     int m_iState;
 
     CMainServer	m_MainServer;

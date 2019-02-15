@@ -1,17 +1,5 @@
 #pragma once
 
-#define		STR_MQMAILSYS_QUEUE				_T("ctemail.getremind")
-#define		STR_MQMAILSYS_ROUTE				_T("ctemail.biznotify.#")
-
-#define		MAIL_TARGETTYPE_USERS 1			// 指定用户
-#define		MAIL_TARGETTYPE_PC_GAMES 2		// PC游戏 [作废]
-#define		MAIL_TARGETTYPE_PC_FLATF 3		// PC平台
-#define		MAIL_TARGETTYPE_MB_GAMES 4		// 移动游戏
-
-#define		MAIL_USERSTYPE_PC_GAMES 2		// 游戏用户[作废]
-#define		MAIL_USERSTYPE_PC_FLATF 3		// 平台用户
-#define		MAIL_USERSTYPE_MB_GAMES 4		// 移动游戏用户
-
 #define		ROBOT_SETTING_FILE_NAME			_T("robot.setting")
 
 #define		REQ_TIMEOUT_INTERVAL  4000 //请求回应等待Milliseconds
@@ -80,67 +68,61 @@ typedef std::tuple<bool, std::string>		TTueRet;
 
 
 
-enum EConnType:uint32_t
-{
-	ECT_HALL,
-	ECT_ROOM,
-	ECT_GAME,
-	ECT_MAX
+enum EConnType :uint32_t {
+    ECT_HALL,
+    ECT_ROOM,
+    ECT_GAME,
+    ECT_MAX
 };
-struct THREAD_INFO
-{
-	void* lpVoid;
-	int	  nIndex;
+struct THREAD_INFO {
+    void* lpVoid;
+    int	  nIndex;
 };
 typedef THREAD_INFO *LPTHREAD_INFO;
 
-class stRobotUnit
-{
+class stRobotUnit {
 public:
-	int32_t		account;
-	std::string	password;
-	std::string nickName;
-	std::string portraitUrl;
-	bool		logoned;
+    int32_t		account;
+    std::string	password;
+    std::string nickName;
+    std::string portraitUrl;
+    bool		logoned;
 };
 // 每个房间里面机器人的申请控制模式
-enum EACtrlMode :uint32_t
-{
-	EACM_Hold = 0 , // 房间内机器人总是维持固定的数量
-	EACM_Scale= 1 ,// 房间内机器人数据量总是房间内正常玩家的固定比例
-	EACM_Max
+enum EACtrlMode :uint32_t {
+    EACM_Hold = 0, // 房间内机器人总是维持固定的数量
+    EACM_Scale = 1,// 房间内机器人数据量总是房间内正常玩家的固定比例
+    EACM_Max
 };
 
 struct stActiveCtrl {
-	int32_t nRoomId;
-	int32_t nCtrlMode;
-	int32_t nCtrlVal;
-	int32_t nCurrNum; // 当前人数
+    int32_t nRoomId;
+    int32_t nCtrlMode;
+    int32_t nCtrlVal;
+    int32_t nCurrNum; // 当前人数
 };
 
 struct stRoomData {
-	ROOM	 room;
-	uint32_t nLastGetTime;
+    ROOM	 room;
+    uint32_t nLastGetTime;
 };
 // 单例模板类
 template< typename T >
-class ISingletion
-{
+class ISingletion {
 public:
-	ISingletion(const ISingletion&) = delete;
-	ISingletion& operator = (const ISingletion&) = delete;
-	ISingletion(ISingletion&& t) = delete;
-	ISingletion& operator = (ISingletion&& t) = delete;
-	virtual ~ISingletion() {}
+    ISingletion(const ISingletion&) = delete;
+    ISingletion& operator = (const ISingletion&) = delete;
+    ISingletion(ISingletion&& t) = delete;
+    ISingletion& operator = (ISingletion&& t) = delete;
+    virtual ~ISingletion() {}
 
-	static T& Instance()
-	{
-		static T s_xInstance;
-		return s_xInstance;
-	}
+    static T& Instance() {
+        static T s_xInstance;
+        return s_xInstance;
+    }
 
 protected:
-	ISingletion() {}
+    ISingletion() {}
 };
 
 #define SINGLETION_CONSTRUCTOR(_class_name_) \
@@ -149,32 +131,29 @@ _class_name_(){}; \
 virtual ~_class_name_(){}; \
 
 // 线程对象
-class UThread
-{
+class UThread {
 public:
-	UThread(){}
-	UThread(std::thread&& thrd){ Initial(std::move(thrd)); }
-	~UThread() { Release(); }
+    UThread() {}
+    UThread(std::thread&& thrd) { Initial(std::move(thrd)); }
+    ~UThread() { Release(); }
 
 public:
-	void Initial(std::thread&& thrd)
-	{
-		m_thrd.swap(thrd);
-		m_hThrd = (HANDLE)m_thrd.native_handle();
-		m_nThrd = ::GetThreadId(m_hThrd);
-	}
-	void Release()
-	{
-		if (m_nThrd == 0) return;
-		
-		::PostThreadMessage(m_nThrd, WM_QUIT, 0, 0);
-		::WaitForSingleObject(m_hThrd, WAITTIME_EXIT);
-		m_thrd.detach(); //::CloseHandle(m_hThrd);
-		m_nThrd = 0; m_hThrd = nullptr;
-	}
-	uint32_t ThreadId(){ return m_nThrd; }
+    void Initial(std::thread&& thrd) {
+        m_thrd.swap(thrd);
+        m_hThrd = (HANDLE) m_thrd.native_handle();
+        m_nThrd = ::GetThreadId(m_hThrd);
+    }
+    void Release() {
+        if (m_nThrd == 0) return;
+
+        ::PostThreadMessage(m_nThrd, WM_QUIT, 0, 0);
+        ::WaitForSingleObject(m_hThrd, WAITTIME_EXIT);
+        m_thrd.detach(); //::CloseHandle(m_hThrd);
+        m_nThrd = 0; m_hThrd = nullptr;
+    }
+    uint32_t ThreadId() { return m_nThrd; }
 protected:
-	std::thread     m_thrd;
-	uint32_t		m_nThrd		{ 0 };
-	HANDLE			m_hThrd		{ nullptr };
+    std::thread     m_thrd;
+    uint32_t		m_nThrd{0};
+    HANDLE			m_hThrd{nullptr};
 };

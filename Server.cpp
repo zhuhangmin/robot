@@ -132,6 +132,4 @@ void CMainServer::OnThreadTimer(time_t nCurrTime) {
     if (nCurrTime - sLastXXXTime >= MAIN_XXX_GAP_TIME) {
         sLastXXXTime = nCurrTime;
     }
-
-    // ... like up
 }

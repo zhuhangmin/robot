@@ -23,15 +23,12 @@ public:
 
     // 大厅服务请求发送
     TTueRet SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
-    TTueRet SendHallRequestEx(TReqstId nReqId, TReqstId nSubReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
 
     // 机器人配置接口
     bool	GetRobotSetting(int account, OUT stRobotUnit& unit);
-    bool	UpdateRobotSetting(const stRobotUnit& unit);
-    bool    UpdateGRoomSetting(const int32_t nGameId, const stActiveCtrl & active);
 
-    int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t nMaxCount);
-    int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec accounts);
+    int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t nMaxCount); // second level
+    int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec accounts); //should be first level
 
     // 机器人数据管理
     uint32_t	  GetAcntSettingSize() { return m_mapAcntSett.size(); }
@@ -66,9 +63,6 @@ protected:
     bool	InitGameRoomDatas();
 
 
-
-    void	SaveSettingFile();
-
     // 通知消息线程方法
     void	ThreadRunHallNotify();
     void	ThreadRunRoomNotify();
@@ -102,8 +96,7 @@ protected:
     TTueRet	RobotGainDeposit(CRobotClient* client);
     TTueRet	RobotBackDeposit(CRobotClient* client);
 
-    //zhuhangmin
-    int	GetIntervalTime(int curRoomUsers);
+
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 

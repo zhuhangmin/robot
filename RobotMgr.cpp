@@ -197,60 +197,7 @@ TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pD
     }
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
-TTueRet	CRobotMgr::SendHallRequestEx(TReqstId nReqId, TReqstId nSubReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
-    if (!m_ConnHall) {
-        UWL_ERR("SendHallRequestEx ERR_CONNECT_NOT_EXIST nReqId = %d, nSubReqId = %d", nReqId, nSubReqId);
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    }
 
-    if (!m_ConnHall->IsConnected()) {
-        UWL_ERR("SendHallRequestEx ERR_CONNECT_DISABLE nReqId = %d, nSubReqId = %d", nReqId, nSubReqId);
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    }
-
-    CONTEXT_HEAD	Context = {};
-    REQUEST			Request = {};
-    REQUEST			Response = {};
-    Context.hSocket = m_ConnHall->GetSocket();
-    Context.lSession = 0;
-    Context.bNeedEcho = bNeedEcho;
-    Request.head.nRepeated = 0;
-    Request.head.nRequest = nReqId;
-    Request.head.nSubReq = nSubReqId;
-    Request.nDataLen = nDataLen;
-    Request.pDataPtr = pData;//////////////
-
-    BOOL bTimeOut = FALSE, bResult = TRUE;
-    {
-        CAutoLock lock(&m_csConnHall);
-        bResult = m_ConnHall->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
-    }
-
-    if (!bResult)///if timeout or disconnect 
-    {
-        UWL_ERR("SendHallRequestEx ERR_CONNECT_DISABLE bResult = %d, nReqId = %d, nSubReqId = %d", bResult, nReqId, nSubReqId);
-        assert(false);
-        return std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
-    }
-
-
-    nDataLen = Response.nDataLen;
-    nRespId = Response.head.nRequest;
-    pRetData = Response.pDataPtr;
-
-    if (nRespId == GR_ERROR_INFOMATION) {
-        CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData);
-        nDataLen = 0;
-        SAFE_DELETE_ARRAY(pRetData);
-        UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail nRespId GR_ERROR_INFOMATION nReqId = %d, nSubReqId = %d", bResult, nReqId, nSubReqId);
-        assert(false);
-        return std::make_tuple(false, info);
-    }
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
-}
 bool	CRobotMgr::GetRobotSetting(int account, OUT stRobotUnit& unit) {
     CAutoLock lock(&m_csRobot);
 
@@ -262,60 +209,6 @@ bool	CRobotMgr::GetRobotSetting(int account, OUT stRobotUnit& unit) {
     unit = it->second;
 
     return true;
-}
-bool	CRobotMgr::UpdateRobotSetting(const stRobotUnit& unit) {
-    CAutoLock lock(&m_csRobot);
-
-    if (unit.account == 0)	return false;
-
-    if (m_mapAcntSett.find(unit.account) != m_mapAcntSett.end()) return false;
-
-    m_mapAcntSett[unit.account] = unit;
-
-    SaveSettingFile();
-    return true;
-}
-bool	CRobotMgr::UpdateGRoomSetting(const int32_t nGameId, const stActiveCtrl & active) {
-    CAutoLock lock(&m_csRobot);
-    if (m_mapGRoomSett[nGameId].find(active.nRoomId) != m_mapGRoomSett[nGameId].end())
-        return false;
-
-    m_mapGRoomSett[nGameId][active.nRoomId] = active;
-
-    SaveSettingFile();
-    return true;
-}
-void	CRobotMgr::SaveSettingFile() {
-    Json::Value root;
-    Json::Reader reader;
-    Json::StyledWriter swriter;
-
-    for (auto& it : m_mapGRoomSett) {
-
-        Json::Value obj;
-        obj["GameId"] = it.first;
-        for (auto& val : it.second) {
-            Json::Value active;
-            active["RoomId"] = val.first;
-            active["CtrlMode"] = val.second.nCtrlMode;
-            active["Value"] = val.second.nCtrlVal;
-            obj["RoomIds"].append(active);
-        }
-        root["grooms"].append(obj);
-    }
-
-    for (auto& it : m_mapAcntSett) {
-
-        Json::Value obj;
-        obj["Account"] = it.second.account;
-        obj["Password"] = it.second.password;
-        obj["NickName"] = it.second.nickName;
-        obj["Portrait"] = it.second.portraitUrl;
-        root["robots"].append(obj);
-    }
-
-    std::ofstream ofs(g_curExePath + ROBOT_SETTING_FILE_NAME);
-    ofs << swriter.write(root); ofs.close();
 }
 bool	CRobotMgr::GetRoomData(int32_t nRoomId, OUT ROOM& room) {
     CAutoLock lock(&m_csRoomData);
@@ -1267,50 +1160,6 @@ void    CRobotMgr::OnTimerSendGamePluse(time_t nCurrTime) {
         }
     }
 }
-
-//curRoomNum timeIntrval
-//std::map<int,int> CRobotMgr::GetIntervalSetting(){ 
-//
-//}
-
-int	CRobotMgr::GetIntervalTime(int curRoomUsers) {
-    //@zhuhangmin 20181206
-    //TCHAR szKey[32];
-    //TCHAR szKeyInterval[32];
-    //memset(szKey, 0, sizeof(szKey));
-    //memset(szKeyInterval, 0, sizeof(szKeyInterval));
-    //std::vector<int> playerNumVec;
-    //std::vector<int> timeInterval;
-    //int nCount = GetPrivateProfileInt(_T("RobotNum"), _T("count"), 0, g_szIniFile);
-    //for (int i = 0; i<nCount; i++)
-    //{
-    //	sprintf(szKey, _T("playerNum%d"), i);
-    //	int num = GetPrivateProfileInt(_T("RobotNum"), szKey, 0, g_szIniFile);
-    //	playerNumVec.push_back(num);
-
-    //	sprintf(szKeyInterval, _T("timeInterval%d"), i);
-    //	int interval = GetPrivateProfileInt(_T("RobotNum"), szKeyInterval, 8, g_szIniFile);
-    //	timeInterval.push_back(interval);
-    //}
-
-    //auto playerNumVecIndex = 0;
-    //for (auto it = playerNumVec.begin(); it != playerNumVec.end(); it++)
-    //{
-    //	auto num = *it;
-    //	if (num < curRoomUsers){
-    //		playerNumVecIndex++;
-    //	}
-    //}
-    //
-    //auto retInterval = 8;
-    //if (timeInterval.size() > playerNumVecIndex){
-    //	retInterval = timeInterval[playerNumVecIndex];
-    //}
-
-    //return retInterval;
-    return 8;
-}
-
 void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
     if (!m_ConnHall) {
         UWL_ERR("SendHallRequest OnTimerCtrlRoomActiv nil ERR_CONNECT_NOT_EXIST");

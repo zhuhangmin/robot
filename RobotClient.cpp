@@ -121,61 +121,7 @@ TTueRet CRobotClient::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void 
     }
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
-TTueRet CRobotClient::SendRoomRequestEx(TReqstId nReqId, TReqstId nSubReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
-    std::lock_guard<std::mutex> lg(m_mutex);
-    if (!m_ConnRoom) {
-        UWL_ERR("m_ConnRoom nil");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    }
 
-    if (!m_ConnRoom->IsConnected()) {
-        UWL_ERR("m_ConnRoom not connected");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    }
-
-    CONTEXT_HEAD	Context = {};
-    REQUEST			Request = {};
-    REQUEST			Response = {};
-    Context.hSocket = m_ConnRoom->GetSocket();
-    Context.lSession = 0;
-    Context.bNeedEcho = bNeedEcho;
-    Request.head.nRepeated = 0;
-    Request.head.nRequest = nReqId;
-    Request.head.nSubReq = nSubReqId;
-    Request.nDataLen = nDataLen;
-    Request.pDataPtr = pData;//////////////
-
-    BOOL bTimeOut = FALSE, bResult = TRUE;
-    {
-        CAutoLock lock(&m_csConnRoom);
-        bResult = m_ConnRoom->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
-    }
-
-    if (!bResult)///if timeout or disconnect 
-    {
-        UWL_ERR("SEND REQUEST FAIL");
-        assert(false);
-        return std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
-    }
-
-
-    nDataLen = Response.nDataLen;
-    nRespId = Response.head.nRequest;
-    pRetData = Response.pDataPtr;
-
-    if (nRespId == GR_ERROR_INFOMATION) {
-        CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData);
-        nDataLen = 0;
-        SAFE_DELETE_ARRAY(pRetData);
-        UWL_ERR("GR_ERROR_INFOMATION");
-        assert(false);
-        return std::make_tuple(false, info);
-    }
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
-}
 TTueRet CRobotClient::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
     if (!m_ConnGame) {
         UWL_ERR("m_ConnGame is nil");
@@ -238,61 +184,7 @@ TTueRet CRobotClient::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void 
     }
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
-TTueRet CRobotClient::SendGameRequestEx(TReqstId nReqId, TReqstId nSubReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
-    std::lock_guard<std::mutex> lg(m_mutex);
-    if (!m_ConnGame) {
-        UWL_ERR("m_ConnGame is nil");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    }
 
-
-    if (!m_ConnGame->IsConnected()) {
-        UWL_ERR("m_ConnGame not connected");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    }
-
-
-    CONTEXT_HEAD	Context = {};
-    REQUEST			Request = {};
-    REQUEST			Response = {};
-    Context.hSocket = m_ConnGame->GetSocket();
-    Context.lSession = 0;
-    Context.bNeedEcho = bNeedEcho;
-    Request.head.nRepeated = 0;
-    Request.head.nRequest = nReqId;
-    Request.head.nSubReq = nSubReqId;
-    Request.nDataLen = nDataLen;
-    Request.pDataPtr = pData;//////////////
-
-    BOOL bTimeOut = FALSE, bResult = TRUE;
-    {
-        CAutoLock lock(&m_csConnGame);
-        bResult = m_ConnGame->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
-    }
-
-    if (!bResult)///if timeout or disconnect 
-    {
-        UWL_ERR("game send request fail");
-        assert(false);
-        return std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
-    }
-
-
-    nDataLen = Response.nDataLen;
-    nRespId = Response.head.nRequest;
-    pRetData = Response.pDataPtr;
-
-    if (nRespId == GR_ERROR_INFOMATION) {
-        CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData);
-        nDataLen = 0;
-        SAFE_DELETE_ARRAY(pRetData);
-        return std::make_tuple(false, info);
-    }
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
-}
 TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
     std::lock_guard<std::mutex> lg(m_mutex);
     if (!m_ConnRoom) {
