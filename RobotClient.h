@@ -12,13 +12,13 @@ public:
     CCritSec*	Critical() { return &m_csClit; }
     int32_t		Account() { return m_Account; }
     std::string	Password() { return m_Password; }
-    TUserId		UserId() { return m_LogonData.nUserID; }
+    UserID		UserId() { return m_LogonData.nUserID; }
     int32_t		GameId() { return m_nGameId; }
     int32_t		RoomId() { return m_nRoomId; }
     bool		IsGaming() { return m_bRunGame; }
     void		SetGaming(bool isGame) { m_bRunGame = isGame; }
-    TTokenId	RoomToken() { return m_ConnRoom->GetTokenID(); }
-    TTokenId	GameToken() { return m_ConnGame->GetTokenID(); }
+    TokenID	RoomToken() { return m_ConnRoom->GetTokenID(); }
+    TokenID	GameToken() { return m_ConnGame->GetTokenID(); }
 
     void		SetLogonData(LPLOGON_SUCCEED_V2 logonOk) { m_LogonData = *logonOk; }
 

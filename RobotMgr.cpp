@@ -248,7 +248,7 @@ CRobotClient* CRobotMgr::GetWaitEnter() {
     return it;
 }
 
-CRobotClient* CRobotMgr::GetRobotClient_ToknId(const EConnType& type, const TTokenId& id) {
+CRobotClient* CRobotMgr::GetRobotClient_ToknId(const EConnType& type, const TokenID& id) {
     bool bFind = false;
     ToknRobotMap::iterator it;
     CAutoLock lock(&m_csTknRobot);
@@ -260,7 +260,7 @@ CRobotClient* CRobotMgr::GetRobotClient_ToknId(const EConnType& type, const TTok
     }
     return bFind ? it->second : nullptr;
 }
-CRobotClient* CRobotMgr::GetRobotClient_UserId(const TUserId& id) {
+CRobotClient* CRobotMgr::GetRobotClient_UserId(const UserID& id) {
     CAutoLock lock(&m_csRobot);
     auto it = m_mapUIdRobot.find(id);
     return it != m_mapUIdRobot.end() ? it->second : nullptr;
@@ -281,14 +281,14 @@ void	CRobotMgr::UpdRobotClientToken(const EConnType& type, CRobotClient* client,
         case ECT_HALL:return;
         case ECT_ROOM:
             if (add) {
-                m_mapTknRobot_Room.insert(std::pair<TTokenId, CRobotClient*>(client->RoomToken(), client));
+                m_mapTknRobot_Room.insert(std::pair<TokenID, CRobotClient*>(client->RoomToken(), client));
             } else {
                 m_mapTknRobot_Room.erase(client->RoomToken());
             }
             break;
         case ECT_GAME:
             if (add) {
-                m_mapTknRobot_Game.insert(std::pair<TTokenId, CRobotClient*>(client->GameToken(), client));
+                m_mapTknRobot_Game.insert(std::pair<TokenID, CRobotClient*>(client->GameToken(), client));
             } else {
                 m_mapTknRobot_Game.erase(client->GameToken());
             };
@@ -563,7 +563,7 @@ void	CRobotMgr::ThreadRunHallNotify() {
             LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
-            TTokenId		nTokenID = pContext->lTokenID;
+            TokenID		nTokenID = pContext->lTokenID;
             TReqstId		nReqstID = pRequest->head.nRequest;
 
             auto client = GetRobotClient_ToknId(ECT_HALL, nTokenID);
@@ -589,7 +589,7 @@ void	CRobotMgr::ThreadRunRoomNotify() {
             LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
-            TTokenId		nTokenID = pContext->lTokenID;
+            TokenID		nTokenID = pContext->lTokenID;
             TReqstId		nReqstID = pRequest->head.nRequest;
 
             auto client = GetRobotClient_ToknId(ECT_ROOM, nTokenID);
@@ -620,7 +620,7 @@ void	CRobotMgr::ThreadRunGameNotify() {
             LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
-            TTokenId		nTokenID = pContext->lTokenID;
+            TokenID		nTokenID = pContext->lTokenID;
             TReqstId		nReqstID = pRequest->head.nRequest;
 
             auto client = GetRobotClient_ToknId(ECT_GAME, nTokenID);

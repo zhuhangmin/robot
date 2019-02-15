@@ -40,8 +40,8 @@
 #define	ROOM_PLAYER_STATUS_LOOKON		15	// 旁观
 #define	ROOM_PLAYER_STATUS_BEGAN		16	// 开始游戏
 
-typedef int32_t			TUserId;
-typedef int32_t			TTokenId;
+typedef int32_t			UserID;
+typedef int32_t			TokenID;
 typedef uint32_t		TReqstId;
 
 typedef std::unordered_map<LONG, SOCKET>	TTokenSockMap;

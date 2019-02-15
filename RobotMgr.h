@@ -5,22 +5,20 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
-    typedef std::unordered_set<CRobotClient*>					TRobotCliSet;
-    typedef std::unordered_map<int32_t, stActiveCtrl>			TRoomActivMap;
-
-    typedef std::unordered_map<int32_t, TRobotCliSet>			TRoomRobotMap;	// token
-
-    typedef std::unordered_map<int32_t, stRobotUnit>			TAcntSettMap;	// setting
-    typedef std::unordered_map<int32_t, TRoomActivMap>			TGRoomSettMap;	// support
-    typedef std::unordered_map<int32_t, stRoomData>				TRoomDataMap;	// roomdata
-
+    using AccountID = int32_t;
+    typedef std::unordered_map<AccountID, stRobotUnit>			TAcntSettMap;	// setting
 
     typedef std::queue<CRobotClient*>							TRobotCliQue;
+    typedef std::unordered_set<CRobotClient*>					TRobotCliSet;
+    typedef std::unordered_map<UserID, CRobotClient*>			TUIdRobotMap;	// uid
+    typedef std::unordered_map<TokenID, CRobotClient*>			ToknRobotMap;	// token
+    typedef std::unordered_map<AccountID, CRobotClient*>		TAntRobotMap;	// account
 
+    using RoomID = int32_t;
+    typedef std::unordered_map<RoomID, stActiveCtrl>			TRoomActivMap;
+    typedef std::unordered_map<RoomID, TRobotCliSet>			TRoomRobotMap;	// token
+    typedef std::unordered_map<RoomID, stRoomData>				TRoomDataMap;	// roomdata
 
-    typedef std::unordered_map<TUserId, CRobotClient*>			TUIdRobotMap;	// uid
-    typedef std::unordered_map<TTokenId, CRobotClient*>			ToknRobotMap;	// token
-    typedef std::unordered_map<int32_t, CRobotClient*>			TAntRobotMap;	// account
 
 public:
     // 开始|结束
@@ -38,8 +36,8 @@ public:
 
     // 机器人数据管理
     uint32_t	  GetAcntSettingSize() { return m_mapAcntSett.size(); }
-    CRobotClient* GetRobotClient_ToknId(const EConnType& type, const TTokenId& id);
-    CRobotClient* GetRobotClient_UserId(const TUserId& id);
+    CRobotClient* GetRobotClient_ToknId(const EConnType& type, const TokenID& id);
+    CRobotClient* GetRobotClient_UserId(const UserID& id);
     CRobotClient* GetRobotClient_Accout(const int32_t& account);
 
 
