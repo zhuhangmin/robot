@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 #include <functional> 
+#include <ctime>
 
 #include <xygext2.h>
 #include <DefIocpServer.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include "RobotDef.h"
 
 #include "resource.h"
 #define APPLICATION_TITLE	 _T("RobotToolLudo")
@@ -23,7 +23,7 @@ extern CCritSec			g_csTokenSock;
 
 extern HANDLE			g_hExitServer;
 
-//extern UThread			g_thrdTimer;
+extern UThread			g_thrdTimer;
 
 //////////////////
 extern DWORD	GetLocalIPByRemote(LPTSTR szIp, int nPort);

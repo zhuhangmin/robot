@@ -7,7 +7,7 @@
 #include  <dbghelp.h > 
 #include "RobotDef.h"
 #include "Main.h"
-//#include "Server.h"
+#include "Server.h"
 #pragma comment(lib,  "dbghelp.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -27,7 +27,7 @@ CCritSec			g_csTokenSock;
 
 HANDLE				g_hExitServer = NULL;
 
-//UThread				g_thrdTimer;
+UThread				g_thrdTimer;
 
 // 唯一的应用程序对象
 CWinApp				theApp;
@@ -185,24 +185,24 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         nRetCode = -1;
         return nRetCode;
     }
-    //CMainService MainService(serviceName, displayName, 0, 0);
+    CMainService MainService(serviceName, displayName, 0, 0);
 
-    //if (!MainService.ParseStandardArgs(argc, argv)) {
-    //    // Didn't find any standard args so start the service
-    //    // Uncomment the DebugBreak line below to enter the debugger when the service is started.
-    //    //DebugBreak();
-    //    MainService.StartService();
-    //}
-    //// When we get here, the service has been stopped
-    //nRetCode = MainService.m_Status.dwWin32ExitCode;
+    if (!MainService.ParseStandardArgs(argc, argv)) {
+        // Didn't find any standard args so start the service
+        // Uncomment the DebugBreak line below to enter the debugger when the service is started.
+        //DebugBreak();
+        MainService.StartService();
+    }
+    // When we get here, the service has been stopped
+    nRetCode = MainService.m_Status.dwWin32ExitCode;
 #else
 
-    /*   CMainServer MainServer;
+    CMainServer MainServer;
 
-       if (FALSE == MainServer.Initialize()) {
-       UwlTrace(_T("server initialize failed!"));
-       return -1;
-       }*/
+    if (FALSE == MainServer.Initialize()) {
+        UwlTrace(_T("server initialize failed!"));
+        return -1;
+    }
 
     UwlTrace("Type 'q' when you want to exit. ");
     TCHAR ch;
@@ -224,7 +224,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     } while (ch != 'Q');
 
-    //MainServer.Shutdown();
+    MainServer.Shutdown();
 
     nRetCode = 1;
 #endif
