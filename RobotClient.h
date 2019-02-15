@@ -10,9 +10,8 @@ public:
 
 public:
     CCritSec*	Critical() { return &m_csClit; }
-    int32_t		Account() { return m_Account; }
+    int32_t		GetUserID() { return m_Account; }
     std::string	Password() { return m_Password; }
-    UserID		UserId() { return m_LogonData.nUserID; }
     int32_t		GameId() { return m_nGameId; }
     int32_t		RoomId() { return m_nRoomId; }
     bool		IsGaming() { return m_bRunGame; }

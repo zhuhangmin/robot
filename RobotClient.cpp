@@ -17,7 +17,7 @@ void CRobotClient::OnDisconnRoom() {
     m_nRoomId = 0;
     m_ConnRoom->DestroyEx();
     m_playerRoomStatus = PLAYER_STATUS_OFFLINE; // 退出房间后 恢复默认状态
-    UWL_INF("[STATUS] account:%d userid:%d status [offline] ", Account(), UserId());
+    UWL_INF("[STATUS] account:%d userid:%d status [offline] ", GetUserID(), GetUserID());
     m_bRunGame = false; //@zhuhangmin 20181129 用户房间服务器崩溃情况
 }
 void CRobotClient::OnDisconnGame() {
@@ -278,7 +278,7 @@ TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
         SAFE_DELETE_ARRAY(pRetData);
 
         if (nResponse != GR_DEPOSIT_NOTENOUGH_EX) {
-            UWL_ERR("account:%d userid:%d enter room[%d] of game[%d] ERROR , ROOM nResponse = [%d] ", Account(), UserId(), room.nRoomID, room.nGameID, nResponse);
+            UWL_ERR("account:%d userid:%d enter room[%d] of game[%d] ERROR , ROOM nResponse = [%d] ", GetUserID(), GetUserID(), room.nRoomID, room.nGameID, nResponse);
             if (nResponse == GR_ROOM_NEED_DXXW_EX) {
                 ret = "ROOM_NEED_DXXW";
                 return std::make_tuple(false, ret);
@@ -300,7 +300,7 @@ TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
     int nPlayerMinSize = sizeof(PLAYER) - sizeof(PLAYER_EXTEND);
     LPPLAYER  lpPlayer = (LPPLAYER) (PBYTE(pRetData) + sizeof(ENTER_ROOM_OK));
     for (int i = 0; i < m_EnterRoomData.nPlayerCount; i++) {
-        if (lpPlayer->nUserID == UserId()) {
+        if (lpPlayer->nUserID == GetUserID()) {
             memcpy(&m_PlayerData, lpPlayer, nPlayerMinSize);
         }
         /////////////////////////////////////////// 
@@ -311,7 +311,7 @@ TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
     m_nWantRoomId = 0;
 
     m_playerRoomStatus = ROOM_PLAYER_STATUS_WALKAROUND;
-    UWL_INF("[STATUS] account:%d userid:%d room[%d] of game[%d] status [walking] ", Account(), UserId(), room.nRoomID, room.nGameID);
+    UWL_INF("[STATUS] account:%d userid:%d room[%d] of game[%d] status [walking] ", GetUserID(), GetUserID(), room.nRoomID, room.nGameID);
 
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
@@ -337,7 +337,7 @@ TTueRet	CRobotClient::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std
     UWL_DBG("[PROFILE] 4 SendEnterGame timestamp = %ld", GetTickCount());
     // enter_game
     ENTER_GAME_EX enter = {};
-    enter.nUserID = UserId();
+    enter.nUserID = GetUserID();
     enter.nUserType = m_LogonData.nUserType;
 
     enter.nGameID = room.nGameID;
@@ -353,7 +353,7 @@ TTueRet	CRobotClient::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std
 
     // solo_player
     SOLO_PLAYER splayer = {};
-    splayer.nUserID = UserId();
+    splayer.nUserID = GetUserID();
     splayer.nUserType = m_LogonData.nUserType;
     splayer.nStatus = ROOM_PLAYER_STATUS_SEATED;
     splayer.nTableNO = nTableNo;
@@ -392,10 +392,10 @@ TTueRet	CRobotClient::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std
     UWL_DBG("[PROFILE] 5 SendEnterGame timestamp = %ld", GetTickCount());
     auto it = SendGameRequest(GR_ENTER_GAME_EX, nDataLen, pSendData, nResponse, pRetData, true);
     m_playerRoomStatus = ROOM_PLAYER_STATUS_WAITING;
-    UWL_INF("[STATUS] account:%d userid:%d status [walking] ", Account(), UserId());
+    UWL_INF("[STATUS] account:%d userid:%d status [walking] ", GetUserID(), GetUserID());
     SAFE_DELETE_ARRAY(pSendData);
     if (!TUPLE_ELE(it, 0)) {
-        UWL_ERR("GR_ENTER_GAME_EX fail userid = %d", UserId());
+        UWL_ERR("GR_ENTER_GAME_EX fail userid = %d", GetUserID());
         //assert(false);
         return it;
     }
@@ -478,8 +478,8 @@ TTueRet CRobotClient::SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, N
     lpNewTableInfo = *(LPNTF_GET_NEWTABLE) pRetData;
 
     m_playerRoomStatus = ROOM_PLAYER_STATUS_SEATED;
-    UWL_INF("[STATUS] account:%d userid:%d room[%d] of game[%d] status [seated]", Account(), UserId(), room.nRoomID, room.nGameID);
-    UWL_INF("account:%d userid:%d get table [%d] of chair[%d] ok.", Account(), UserId(), lpNewTableInfo.pp.nTableNO, lpNewTableInfo.pp.nChairNO);
+    UWL_INF("[STATUS] account:%d userid:%d room[%d] of game[%d] status [seated]", GetUserID(), GetUserID(), room.nRoomID, room.nGameID);
+    UWL_INF("account:%d userid:%d get table [%d] of chair[%d] ok.", GetUserID(), GetUserID(), lpNewTableInfo.pp.nTableNO, lpNewTableInfo.pp.nChairNO);
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
@@ -497,7 +497,7 @@ TTueRet	CRobotClient::SendRoomPulse() {
     }
 
     ROOMUSER_PULSE rp = {};
-    rp.nUserID = UserId();
+    rp.nUserID = GetUserID();
     rp.nRoomID = RoomId();
 
     TReqstId nResponse;
@@ -521,7 +521,7 @@ TTueRet	CRobotClient::SendGamePulse() {
 
 
     GAME_PULSE gp = {};
-    gp.nUserID = UserId();
+    gp.nUserID = GetUserID();
     gp.dwAveDelay = 11;
     gp.dwMaxDelay = 22;
 

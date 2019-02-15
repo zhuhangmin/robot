@@ -5,18 +5,17 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
+    //TODO 区分不变配置文件 和 动态数据
+    typedef std::unordered_map<AccountID, stRobotUnit>			AccountSettingMap;
 
-    typedef std::unordered_map<AccountID, stRobotUnit>			TAcntSettMap;	// setting
+    typedef std::unordered_set<CRobotClient*>					RobotSet;
+    typedef std::unordered_map<UserID, CRobotClient*>			LogonHallMap;
+    typedef std::unordered_map<TokenID, CRobotClient*>			TokenRobotMap;
+    typedef std::unordered_map<AccountID, CRobotClient*>		AccountRobotMap;
 
-    typedef std::queue<CRobotClient*>							TRobotCliQue;
-    typedef std::unordered_set<CRobotClient*>					TRobotCliSet;
-    typedef std::unordered_map<UserID, CRobotClient*>			TUIdRobotMap;
-    typedef std::unordered_map<TokenID, CRobotClient*>			ToknRobotMap;
-    typedef std::unordered_map<AccountID, CRobotClient*>		TAntRobotMap;
-
-    typedef std::unordered_map<RoomID, stActiveCtrl>			TRoomActivMap;
-    typedef std::unordered_map<RoomID, TRobotCliSet>			TRoomRobotMap;
-    typedef std::unordered_map<RoomID, stRoomData>				TRoomDataMap;
+    typedef std::unordered_map<RoomID, stActiveCtrl>			RoomSettingMap;
+    typedef std::unordered_map<RoomID, RobotSet>			    RoomRobotSetMap;
+    typedef std::unordered_map<RoomID, stRoomData>				RoomDataMap;
 
 public:
     // 开始|结束
@@ -33,7 +32,7 @@ public:
     int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec accounts); //should be first level
 
     // 机器人数据管理
-    uint32_t	  GetAcntSettingSize() { return m_mapAcntSett.size(); }
+    uint32_t	  GetAcntSettingSize() { return account_setting_map_.size(); }
     CRobotClient* GetRobotClient_ToknId(const EConnType& type, const TokenID& id);
     CRobotClient* GetRobotClient_UserId(const UserID& id);
     CRobotClient* GetRobotClient_Accout(const int32_t& account);
@@ -46,10 +45,6 @@ public:
     bool	GetRoomData(int32_t nRoomId, OUT ROOM& room);
     uint32_t GetRoomDataLastTime(int32_t nRoomId);
     void	SetRoomData(int32_t nRoomId, const LPROOM& room);
-
-    // WaitEnter
-    void			AddWaitEnter(CRobotClient* pRoboter);
-    CRobotClient*	GetWaitEnter();
 
     void    UpdRobotClientToken(const EConnType& type, CRobotClient* client, bool add);
 protected:
@@ -90,7 +85,6 @@ protected:
     void    OnTimerSendGamePluse(time_t nCurrTime);
     void    OnTimerCtrlRoomActiv(time_t nCurrTime);
     void    OnTimerUpdateDeposit(time_t nCurrTime);
-    void    OnThrndDelyEnterGame(time_t nCurrTime);
 
     // 网络辅助请求
     TTueRet	RobotLogonHall(const int32_t& account = 0);
@@ -103,21 +97,21 @@ protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 
     CCritSec        m_csRobot;
-    TAcntSettMap	m_mapAcntSett; // robot setting
+    AccountSettingMap	account_setting_map_; // 账号信息  from robot.setting
 
     CCritSec        m_csRoomData;
-    TRoomDataMap	m_mapRoomData; // room data
+    RoomDataMap	m_mapRoomData; // 大厅房间配置
 
-    TUIdRobotMap	m_mapUIdRobot; // key : userid, value: robots already in hall
+    LogonHallMap	logon_hall_map_; // 登陆大厅成功集合
 
     CCritSec        m_csTknRobot;
-    ToknRobotMap	m_mapTknRobot_Hall;
-    ToknRobotMap	m_mapTknRobot_Room;
-    ToknRobotMap	m_mapTknRobot_Game;
+    TokenRobotMap	m_mapTknRobot_Hall;
+    TokenRobotMap	m_mapTknRobot_Room;
+    TokenRobotMap	m_mapTknRobot_Game;
 
-    TAntRobotMap	m_mapAntRobot; // key:account,  value: robots already in hall
-    TRoomRobotMap   m_mapRoomRobot; //key:roomid ， value：robots already in roomid
-    TRoomRobotMap   m_mapWantRoomRobot;//key:roomid ， value：robots enter fail and wait to retry
+    AccountRobotMap   account_robot_map_; // 登陆大厅成功集合
+    RoomRobotSetMap   room_robot_set_; //进入房间成功集合
+    RoomRobotSetMap   room_want_robot_map_;//入房间失败的机器人,等待重进
 
     CCritSec        m_csConnHall;
     CDefSocketClient* m_ConnHall{new CDefSocketClient()};
@@ -127,9 +121,9 @@ protected:
     UThread			m_thrdGameNotify;
 
     CCritSec        m_csWaitEnters;
-    TRobotCliQue	m_queWaitEnters; //已进入房间，等待进入游戏的机器人集合
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
-    //
-    TRoomActivMap mapRooms_;
+
+    //@zhuhangmin
+    RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
 };
 #define TheRobotMgr CRobotMgr::Instance()
