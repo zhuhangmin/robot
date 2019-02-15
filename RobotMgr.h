@@ -35,8 +35,6 @@ public:
     // 机器人数据管理
     uint32_t	  GetAcntSettingSize() { return account_setting_map_.size(); }
     CRobotClient* GetRobotClient_ToknId(const EConnType& type, const TokenID& id);
-    CRobotClient* GetRobotClient_UserId(const UserID& id);
-    CRobotClient* GetRobotClient_Accout(const int32_t& account);
 
 
     // 主定时器
@@ -95,6 +93,13 @@ protected:
     //@zhuhangmin
     bool IsLogon(UserID userid);
     void SetLogon(UserID userid, bool status);
+    CRobotClient* GetRobotClient(UserID userid);
+    void SetRobotClient(CRobotClient* client);
+
+    bool IsInRoom(UserID userid);
+    void SetRoomID(UserID userid, RoomID roomid);
+
+    int GetRoomCurrentRobotSize(RoomID roomid); //当前在某个房间里的机器人数
 
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
@@ -109,20 +114,17 @@ protected:
     CCritSec        m_csWaitEnters;
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
 
-    //不变数据类（热更新） 初始化后，不使用set改变状态，不用加锁
+    //不变数据类（热更新,允许脏读） 初始化后，不使用set改变状态，不用加锁
     CCritSec        m_csRobot;
-    AccountSettingMap	account_setting_map_; // 账号信息  from robot.setting
+    AccountSettingMap	account_setting_map_; // 账号信息  robot.setting
     RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
+    RoomDataMap	m_mapRoomData; // 大厅房间配置 大厅获得 
 
     //变化数据类 需加锁
-    RobotMap robot_map_; //@zhuhangmin 20190215 管理所有robot信息
-    RoomCurUsersMap room_cur_users_; //房间中当前玩家数
+    RobotMap robot_map_; //管理所有robot信息
+    RoomCurUsersMap room_cur_users_; //房间中当前玩家数(包括机器人和真人)
     CCritSec        m_csRoomData;
-    RoomDataMap	m_mapRoomData; // 大厅房间配置
-    LogonHallMap	logon_hall_map_; // 登陆大厅成功集合
     CCritSec        m_csTknRobot;
-    AccountRobotMap   account_robot_map_; // 登陆大厅成功集合
-    RoomRobotSetMap   room_robot_set_; //进入房间成功集合
     RoomRobotSetMap   room_want_robot_map_;//入房间失败的机器人,等待重进
 
 

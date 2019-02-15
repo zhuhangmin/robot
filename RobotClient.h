@@ -13,7 +13,7 @@ public:
     int32_t		GetUserID() { return m_Account; }
     std::string	Password() { return m_Password; }
     int32_t		GameId() { return m_nGameId; }
-    int32_t		RoomId() { return m_nRoomId; }
+    int32_t		GetRoomID() { return m_nRoomId; }
     bool		IsGaming() { return m_bRunGame; }
     void		SetGaming(bool isGame) { m_bRunGame = isGame; }
     TokenID	RoomToken() { return m_ConnRoom->GetTokenID(); }
@@ -24,6 +24,9 @@ public:
     bool        IsLogon() { return logon_; }
 
     void        SetLogon(bool status) { logon_ = status; }
+
+    bool IsInRoom() { return m_nRoomId != 0; }
+    void SetRoomID(RoomID roomid) { m_nRoomId = roomid; }
 
 
     void		OnDisconnRoom();
@@ -98,6 +101,6 @@ public:
     //zhuhangmin 20181019
     int32_t			m_playerRoomStatus{0}; //default not in room
     std::mutex		m_mutex;
-    bool		logon_; // 是否登入大厅
+    bool		logon_{false}; // 是否登入大厅
 
 };

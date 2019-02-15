@@ -492,7 +492,7 @@ TTueRet	CRobotClient::SendRoomPulse() {
 
     ROOMUSER_PULSE rp = {};
     rp.nUserID = GetUserID();
-    rp.nRoomID = RoomId();
+    rp.nRoomID = GetRoomID();
 
     TReqstId nResponse;
     LPVOID	 pRetData = NULL;
