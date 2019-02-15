@@ -5,7 +5,6 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
-    //@zhuhangmin TODO 区分相对不变配置类（热更新）和 动态数据,  直接影响锁的范围
     typedef std::unordered_map<AccountID, stRobotUnit>			AccountSettingMap;
 
     typedef std::unordered_set<CRobotClient*>					RobotSet;
@@ -16,8 +15,8 @@ public:
     typedef std::unordered_map<RoomID, RobotSet>			    RoomRobotSetMap;
     typedef std::unordered_map<RoomID, stRoomData>				RoomDataMap;
 
-    using RobotMap = std::unordered_map<UserID, CRobotClient*>;
-    using RoomCurUsersMap = std::unordered_map<RoomID, int32_t>
+    using RobotMap = std::unordered_map<UserID, CRobotClient*>;//TODO 所有RobotClient 的类都是cache 需要合并重构
+    using RoomCurUsersMap = std::unordered_map<RoomID, int32_t>;
 
 public:
     // 开始|结束
@@ -100,19 +99,6 @@ protected:
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 
-    CCritSec        m_csRobot;
-    AccountSettingMap	account_setting_map_; // 账号信息  from robot.setting
-
-    CCritSec        m_csRoomData;
-    RoomDataMap	m_mapRoomData; // 大厅房间配置
-
-    LogonHallMap	logon_hall_map_; // 登陆大厅成功集合
-
-    CCritSec        m_csTknRobot;
-    AccountRobotMap   account_robot_map_; // 登陆大厅成功集合
-    RoomRobotSetMap   room_robot_set_; //进入房间成功集合
-    RoomRobotSetMap   room_want_robot_map_;//入房间失败的机器人,等待重进
-
     CCritSec        m_csConnHall;
     CDefSocketClient* m_ConnHall{new CDefSocketClient()};
 
@@ -123,9 +109,22 @@ protected:
     CCritSec        m_csWaitEnters;
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
 
-    //@zhuhangmin
+    //不变数据类（热更新） 初始化后，不使用set改变状态，不用加锁
+    CCritSec        m_csRobot;
+    AccountSettingMap	account_setting_map_; // 账号信息  from robot.setting
     RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
+
+    //变化数据类 需加锁
     RobotMap robot_map_; //@zhuhangmin 20190215 管理所有robot信息
     RoomCurUsersMap room_cur_users_; //房间中当前玩家数
+    CCritSec        m_csRoomData;
+    RoomDataMap	m_mapRoomData; // 大厅房间配置
+    LogonHallMap	logon_hall_map_; // 登陆大厅成功集合
+    CCritSec        m_csTknRobot;
+    AccountRobotMap   account_robot_map_; // 登陆大厅成功集合
+    RoomRobotSetMap   room_robot_set_; //进入房间成功集合
+    RoomRobotSetMap   room_want_robot_map_;//入房间失败的机器人,等待重进
+
+
 };
 #define TheRobotMgr CRobotMgr::Instance()

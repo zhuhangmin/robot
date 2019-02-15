@@ -80,7 +80,7 @@ bool CRobotMgr::InitSetting() {
         int32_t nCtrlMode = rooms[n]["CtrlMode"].asInt();
         int32_t nCtrlValue = rooms[n]["Value"].asInt();
         room_setting_map_[nRoomId] = stActiveCtrl{nRoomId, nCtrlMode, nCtrlValue};
-        room_cur_users_[nRoomId] = 0
+        room_cur_users_[nRoomId] = 0;
     }
 
     auto robots = root["robots"];
