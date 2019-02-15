@@ -1,5 +1,8 @@
 ﻿#include "stdafx.h"
+#include "RobotMgr.h"
 #include <Json.h>
+#include "Main.h"
+#include "RobotReq.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

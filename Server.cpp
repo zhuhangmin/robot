@@ -2,6 +2,7 @@
 #include "Server.h"
 #include <json.h>
 #include "Main.h"
+#include "RobotMgr.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -65,11 +66,11 @@ BOOL CMainServer::Initialize() {
         return FALSE;
     }
 
-    /*if (!TheRobotMgr.Init()) {
+    if (!TheRobotMgr.Init()) {
         UWL_ERR(_T("TheRobotMgr Init() return false"));
         assert(false);
         return FALSE;
-        }*/
+    }
 
     g_thrdTimer.Initial(std::thread([this] {this->TimerThreadProc(); }));
 
@@ -96,7 +97,7 @@ void CMainServer::Shutdown() {
 
     g_thrdTimer.Release();
 
-    //TheRobotMgr.Term();
+    TheRobotMgr.Term();
 
 
     if (g_hExitServer) { CloseHandle(g_hExitServer); g_hExitServer = NULL; }
@@ -124,8 +125,7 @@ void CMainServer::TimerThreadProc() {
     return;
 }
 void CMainServer::OnThreadTimer(time_t nCurrTime) {
-    //UWL_DBG("[interval] OnThreadTimer = %I32u", time(nullptr));
-    //TheRobotMgr.OnServerMainTimer(nCurrTime);
+    TheRobotMgr.OnServerMainTimer(nCurrTime);
 
 #define MAIN_XXX_GAP_TIME (10*60) // 10∑÷÷”
     static time_t	sLastXXXTime = 0;
