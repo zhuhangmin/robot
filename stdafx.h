@@ -19,11 +19,13 @@
 #include <ctime>
 
 #include <xygext2.h>
+#include <DefSocketClient.h>
 #include <DefIocpServer.h>
 #include <CommonData.h>
 #include <GameDef.h>
 #include <MobileReq-.h>
 #include <GameReq-.h>
+
 
 #include <IPPort.h>		//¿ª·ÅIPPort.h£¬È¥µôTcyPort.h 20150506
 
