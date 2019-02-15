@@ -81,7 +81,6 @@ protected:
 
 public:
     // 游戏的银子
-    int32_t			m_nWantGameId{};
     int32_t			m_nWantRoomId{};
 
     // 是否要取银

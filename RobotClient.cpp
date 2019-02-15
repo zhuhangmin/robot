@@ -253,7 +253,6 @@ TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
             int64_t nPlayerDeposit = *(int64_t*) pRetData;
             int64_t nMinRoomDeposit = *(int64_t*) ((PBYTE) pRetData + sizeof(int64_t));
             int64_t nDiffDeposit = nMinRoomDeposit - nPlayerDeposit;
-            m_nWantGameId = room.nGameID;
             m_nWantRoomId = room.nRoomID;
             m_bGainDeposit = true;
             m_nGainAmount = 200000;
@@ -263,7 +262,6 @@ TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
             int64_t nPlayerDeposit = *(int64_t*) pRetData;
             int64_t nMaxRoomDeposit = *(int64_t*) ((PBYTE) pRetData + sizeof(int64_t));
             int64_t nDiffDeposit = nPlayerDeposit - nMaxRoomDeposit;
-            m_nWantGameId = room.nGameID;
             m_nWantRoomId = room.nRoomID;
             m_bBackDeposit = true;
             m_nBackAmount = nDiffDeposit*1.2;
@@ -301,7 +299,6 @@ TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
         lpPlayer = (LPPLAYER) ((PBYTE) lpPlayer + nPlayerMinSize); //服务器发过来的是nPlayerMinSize长度
     }
     SAFE_DELETE_ARRAY(pRetData);
-    m_nWantGameId = 0;
     m_nWantRoomId = 0;
 
     m_playerRoomStatus = ROOM_PLAYER_STATUS_WALKAROUND;

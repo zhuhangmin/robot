@@ -317,9 +317,6 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
                 continue;
             }
 
-            if (it->second->m_nWantGameId != 0) {
-                continue;
-            }
             filterRobotMap[it->second->GetUserID()] = it->second;
         }
 
@@ -373,12 +370,8 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
                     return 0;
                 }
             }
-            if (it->second->m_nWantGameId != 0) {
-                n++;
-                room_want_robot_map_[nRoomId].insert(it->second); //添加进入房间失败的机器人 去 等待列表
-            } else {
-                assert(false);
-            }
+            n++;
+            room_want_robot_map_[nRoomId].insert(it->second); //添加进入房间失败的机器人 去 等待列表
             nErr++; /*continue;*/
         }
 
@@ -483,9 +476,7 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec
                         assert(false);
                     }
                 }
-                if (it_->second->m_nWantGameId != 0)
-                    room_want_robot_map_[nRoomId].insert(it_->second);
-                nErr++; continue;
+                room_want_robot_map_[nRoomId].insert(it_->second);
             }
 
             n++;
@@ -904,7 +895,7 @@ TTueRet	CRobotMgr::RobotGainDeposit(CRobotClient* client) {
         return std::make_tuple(false, "RobotReward HttpUrl_G ini read faild");
 
     TCHAR szField[128] = {};
-    sprintf_s(szField, "ActiveID_Game%d", client->m_nWantGameId);
+    sprintf_s(szField, "ActiveID_Game%d", g_gameID);
     TCHAR szValue[128] = {};
     GetPrivateProfileString(_T("RobotReward"), szField, _T("null"), szValue, sizeof(szValue), g_szIniFile);
     if (0 == strcmp(szValue, "null"))
@@ -912,13 +903,13 @@ TTueRet	CRobotMgr::RobotGainDeposit(CRobotClient* client) {
 
     Json::Value root;
     Json::FastWriter fast_writer;
-    root["GameId"] = Json::Value(client->m_nWantGameId);
+    root["GameId"] = Json::Value(g_gameID);
     root["ActId"] = Json::Value(szValue);
     root["UserId"] = Json::Value(client->GetUserID());
     root["UserNickName"] = Json::Value("Robot");
     root["Num"] = Json::Value(client->m_nGainAmount);
     root["Operation"] = Json::Value(1);
-    root["Device"] = Json::Value(xyConvertIntToStr(client->m_nWantGameId) + "+" + xyConvertIntToStr(client->GetUserID()));
+    root["Device"] = Json::Value(xyConvertIntToStr(g_gameID) + "+" + xyConvertIntToStr(client->GetUserID()));
     root["Time"] = Json::Value((LONGLONG) time(NULL) * 1000);
     root["Sign"] = Json::Value(MD5String((root["ActId"].asString() + "|" + root["UserId"].asString() + "|" + root["Time"].asString() + "|" + ROBOT_APPLY_DEPOSIT_KEY).c_str()));
 
@@ -944,7 +935,7 @@ TTueRet	CRobotMgr::RobotBackDeposit(CRobotClient* client) {
         return std::make_tuple(false, "RobotReward HttpUrl_C ini read faild");
 
     TCHAR szField[128] = {};
-    sprintf_s(szField, "ActiveID_Game%d", client->m_nWantGameId);
+    sprintf_s(szField, "ActiveID_Game%d", g_gameID);
     TCHAR szValue[128] = {};
     GetPrivateProfileString(_T("RobotReward"), szField, _T("null"), szValue, sizeof(szValue), g_szIniFile);
     if (0 == strcmp(szValue, "null"))
@@ -952,13 +943,13 @@ TTueRet	CRobotMgr::RobotBackDeposit(CRobotClient* client) {
 
     Json::Value root;
     Json::FastWriter fast_writer;
-    root["GameId"] = Json::Value(client->m_nWantGameId);
+    root["GameId"] = Json::Value(g_gameID);
     root["ActId"] = Json::Value(szValue);
     root["UserId"] = Json::Value(client->GetUserID());
     root["UserNickName"] = Json::Value("Robot");
     root["Num"] = Json::Value(client->m_nBackAmount);
     root["Operation"] = Json::Value(2);
-    root["Device"] = Json::Value(xyConvertIntToStr(client->m_nWantGameId) + "+" + xyConvertIntToStr(client->GetUserID()));
+    root["Device"] = Json::Value(xyConvertIntToStr(g_gameID) + "+" + xyConvertIntToStr(client->GetUserID()));
     root["Time"] = Json::Value((LONGLONG) time(NULL) * 1000);
     root["Sign"] = Json::Value(MD5String((root["ActId"].asString() + "|" + root["UserId"].asString() + "|" + root["Time"].asString() + "|" + ROBOT_APPLY_DEPOSIT_KEY).c_str()));
 
@@ -1226,7 +1217,7 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
         }
     }
     for (auto&& it : vecWantClient) {
-        ApplyRobotForRoom(it->m_nWantGameId, it->m_nWantRoomId, TInt32Vec{it->GetUserID()});
+        ApplyRobotForRoom(g_gameID, it->m_nWantRoomId, TInt32Vec{it->GetUserID()});
     }
 
     for (auto&& it : roomNeedApply) {

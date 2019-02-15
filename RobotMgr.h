@@ -121,10 +121,10 @@ protected:
     RoomDataMap	m_mapRoomData; // 大厅房间配置 大厅获得 
 
     //变化数据类 需加锁
-    RobotMap robot_map_; //管理所有robot信息
-    RoomCurUsersMap room_cur_users_; //房间中当前玩家数(包括机器人和真人)
     CCritSec        m_csRoomData;
     CCritSec        m_csTknRobot;
+    RobotMap robot_map_; //管理所有robot信息
+    RoomCurUsersMap room_cur_users_; //房间中当前玩家数(包括机器人和真人)
     RoomRobotSetMap   room_want_robot_map_;//入房间失败的机器人,等待重进
 
 
