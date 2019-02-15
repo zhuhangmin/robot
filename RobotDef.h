@@ -158,3 +158,6 @@ protected:
     uint32_t		m_nThrd{0};
     HANDLE			m_hThrd{nullptr};
 };
+
+
+const int InValidToken = -1;

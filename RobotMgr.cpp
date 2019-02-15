@@ -234,16 +234,22 @@ void	CRobotMgr::SetRoomData(int32_t nRoomId, const LPROOM& pRoom) {
 
 
 CRobotClient* CRobotMgr::GetRobotClient_ToknId(const EConnType& type, const TokenID& id) {
-    bool bFind = false;
-    TokenRobotMap::iterator it;
     CAutoLock lock(&m_csTknRobot);
-    switch (type) {
-        case ECT_HALL:it = m_mapTknRobot_Hall.find(id); bFind = (it != m_mapTknRobot_Hall.end()); break;
-        case ECT_ROOM:it = m_mapTknRobot_Room.find(id); bFind = (it != m_mapTknRobot_Room.end()); break;
-        case ECT_GAME:it = m_mapTknRobot_Game.find(id); bFind = (it != m_mapTknRobot_Game.end()); break;
-        default: return nullptr;
-    }
-    return bFind ? it->second : nullptr;
+
+    auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, CRobotClient*>& it) {
+        switch (type) {
+            case ECT_ROOM:
+                return it.second->RoomToken() == id;
+                break;
+            case ECT_GAME:
+                return it.second->GameToken() == id;
+                break;
+            default:
+                return false;
+        }
+    });
+
+    return it != robot_map_.end() ? it->second : nullptr;
 }
 CRobotClient* CRobotMgr::GetRobotClient_UserId(const UserID& id) {
     CAutoLock lock(&m_csRobot);
@@ -255,33 +261,6 @@ CRobotClient* CRobotMgr::GetRobotClient_Accout(const int32_t& account) {
     auto it = account_robot_map_.find(account);
     return it != account_robot_map_.end() ? it->second : nullptr;
 }
-void	CRobotMgr::UpdRobotClientToken(const EConnType& type, CRobotClient* client, bool add) {
-    TokenRobotMap* pMap = nullptr;
-
-    if (add && client == nullptr)	return;
-
-    CAutoLock lock(&m_csTknRobot);
-
-    switch (type) {
-        case ECT_HALL:return;
-        case ECT_ROOM:
-            if (add) {
-                m_mapTknRobot_Room.insert(std::pair<TokenID, CRobotClient*>(client->RoomToken(), client));
-            } else {
-                m_mapTknRobot_Room.erase(client->RoomToken());
-            }
-            break;
-        case ECT_GAME:
-            if (add) {
-                m_mapTknRobot_Game.insert(std::pair<TokenID, CRobotClient*>(client->GameToken(), client));
-            } else {
-                m_mapTknRobot_Game.erase(client->GameToken());
-            };
-            break;
-        default:return;
-    }
-}
-
 //try to enter room amount of robots
 int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t nMaxCount) {
     if (!m_ConnHall) {
@@ -410,8 +389,6 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
         }
 
         n++;
-        //@zhuhangmin 移入RobotClient 以免丢包
-        //UpdRobotClientToken(ECT_ROOM, it->second, true);
 
         UWL_INF("[interval] ApplyRobotForRoom1 enter room OK successfully Room[%d] Account:[%d], time = %I32u", nRoomId, it->second->GetUserID(), time(nullptr));
 
@@ -517,7 +494,6 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec
             }
 
             n++;
-            UpdRobotClientToken(ECT_ROOM, it_->second, true);
             room_robot_set_[nRoomId].insert(it_->second);
             room_want_robot_map_[nRoomId].erase(it_->second);
 
@@ -551,8 +527,7 @@ void	CRobotMgr::ThreadRunHallNotify() {
             TokenID		nTokenID = pContext->lTokenID;
             TReqstId		nReqstID = pRequest->head.nRequest;
 
-            auto client = GetRobotClient_ToknId(ECT_HALL, nTokenID);
-            OnHallNotify(client, nReqstID, pRequest->pDataPtr, pRequest->nDataLen);
+            OnHallNotify(nReqstID, pRequest->pDataPtr, pRequest->nDataLen);
 
             SAFE_DELETE(pContext);
             UwlClearRequest(pRequest);
@@ -643,14 +618,11 @@ void    CRobotMgr::ThreadRunEnterGame() {
     return;
 }
 
-void	CRobotMgr::OnHallNotify(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
-    if (client) {
-        //UWL_INF("OnHallNotify client[%d] reqId:%d", client->GetUserID(), nReqId);
-    }
+void CRobotMgr::OnHallNotify(TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     switch (nReqId) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            OnCliDisconnHall(client, nReqId, pDataPtr, nSize);
+            OnCliDisconnHall(nReqId, pDataPtr, nSize);
             break;
 
         case GR_GET_ROOMUSERS_OK:
@@ -782,7 +754,7 @@ void	CRobotMgr::OnRoomRobotEnter(CRobotClient* client, int32_t nTableNo, int32_t
     client->m_sEnterWay = sEnterWay;
     //UWL_INF("AddWaitEnter 已进入房间，等待进入游戏的机器人 %s: client[%d] room[%d].", sEnterWay.c_str(), client->GetUserID(), client->RoomId());
 }
-void    CRobotMgr::OnCliDisconnHall(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     UWL_ERR(_T("与大厅服务断开连接"));
     assert(false);
     m_ConnHall->DestroyEx();
@@ -796,7 +768,6 @@ void    CRobotMgr::OnCliDisconnHall(CRobotClient* client, TReqstId nReqId, void*
 void    CRobotMgr::OnCliDisconnRoom(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     CAutoLock lock(&m_csRobot);
     UWL_WRN("userid = %d disconnect room %d", client->GetUserID(), client->RoomId());
-    UpdRobotClientToken(ECT_ROOM, client, false);
     room_robot_set_[client->RoomId()].erase(client);
     client->OnDisconnRoom();
 
@@ -804,7 +775,6 @@ void    CRobotMgr::OnCliDisconnRoom(CRobotClient* client, TReqstId nReqId, void*
 void    CRobotMgr::OnCliDisconnGame(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     CAutoLock lock(&m_csRobot);
     UWL_WRN("userid = %d disconnect game ", client->GetUserID());
-    UpdRobotClientToken(ECT_GAME, client, false);
     client->OnDisconnGame();
 }
 
@@ -909,6 +879,10 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
 
     logon_hall_map_[client->GetUserID()] = client;
     account_robot_map_[client->GetUserID()] = client;
+
+
+    //@zhuhangmin 20190215
+    robot_map_[client->GetUserID()] = client;
 
     SAFE_DELETE_ARRAY(pRetData);
     UWL_INF("account:%d userid:%d logon hall ok.", client->GetUserID(), client->GetUserID());
@@ -1216,20 +1190,20 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
                     //}
 
                 }
-                //UWL_INF("[ROOM STATUS] room id = %d , already in room %d,  need in room %d,  in playing %d, in waitting %d", it_2->second.nRoomId, room_robot_set_[it_2->first].size(), room_want_robot_map_[it_2->first].size(), robotInPlaying, robotInWaiting);
-                //if (m_mapRoomRobot[it_2->first].size() + m_mapWantRoomRobot[it_2->first].size() - robotInPlaying < it_2->second.nCtrlVal)
-                //if (robotInWaiting < it_2->second.nCtrlVal)
-                //    roomNeedApply[it_2->first] = it_1->first;// roomid:gameid
+                UWL_INF("[ROOM STATUS] room id = %d , already in room %d,  need in room %d,  in playing %d, in waitting %d", it_2->second.nRoomId, room_robot_set_[it_2->first].size(), room_want_robot_map_[it_2->first].size(), robotInPlaying, robotInWaiting);
+                if (room_robot_set_[it_2->first].size() + room_want_robot_map_[it_2->first].size() - robotInPlaying < it_2->second.nCtrlVal)
+                    if (robotInWaiting < it_2->second.nCtrlVal)
+                        roomNeedApply[it_2->first] = g_gameID;// roomid:gameid
             }
-            if (it_2->second.nCtrlMode == EACM_Scale) {
-                gr.nRoomID[gr.nRoomCount] = it_2->second.nRoomId;
-                gr.nRoomCount++;
+            //if (it_2->second.nCtrlMode == EACM_Scale) {
+            //    gr.nRoomID[gr.nRoomCount] = it_2->second.nRoomId;
+            //    gr.nRoomCount++;
 
-                auto room_robot_num = room_robot_set_[it_2->first].size() + room_want_robot_map_[it_2->first].size();
-                auto scale_user_num = (size_t) ((it_2->second.nCurrNum - room_robot_num)*it_2->second.nCtrlVal*0.01f);
-                /*if (it_2->second.nCurrNum > room_robot_num && room_robot_num < scale_user_num)
-                    roomNeedApply[it_2->first] = it_1->first;*/
-            }
+            //    auto room_robot_num = room_robot_set_[it_2->first].size() + room_want_robot_map_[it_2->first].size();
+            //    auto scale_user_num = (size_t) ((it_2->second.nCurrNum - room_robot_num)*it_2->second.nCtrlVal*0.01f);
+            //    /*if (it_2->second.nCurrNum > room_robot_num && room_robot_num < scale_user_num)
+            //        roomNeedApply[it_2->first] = it_1->first;*/
+            //}
         }
     }
 
@@ -1338,7 +1312,6 @@ void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
 //            OnCliDisconnGame(pRoboter, 0, nullptr, 0);
 //            continue;
 //        }
-//        //UpdRobotClientToken(ECT_GAME, pRoboter, true); @zhuhangmin 移入RobotClient
 //        auto endTime = GetTickCount();
 //        UWL_DBG("[interval] Room %s: client[%d] Dely Enter Game OK end successfully. time %d ", pRoboter->m_sEnterWay.c_str(), pRoboter->GetUserID(), time(nullptr));
 //        UWL_DBG("[interval] [PROFILE] ENTER GAME cost time = %ld", endTime - begTime);

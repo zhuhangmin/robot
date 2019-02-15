@@ -5,17 +5,18 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
-    //TODO 区分不变配置文件 和 动态数据
+    //@zhuhangmin TODO 区分相对不变配置类（热更新）和 动态数据,  直接影响锁的范围
     typedef std::unordered_map<AccountID, stRobotUnit>			AccountSettingMap;
 
     typedef std::unordered_set<CRobotClient*>					RobotSet;
     typedef std::unordered_map<UserID, CRobotClient*>			LogonHallMap;
-    typedef std::unordered_map<TokenID, CRobotClient*>			TokenRobotMap;
     typedef std::unordered_map<AccountID, CRobotClient*>		AccountRobotMap;
 
     typedef std::unordered_map<RoomID, stActiveCtrl>			RoomSettingMap;
     typedef std::unordered_map<RoomID, RobotSet>			    RoomRobotSetMap;
     typedef std::unordered_map<RoomID, stRoomData>				RoomDataMap;
+
+    using RobotMap = std::unordered_map<UserID, CRobotClient*>;
 
 public:
     // 开始|结束
@@ -46,7 +47,6 @@ public:
     uint32_t GetRoomDataLastTime(int32_t nRoomId);
     void	SetRoomData(int32_t nRoomId, const LPROOM& room);
 
-    void    UpdRobotClientToken(const EConnType& type, CRobotClient* client, bool add);
 protected:
     // 初始化配置文件
     bool InitSetting();
@@ -67,14 +67,14 @@ protected:
     void	ThreadRunEnterGame();
 
     // 通知消息处理回调
-    void	OnHallNotify(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
+    void OnHallNotify(TReqstId nReqId, void* pDataPtr, int32_t nSize);
     void	OnRoomNotify(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
     void	OnGameNotify(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
 
     void	OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr);
     void	OnRoomRobotEnter(CRobotClient* client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay);
 
-    void	OnCliDisconnHall(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
+    void OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize);
     void    OnCliDisconnRoom(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
     void    OnCliDisconnGame(CRobotClient* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
 
@@ -105,10 +105,6 @@ protected:
     LogonHallMap	logon_hall_map_; // 登陆大厅成功集合
 
     CCritSec        m_csTknRobot;
-    TokenRobotMap	m_mapTknRobot_Hall;
-    TokenRobotMap	m_mapTknRobot_Room;
-    TokenRobotMap	m_mapTknRobot_Game;
-
     AccountRobotMap   account_robot_map_; // 登陆大厅成功集合
     RoomRobotSetMap   room_robot_set_; //进入房间成功集合
     RoomRobotSetMap   room_want_robot_map_;//入房间失败的机器人,等待重进
@@ -125,5 +121,6 @@ protected:
 
     //@zhuhangmin
     RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
+    RobotMap robot_map_; //@zhuhangmin 20190215 管理所有robot信息
 };
 #define TheRobotMgr CRobotMgr::Instance()

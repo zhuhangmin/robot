@@ -37,11 +37,6 @@ bool CRobotClient::ConnectRoom(const std::string& strIP, const int32_t nPort, ui
         return false;
     }
 
-    //TODO FIXME DECOUPLE WITH MANAGER
-    //@zhuhangmin 20181129 马上加入token等以免丢包
-    //TheRobotMgr.UpdRobotClientToken(ECT_ROOM, this, true);
-
-
     return true;
 }
 bool CRobotClient::ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
@@ -60,7 +55,6 @@ bool CRobotClient::ConnectGame(const std::string& strIP, const int32_t nPort, ui
 
         ////TODO FIXME DECOUPLE WITH MANAGER
         ////@zhuhangmin 20181129 立即加上token信息 以免丢包
-        //TheRobotMgr.UpdRobotClientToken(ECT_GAME, this, true);
     }
 
     //SendCheckVersion();
