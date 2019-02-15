@@ -92,6 +92,9 @@ protected:
     TTueRet	RobotGainDeposit(CRobotClient* client);
     TTueRet	RobotBackDeposit(CRobotClient* client);
 
+    //@zhuhangmin
+    bool IsLogon(UserID userid);
+    void SetLogon(UserID userid, bool status);
 
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);

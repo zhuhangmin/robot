@@ -87,7 +87,6 @@ public:
     std::string	password;
     std::string nickName;
     std::string portraitUrl;
-    bool		logoned;
 };
 // 每个房间里面机器人的申请控制模式
 enum EACtrlMode :uint32_t {

@@ -93,7 +93,6 @@ bool CRobotMgr::InitSetting() {
 
         stRobotUnit unit;
         unit.account = nAccount;
-        unit.logoned = false;
         unit.password = sPassword;
         unit.nickName = sNickName;
         unit.portraitUrl = sPortrait;
@@ -351,7 +350,7 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
 
         tRet = it->second->SendEnterRoom(theRoom, m_thrdRoomNotify.ThreadId());
         if (!TUPLE_ELE(tRet, 0)) {
-            account_setting_map_[it->second->GetUserID()].logoned = false;
+            SetLogon(it->first, false);
             auto retStr = TUPLE_ELE_C(tRet, 1);
             UWL_WRN("ApplyRobotForRoom1 Account:%d enterRoom[%d] Err:%s", it->second->GetUserID(), nRoomId, TUPLE_ELE_C(tRet, 1));
             if (strcmp(retStr, "GR_DEPOSIT_NOTENOUGH") != 0
@@ -462,7 +461,7 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec
 
             tRet = it_->second->SendEnterRoom(theRoom, m_thrdRoomNotify.ThreadId());
             if (!TUPLE_ELE(tRet, 0)) {
-                account_setting_map_[it_->second->GetUserID()].logoned = false;
+                SetLogon(it_->first, false);
                 UWL_WRN("ApplyRobotForRoom2 Account:%d enterRoom[%d] Err:%s", it_->second->GetUserID(), nRoomId, TUPLE_ELE_C(tRet, 1));
                 auto retStr = TUPLE_ELE_C(tRet, 1);
                 if (strcmp(retStr, "GR_DEPOSIT_NOTENOUGH") != 0
@@ -760,8 +759,9 @@ void CRobotMgr::OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize)
     m_ConnHall->DestroyEx();
     {
         CAutoLock lock(&m_csRobot);
-        for (auto&& it = account_setting_map_.begin(); it != account_setting_map_.end(); it++) {
-            it->second.logoned = false;
+
+        for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
+            it->second->SetLogon(false);
         }
     }
 }
@@ -789,8 +789,9 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
         if (it == account_setting_map_.end())
             return std::make_tuple(false, "使用无效的机器人账号");
 
-        if (it->second.logoned)
+        if (IsLogon(account))
             return std::make_tuple(true, "不可重复登录");
+
         itRobot = it;
     } else {
         //random
@@ -800,7 +801,7 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
             auto mapSize = account_setting_map_.size();
             auto num = randnum % mapSize;
             std::advance(it, num);
-            if (it->second.logoned)			continue;
+            if (IsLogon(it->first)) continue;
             itRobot = it; break;
         }
 
@@ -874,15 +875,15 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
         SAFE_DELETE(client);
         return std::make_tuple(false, std::to_string(nResponse));
     }
-    itRobot->second.logoned = true;
+    client->SetLogon(true);
     client->SetLogonData((LPLOGON_SUCCEED_V2) pRetData);
 
     logon_hall_map_[client->GetUserID()] = client;
     account_robot_map_[client->GetUserID()] = client;
 
 
-    //@zhuhangmin 20190215
-    robot_map_[client->GetUserID()] = client;
+    //@zhuhangmin 20190215 insert
+    robot_map_.insert(std::make_pair(client->GetUserID(), client));
 
     SAFE_DELETE_ARRAY(pRetData);
     UWL_INF("account:%d userid:%d logon hall ok.", client->GetUserID(), client->GetUserID());
@@ -999,6 +1000,19 @@ TTueRet	CRobotMgr::RobotBackDeposit(CRobotClient* client) {
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
+bool CRobotMgr::IsLogon(UserID userid) {
+    if (robot_map_.find(userid) != robot_map_.end()) {
+        return robot_map_[userid]->IsLogon();
+    }
+    return false;
+}
+
+void CRobotMgr::SetLogon(UserID userid, bool status) {
+    if (robot_map_.find(userid) != robot_map_.end()) {
+        robot_map_[userid]->SetLogon(status);
+    }
+}
+
 void    CRobotMgr::OnServerMainTimer(time_t nCurrTime) {
     OnTimerReconnectHall(nCurrTime);
     OnTimerSendHallPluse(nCurrTime);
@@ -1035,7 +1049,7 @@ bool	CRobotMgr::OnTimerReconnectHall(time_t nCurrTime) {
     {
         CAutoLock lock(&m_csRobot);
         for (auto&& it = account_setting_map_.begin(); it != account_setting_map_.end(); it++) {
-            if (!it->second.logoned) continue;
+            if (!IsLogon(it->first)) continue;
 
             if (++nCount >= 5)		 break;
 

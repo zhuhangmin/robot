@@ -21,6 +21,11 @@ public:
 
     void		SetLogonData(LPLOGON_SUCCEED_V2 logonOk) { m_LogonData = *logonOk; }
 
+    bool        IsLogon() { return logon_; }
+
+    void        SetLogon(bool status) { logon_ = status; }
+
+
     void		OnDisconnRoom();
     void		OnDisconnGame();
 
@@ -93,5 +98,6 @@ public:
     //zhuhangmin 20181019
     int32_t			m_playerRoomStatus{0}; //default not in room
     std::mutex		m_mutex;
+    bool		logon_; // ÊÇ·ñµÇÈë´óÌü
 
 };
