@@ -5,20 +5,18 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
-    using AccountID = int32_t;
+
     typedef std::unordered_map<AccountID, stRobotUnit>			TAcntSettMap;	// setting
 
     typedef std::queue<CRobotClient*>							TRobotCliQue;
     typedef std::unordered_set<CRobotClient*>					TRobotCliSet;
-    typedef std::unordered_map<UserID, CRobotClient*>			TUIdRobotMap;	// uid
-    typedef std::unordered_map<TokenID, CRobotClient*>			ToknRobotMap;	// token
-    typedef std::unordered_map<AccountID, CRobotClient*>		TAntRobotMap;	// account
+    typedef std::unordered_map<UserID, CRobotClient*>			TUIdRobotMap;
+    typedef std::unordered_map<TokenID, CRobotClient*>			ToknRobotMap;
+    typedef std::unordered_map<AccountID, CRobotClient*>		TAntRobotMap;
 
-    using RoomID = int32_t;
     typedef std::unordered_map<RoomID, stActiveCtrl>			TRoomActivMap;
-    typedef std::unordered_map<RoomID, TRobotCliSet>			TRoomRobotMap;	// token
-    typedef std::unordered_map<RoomID, stRoomData>				TRoomDataMap;	// roomdata
-
+    typedef std::unordered_map<RoomID, TRobotCliSet>			TRoomRobotMap;
+    typedef std::unordered_map<RoomID, stRoomData>				TRoomDataMap;
 
 public:
     // 开始|结束
