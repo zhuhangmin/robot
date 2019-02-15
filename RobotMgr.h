@@ -7,14 +7,20 @@ class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
     typedef std::unordered_set<CRobotClient*>					TRobotCliSet;
     typedef std::unordered_map<int32_t, stActiveCtrl>			TRoomActivMap;
-    typedef std::unordered_map<TUserId, CRobotClient*>			TUIdRobotMap;	// uid
-    typedef std::unordered_map<TTokenId, CRobotClient*>			ToknRobotMap;	// token
+
     typedef std::unordered_map<int32_t, TRobotCliSet>			TRoomRobotMap;	// token
-    typedef std::unordered_map<int32_t, CRobotClient*>			TAntRobotMap;	// account
+
     typedef std::unordered_map<int32_t, stRobotUnit>			TAcntSettMap;	// setting
     typedef std::unordered_map<int32_t, TRoomActivMap>			TGRoomSettMap;	// support
     typedef std::unordered_map<int32_t, stRoomData>				TRoomDataMap;	// roomdata
+
+
     typedef std::queue<CRobotClient*>							TRobotCliQue;
+
+
+    typedef std::unordered_map<TUserId, CRobotClient*>			TUIdRobotMap;	// uid
+    typedef std::unordered_map<TTokenId, CRobotClient*>			ToknRobotMap;	// token
+    typedef std::unordered_map<int32_t, CRobotClient*>			TAntRobotMap;	// account
 
 public:
     // 开始|结束
@@ -52,7 +58,7 @@ public:
     void    UpdRobotClientToken(const EConnType& type, CRobotClient* client, bool add);
 protected:
     // 初始化配置文件
-    bool	InitSetting(std::string filename);
+    bool InitSetting();
 
     bool	InitNotifyThreads();
 
@@ -92,7 +98,7 @@ protected:
 
     // 网络辅助请求
     TTueRet	RobotLogonHall(const int32_t& account = 0);
-    TTueRet	SendGetRoomData(const int32_t nGameId, const int32_t nRoomId);
+    TTueRet SendGetRoomData(const int32_t nRoomId);
     TTueRet	RobotGainDeposit(CRobotClient* client);
     TTueRet	RobotBackDeposit(CRobotClient* client);
 
@@ -102,7 +108,6 @@ protected:
 
     CCritSec        m_csRobot;
     TAcntSettMap	m_mapAcntSett; // robot setting
-    TGRoomSettMap   m_mapGRoomSett;
 
     CCritSec        m_csRoomData;
     TRoomDataMap	m_mapRoomData; // room data
@@ -128,5 +133,7 @@ protected:
     CCritSec        m_csWaitEnters;
     TRobotCliQue	m_queWaitEnters; //已进入房间，等待进入游戏的机器人集合
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
+    //
+    TRoomActivMap mapRooms_;
 };
 #define TheRobotMgr CRobotMgr::Instance()

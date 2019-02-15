@@ -10,6 +10,7 @@
 
 extern int				g_nClientID;
 extern int				g_useLocal;
+extern int				g_gameID;
 //extern CRobotMgr		g_robotManager; //@zhuhangmin 20181129 为了解决收到的notify太快，丢包的问题
 
 extern std::string		g_curExePath;
