@@ -26,25 +26,15 @@
 
 #include <IPPort.h>		//¿ª·ÅIPPort.h£¬È¥µôTcyPort.h 20150506
 
-#include "RobotDef.h"
-#include "RobotReq.h"
-#include "SockSvr.h"
-#include "DefSocketClient.h"
-#include "Server.h"
-
-#include "RobotClient.h"
-#include "ExtInterface.h"
-#include "RobotMgr.h"
-
-#include "SvrInOut.h"
-#ifdef _DEBUG
-#pragma comment(lib,"tcElkInOut-vc12d.lib")
-#else
-#pragma comment(lib,"tcElkInOut-vc12.lib")
-#endif 
-
-#include "Main.h"
-#include "Service.h"
-
+//
+//#include "RobotDef.h"
+//#include "RobotReq.h"
+//#include "DefSocketClient.h"
+//#include "Server.h"
+//#include "RobotClient.h"
+//#include "RobotMgr.h"
+//#include "Main.h"
+//#include "Service.h"
+//
 
 
