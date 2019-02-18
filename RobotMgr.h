@@ -63,7 +63,7 @@ protected:
     void OnRoomNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
     void OnGameNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
 
-    void	OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr);
+    void OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr);
     void OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay);
 
     void OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize);

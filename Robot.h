@@ -31,12 +31,11 @@ public:
     void		OnDisconnGame();
 
     // for Room
-    bool		ConnectRoom(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
-    TTueRet SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+
 
     // for Game
-    bool		ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
-    TTueRet SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+
+
 
     // for Send
     TTueRet		SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId);
@@ -48,16 +47,16 @@ public:
     TTueRet		SendRoomPulse();
     TTueRet		SendGamePulse();
 
-    int GetPlayerRoomStatus() {
-        std::lock_guard<std::mutex> lg(m_mutex);
-        return m_playerRoomStatus;
-    }
+    int GetPlayerRoomStatus();
 
-    void SetPlayerRoomStatus(int status) {
-        std::lock_guard<std::mutex> lg(m_mutex);
-        m_playerRoomStatus = status;
-        UWL_INF("SetPlayerRoomStatus = %d", status);
-    }
+    void SetPlayerRoomStatus(int status);
+private:
+    bool ConnectRoomWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId); //caller must require with lock
+    bool ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
+    TTueRet SendRoomRequestWithLock(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    TTueRet SendGameRequestWithLock(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+
+
 protected:
     int32_t			userid_{0};
     std::string		m_Password;
@@ -88,9 +87,9 @@ public:
     int32_t			m_nToChair{0};
     std::string		m_sEnterWay;
 
-    //zhuhangmin 20181019
+    //zhuhangmin 20181019  mutex_ 一把锁管理机器人的所有状态,目前没有需要细化数据颗粒锁的必要
+    std::mutex		mutex_;
     int32_t			m_playerRoomStatus{0}; //default not in room
-    std::mutex		m_mutex;
     bool		logon_{false}; // 是否登入大厅
 
 };

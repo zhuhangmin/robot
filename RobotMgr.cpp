@@ -1081,7 +1081,7 @@ void    CRobotMgr::OnTimerSendHallPluse(time_t nCurrTime) {
     }
 }
 void    CRobotMgr::OnTimerSendRoomPluse(time_t nCurrTime) {
-#define MAIN_SEND_ROOM_PULSE_GAP_TIME (1*60+1) // 1分钟1秒
+#define MAIN_SEND_ROOM_PULSE_GAP_TIME (1*10+1) // 1分钟1秒
     static time_t	sLastSendRPulseGapTime = nCurrTime;
     if (nCurrTime - sLastSendRPulseGapTime >= MAIN_SEND_ROOM_PULSE_GAP_TIME)
         sLastSendRPulseGapTime = nCurrTime;
