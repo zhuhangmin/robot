@@ -1,18 +1,18 @@
 #include "stdafx.h"
-#include "RobotClient.h"
+#include "Robot.h"
 #include "Main.h"
 #include "RobotReq.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-CRobotClient::CRobotClient(const stRobotUnit& robot) {
-    m_Account = robot.account;
+Robot::Robot(const RobotSetting& robot) {
+    userid_ = robot.account;
     m_Password = robot.password;
 }
-CRobotClient::~CRobotClient() {}
+Robot::~Robot() {}
 
-void CRobotClient::OnDisconnRoom() {
+void Robot::OnDisconnRoom() {
     std::lock_guard<std::mutex> lg(m_mutex);
     m_nRoomId = 0;
     m_ConnRoom->DestroyEx();
@@ -20,12 +20,12 @@ void CRobotClient::OnDisconnRoom() {
     UWL_INF("[STATUS] account:%d userid:%d status [offline] ", GetUserID(), GetUserID());
     m_bRunGame = false; //@zhuhangmin 20181129 用户房间服务器崩溃情况
 }
-void CRobotClient::OnDisconnGame() {
+void Robot::OnDisconnGame() {
     std::lock_guard<std::mutex> lg(m_mutex);
     m_bRunGame = false;
     m_ConnGame->DestroyEx();
 }
-bool CRobotClient::ConnectRoom(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
+bool Robot::ConnectRoom(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
     CAutoLock lock(&m_csConnRoom);
 
     m_ConnRoom->InitKey(KEY_HALL, ENCRYPT_AES, 0);
@@ -39,7 +39,7 @@ bool CRobotClient::ConnectRoom(const std::string& strIP, const int32_t nPort, ui
 
     return true;
 }
-bool CRobotClient::ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
+bool Robot::ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
 
     {
         CAutoLock lock(&m_csConnGame);
@@ -57,11 +57,10 @@ bool CRobotClient::ConnectGame(const std::string& strIP, const int32_t nPort, ui
         ////@zhuhangmin 20181129 立即加上token信息 以免丢包
     }
 
-    //SendCheckVersion();
 
     return true;
 }
-TTueRet CRobotClient::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
+TTueRet Robot::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
     if (!m_ConnRoom) {
         UWL_ERR("m_ConnRoom nil");
         assert(false);
@@ -116,7 +115,7 @@ TTueRet CRobotClient::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void 
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
-TTueRet CRobotClient::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
+TTueRet Robot::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
     if (!m_ConnGame) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
@@ -179,7 +178,7 @@ TTueRet CRobotClient::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void 
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
-TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
+TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
     std::lock_guard<std::mutex> lg(m_mutex);
     if (!m_ConnRoom) {
         UWL_ERR("m_ConnRoom nil");
@@ -282,10 +281,9 @@ TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
         return std::make_tuple(false, ret);
     }
     m_EnterRoomData = *(LPENTER_ROOM_OK) pRetData;
-    m_nGameId = room.nGameID;
     m_nRoomId = room.nRoomID;
     if (room.nRoomID == 0) {
-        UWL_ERR("account = %d, room.nRoomID = 0 ???", m_Account, room.nRoomID);
+        UWL_ERR("account = %d, room.nRoomID = 0 ???", userid_, room.nRoomID);
         //assert(false);
         return std::make_tuple(false, "room id 0");
     }
@@ -306,7 +304,7 @@ TTueRet CRobotClient::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
 
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
-TTueRet	CRobotClient::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
+TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
     std::lock_guard<std::mutex> lg(m_mutex);
     UWL_DBG("[PROFILE] 1 SendEnterGame timestamp = %ld", GetTickCount());
     if (!m_ConnGame) {
@@ -416,7 +414,7 @@ TTueRet	CRobotClient::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std
 }
 
 //@zhuhangmin
-TTueRet CRobotClient::SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, NTF_GET_NEWTABLE& lpNewTableInfo) {
+TTueRet Robot::SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, NTF_GET_NEWTABLE& lpNewTableInfo) {
     std::lock_guard<std::mutex> lg(m_mutex);
     if (!m_ConnRoom) {
         UWL_ERR("m_ConnRoom nil");
@@ -474,7 +472,7 @@ TTueRet CRobotClient::SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, N
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
-TTueRet	CRobotClient::SendRoomPulse() {
+TTueRet	Robot::SendRoomPulse() {
     if (!m_ConnRoom) {
         UWL_ERR("m_ConnRoom nil");
         assert(false);
@@ -496,7 +494,7 @@ TTueRet	CRobotClient::SendRoomPulse() {
     uint32_t nDataLen = sizeof(ROOMUSER_PULSE);
     return SendRoomRequest(GR_ROOMUSER_PULSE, nDataLen, &rp, nResponse, pRetData, false);
 }
-TTueRet	CRobotClient::SendGamePulse() {
+TTueRet	Robot::SendGamePulse() {
     if (!m_ConnGame) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
@@ -520,33 +518,4 @@ TTueRet	CRobotClient::SendGamePulse() {
     LPVOID	 pRetData = NULL;
     uint32_t nDataLen = sizeof(GAME_PULSE);
     return SendRoomRequest(GR_GAME_PULSE, nDataLen, &gp, nResponse, pRetData, false);
-}
-TTueRet	CRobotClient::SendCheckVersion() {
-    if (!m_ConnGame) {
-        UWL_ERR("m_ConnGame is nil");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    }
-
-    if (!m_ConnGame->IsConnected()) {
-        UWL_ERR("m_ConnGame not connected");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    }
-
-    TReqstId nResponse;
-    LPVOID	 pRetData = NULL;
-    uint32_t nDataLen = 0;
-    auto it = SendGameRequest(GR_GET_VERSION, nDataLen, nullptr, nResponse, pRetData, true);
-    if (!TUPLE_ELE(it, 0))
-        return it;
-
-    if (nResponse != UR_OPERATE_SUCCEEDED) {
-        SAFE_DELETE_ARRAY(pRetData);
-        return std::make_tuple(false, std::to_string(nResponse));
-    }
-
-    VERSION ver = *(VERSION*) pRetData;
-    SAFE_DELETE_ARRAY(pRetData);
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }

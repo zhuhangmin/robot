@@ -3,16 +3,14 @@
 
 
 
-class CRobotClient {
+class Robot {
 public:
-    CRobotClient(const stRobotUnit& robot);
-    virtual ~CRobotClient();
+    Robot(const RobotSetting& robot);
+    virtual ~Robot();
 
 public:
-    CCritSec*	Critical() { return &m_csClit; }
-    int32_t		GetUserID() { return m_Account; }
+    int32_t		GetUserID() { return userid_; }
     std::string	Password() { return m_Password; }
-    int32_t		GameId() { return m_nGameId; }
     int32_t		GetRoomID() { return m_nRoomId; }
     bool		IsGaming() { return m_bRunGame; }
     void		SetGaming(bool isGame) { m_bRunGame = isGame; }
@@ -50,8 +48,6 @@ public:
     TTueRet		SendRoomPulse();
     TTueRet		SendGamePulse();
 
-    TTueRet		SendCheckVersion();
-
     int GetPlayerRoomStatus() {
         std::lock_guard<std::mutex> lg(m_mutex);
         return m_playerRoomStatus;
@@ -64,9 +60,8 @@ public:
     }
 protected:
     CCritSec        m_csClit;
-    int32_t			m_Account{};
+    int32_t			userid_{0};
     std::string		m_Password;
-    int32_t			m_nGameId{};
     int32_t			m_nRoomId{};
     bool			m_bRunGame{false};
     LOGON_SUCCEED_V2   m_LogonData{};
@@ -92,7 +87,6 @@ public:
     int32_t			m_nBackAmount{};
 
     // ÑÓ³ÙEnter
-    time_t			m_nNeedEnterG{0};
     int32_t			m_nToTable{0};
     int32_t			m_nToChair{0};
     std::string		m_sEnterWay;

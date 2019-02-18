@@ -78,7 +78,7 @@ enum EConnType :uint32_t {
 };
 
 //配置类 只读
-class stRobotUnit {
+class RobotSetting {
 public:
     int32_t		account;
     std::string	password;
@@ -93,14 +93,14 @@ enum EACtrlMode :uint32_t {
     EACM_Max
 };
 
-struct stActiveCtrl {
+struct RoomSetiing {
     int32_t nRoomId;
     int32_t nCtrlMode;
     int32_t nCtrlVal;
     //int32_t nCurrNum; // 当前人数
 };
 
-struct stRoomData {
+struct HallRoomData {
     ROOM	 room;
     uint32_t nLastGetTime;
 };
