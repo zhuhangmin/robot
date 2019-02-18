@@ -1,14 +1,13 @@
 {
-"GameID" : 1003,   
-
-"RoomIds":[
-     {"RoomId":7846,"CtrlMode":0,"Value":1},
-    {"RoomId":7948,"CtrlMode":0,"Value":1},
-    {"RoomId":7965,"CtrlMode":0,"Value":1},
-    {"RoomId":7969,"CtrlMode":0,"Value":1}
-],
-        
-
+    "GameId":1003,
+    
+    "RoomIds":[
+        {"RoomId":7846,"CtrlMode":0,"Value":1},
+        {"RoomId":7948,"CtrlMode":0,"Value":1},
+        {"RoomId":7965,"CtrlMode":0,"Value":1},
+        {"RoomId":7969,"CtrlMode":0,"Value":3}
+    ],
+    
     "robots":[
 {"Account":689272,"Password":"5802278","NickName":"RoLu_111","Portrait":"https://avatar.comfun.com/portrait/d07e0a40-1866-44ae-b6b4-263207e82d29.jpg"},
 {"Account":689273,"Password":"1368833","NickName":"RoLu_112","Portrait":"https://avatar.comfun.com/portrait/d07e0a40-1866-44ae-b6b4-263207e82d29.jpg"},

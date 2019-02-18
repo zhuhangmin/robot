@@ -2,6 +2,7 @@
 #include "Robot.h"
 #include "Main.h"
 #include "RobotReq.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -14,7 +15,7 @@ Robot::~Robot() {}
 
 void Robot::OnDisconnRoom() {
     std::lock_guard<std::mutex> lock(mutex_);
-    m_nRoomId = 0;
+    roomid_ = 0;
     connection_room_->DestroyEx();
     m_playerRoomStatus = PLAYER_STATUS_OFFLINE; // 退出房间后 恢复默认状态
     UWL_INF("[STATUS] account:%d userid:%d status [offline] ", GetUserID(), GetUserID());
@@ -265,7 +266,7 @@ TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
         return std::make_tuple(false, ret);
     }
     m_EnterRoomData = *(LPENTER_ROOM_OK) pRetData.get();
-    m_nRoomId = room.nRoomID;
+    roomid_ = room.nRoomID;
     if (room.nRoomID == 0) {
         UWL_ERR("account = %d, room.nRoomID = 0 ???", userid_, room.nRoomID);
         //assert(false);
@@ -361,6 +362,21 @@ TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::strin
     //LPVOID	 pRetData = NULL;
     std::shared_ptr<void> pRetData;
     //uint32_t nDataLen = 0;
+
+    //@zhuhangmin 20190218 pb
+    TCHAR hard_id[MAX_HARDID_LEN_EX];			// 硬件标识
+    xyGetHardID(hard_id);
+    game::base::EnterNormalGameReq enter_req;
+    enter_req.set_userid(userid_);
+    enter_req.set_roomid(roomid_);
+    enter_req.set_flag(0);//TODO
+    enter_req.set_hardid(hard_id);
+    bool is_succ = enter_req.SerializePartialToArray(pSendData.get(), nDataLen);
+    if (false == is_succ) {
+        UWL_ERR("SerializePartialToArray faild.");
+        //return kCommFaild;
+    }
+    //@zhuhangmin 20190218 pb
 
 
     UWL_DBG("[PROFILE] 5 SendEnterGame timestamp = %ld", GetTickCount());

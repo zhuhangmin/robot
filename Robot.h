@@ -11,7 +11,7 @@ public:
 public:
     int32_t		GetUserID() { return userid_; }
     std::string	Password() { return m_Password; }
-    int32_t		GetRoomID() { return m_nRoomId; }
+    int32_t		GetRoomID() { return roomid_; }
     bool		IsGaming() { return m_bRunGame; }
     void		SetGaming(bool isGame) { m_bRunGame = isGame; }
     TokenID	RoomToken() { return connection_room_->GetTokenID(); }
@@ -23,8 +23,8 @@ public:
 
     void        SetLogon(bool status) { logon_ = status; }
 
-    bool IsInRoom() { return m_nRoomId != 0; }
-    void SetRoomID(RoomID roomid) { m_nRoomId = roomid; }
+    bool IsInRoom() { return roomid_ != 0; }
+    void SetRoomID(RoomID roomid) { roomid_ = roomid; }
 
 
     void		OnDisconnRoom();
@@ -60,7 +60,7 @@ private:
 protected:
     int32_t			userid_{0};
     std::string		m_Password;
-    int32_t			m_nRoomId{};
+    int32_t			roomid_{};
     bool			m_bRunGame{false};
     LOGON_SUCCEED_V2   m_LogonData{};
     ENTER_ROOM_OK   m_EnterRoomData{};

@@ -93,8 +93,8 @@
     <IntDir>.\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)D</TargetName>
-    <IncludePath>$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)librabbitmq\Debug;$(VS_CTLibPath_Sea)librabbit;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\SEA\NEW_GAME\pb;$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)xyGamePb;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)librabbitmq\Debug;$(VS_CTLibPath_Sea)librabbit;F:\SEA\SEA_VC12\protobuf3.5.0;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseS|Win32'">
     <ClCompile>
@@ -281,7 +281,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>tcns-vc12d.lib;uwl-vc12d.lib;uwlnt-vc12d.lib;uwltrace-vc12d.lib;xyapi-vc12d.lib;TcyCommon-vc12d.lib;jsoncpp-vc12d.lib;librabbitmqd.4.lib;libRabbit-vc12d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tcns-vc12d.lib;uwl-vc12d.lib;uwlnt-vc12d.lib;uwltrace-vc12d.lib;xyapi-vc12d.lib;TcyCommon-vc12d.lib;jsoncpp-vc12d.lib;librabbitmqd.4.lib;libRabbit-vc12d.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
@@ -294,6 +294,8 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\SEA\NEW_GAME\pb\game_base.pb.cc" />
+    <ClCompile Include="..\SEA\NEW_GAME\pb\hall_base.pb.cc" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Robot.cpp" />
     <ClCompile Include="RobotMgr.cpp" />
@@ -302,6 +304,8 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\SEA\NEW_GAME\pb\game_base.pb.h" />
+    <ClInclude Include="..\SEA\NEW_GAME\pb\hall_base.pb.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Robot.h" />
