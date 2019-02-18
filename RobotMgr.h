@@ -98,26 +98,24 @@ protected:
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 
-    CCritSec        m_csConnHall;
-    CDefSocketClientPtr m_ConnHall{std::make_shared<CDefSocketClient>()};
-
     UThread			m_thrdHallNotify;
     UThread			m_thrdRoomNotify;
     UThread			m_thrdGameNotify;
 
-    CCritSec        m_csWaitEnters;
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
 
+
     //immutable数据类 配置（热更新,允许脏读),初始化后,不改变状态,不用加锁
-    CCritSec        m_csRobot;
     AccountSettingMap	account_setting_map_; // 机器人账号配置  robot.setting
     RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
     RoomDataMap	m_mapRoomData; // 大厅房间配置 大厅服务器获得 
 
     //mutable数据类 需加锁
-    CCritSec        m_csRoomData;
-    CCritSec        m_csTknRobot;
+    std::mutex        robot_map_mutex_;
     RobotMap robot_map_; //管理所有robot动态信息
+
+    std::mutex hall_connection_mutex_;
+    CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};//大厅连接
     RoomCurUsersMap room_cur_users_; //管理房间中当前玩家数(包括机器人和真人)
 
 

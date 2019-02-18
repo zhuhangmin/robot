@@ -13,25 +13,25 @@ Robot::Robot(const RobotSetting& robot) {
 Robot::~Robot() {}
 
 void Robot::OnDisconnRoom() {
-    std::lock_guard<std::mutex> lg(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_nRoomId = 0;
-    m_ConnRoom->DestroyEx();
+    connection_room_->DestroyEx();
     m_playerRoomStatus = PLAYER_STATUS_OFFLINE; // 退出房间后 恢复默认状态
     UWL_INF("[STATUS] account:%d userid:%d status [offline] ", GetUserID(), GetUserID());
     m_bRunGame = false; //@zhuhangmin 20181129 用户房间服务器崩溃情况
 }
 void Robot::OnDisconnGame() {
-    std::lock_guard<std::mutex> lg(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_bRunGame = false;
-    m_ConnGame->DestroyEx();
+    connection_game_->DestroyEx();
 }
 bool Robot::ConnectRoom(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
-    CAutoLock lock(&m_csConnRoom);
+    std::lock_guard<std::mutex> lock(m_mutex);
 
-    m_ConnRoom->InitKey(KEY_HALL, ENCRYPT_AES, 0);
+    connection_room_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
     std::string sIp = (g_useLocal) ? "127.0.0.1" : strIP;
     //由于目前网络库不支持IPV6，所以添加配置项，可以选定本地地址
-    if (!m_ConnRoom->Create(sIp.c_str(), nPort, 5, 0, nThrdId, 0, GetHelloData(), GetHelloLength())) {
+    if (!connection_room_->Create(sIp.c_str(), nPort, 5, 0, nThrdId, 0, GetHelloData(), GetHelloLength())) {
         UWL_ERR("ConnectRoom Faild! IP:%s Port:%d", sIp.c_str(), nPort);
         //assert(false);
         return false;
@@ -42,12 +42,11 @@ bool Robot::ConnectRoom(const std::string& strIP, const int32_t nPort, uint32_t 
 bool Robot::ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
 
     {
-        CAutoLock lock(&m_csConnGame);
-
-        m_ConnGame->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        connection_game_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
         //由于目前网络库不支持IPV6，所以添加配置项，可以选定本地地址
         std::string sIp = (g_useLocal) ? "127.0.0.1" : strIP;
-        if (!m_ConnGame->Create(sIp.c_str(), nPort, 5, 0, nThrdId, 0, GetHelloData(), GetHelloLength())) {
+        if (!connection_game_->Create(sIp.c_str(), nPort, 5, 0, nThrdId, 0, GetHelloData(), GetHelloLength())) {
             UWL_ERR("ConnectGame Faild! IP:%s Port:%d", sIp.c_str(), nPort);
             //assert(false);
             return false;
@@ -61,14 +60,14 @@ bool Robot::ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t 
     return true;
 }
 TTueRet Robot::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
-    if (!m_ConnRoom) {
+    if (!connection_room_) {
         UWL_ERR("m_ConnRoom nil");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
     }
 
 
-    if (!m_ConnRoom->IsConnected()) {
+    if (!connection_room_->IsConnected()) {
         UWL_ERR("m_ConnRoom not connected");
         //assert(false);
         return std::make_tuple(false, ERR_CONNECT_DISABLE);
@@ -78,7 +77,7 @@ TTueRet Robot::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData,
     CONTEXT_HEAD	Context = {};
     REQUEST			Request = {};
     REQUEST			Response = {};
-    Context.hSocket = m_ConnRoom->GetSocket();
+    Context.hSocket = connection_room_->GetSocket();
     Context.lSession = 0;
     Context.bNeedEcho = bNeedEcho;
     Request.head.nRepeated = 0;
@@ -88,8 +87,8 @@ TTueRet Robot::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData,
 
     BOOL bTimeOut = FALSE, bResult = TRUE;
     {
-        CAutoLock lock(&m_csConnRoom);
-        bResult = m_ConnRoom->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        bResult = connection_room_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
     }
 
     if (!bResult)///if timeout or disconnect 
@@ -117,14 +116,14 @@ TTueRet Robot::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData,
 }
 
 TTueRet Robot::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
-    if (!m_ConnGame) {
+    if (!connection_game_) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
     }
 
 
-    if (!m_ConnGame->IsConnected()) {
+    if (!connection_game_->IsConnected()) {
         UWL_ERR("m_ConnGame not connected");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_DISABLE);
@@ -134,7 +133,7 @@ TTueRet Robot::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData,
     CONTEXT_HEAD	Context = {};
     REQUEST			Request = {};
     REQUEST			Response = {};
-    Context.hSocket = m_ConnGame->GetSocket();
+    Context.hSocket = connection_game_->GetSocket();
     Context.lSession = 0;
     Context.bNeedEcho = bNeedEcho;
     Request.head.nRepeated = 0;
@@ -144,8 +143,8 @@ TTueRet Robot::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData,
 
     BOOL bTimeOut = FALSE, bResult = TRUE;
     {
-        CAutoLock lock(&m_csConnGame);
-        bResult = m_ConnGame->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
+        std::lock_guard<std::mutex> lock(m_mutex);
+        bResult = connection_game_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
     }
 
     if (!bResult)///if timeout or disconnect 
@@ -178,14 +177,14 @@ TTueRet Robot::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData,
 }
 
 TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
-    std::lock_guard<std::mutex> lg(m_mutex);
-    if (!m_ConnRoom) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!connection_room_) {
         UWL_ERR("m_ConnRoom nil");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
     }
 
-    if (!m_ConnRoom->IsConnected()) {
+    if (!connection_room_->IsConnected()) {
 
         if (!ConnectRoom(room.szGameIP, room.nPort == 0 ? 30629 : room.nPort, nNofifyThrId)) {
             UWL_ERR("ConnectRoom connect fail");
@@ -214,15 +213,15 @@ TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
     ::ReleaseDC(NULL, hDC);
 
     int nClientPort = 0;
-    UwlGetSockPort(m_ConnRoom->GetSocket(), nClientPort);
+    UwlGetSockPort(connection_room_->GetSocket(), nClientPort);
     er.dwClientPort = MAKELONG(nClientPort, 0);
 
     int nServerPort = 0;
-    UwlGetPeerPort(m_ConnRoom->GetSocket(), nServerPort);
+    UwlGetPeerPort(connection_room_->GetSocket(), nServerPort);
     er.dwServerPort = MAKELONG(nServerPort, 0);
 
-    UwlGetSockAddr(m_ConnRoom->GetSocket(), er.stClientSockIP);
-    UwlGetPeerAddr(m_ConnRoom->GetSocket(), er.stRemoteSockIP);
+    UwlGetSockAddr(connection_room_->GetSocket(), er.stClientSockIP);
+    UwlGetPeerAddr(connection_room_->GetSocket(), er.stRemoteSockIP);
 
     er.stClientLANIP = er.stClientSockIP;
 
@@ -303,16 +302,16 @@ TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
-    std::lock_guard<std::mutex> lg(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     UWL_DBG("[PROFILE] 1 SendEnterGame timestamp = %ld", GetTickCount());
-    if (!m_ConnGame) {
+    if (!connection_game_) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
     }
     UWL_DBG("[PROFILE] 2 SendEnterGame timestamp = %ld", GetTickCount());
 
-    if (!m_ConnGame->IsConnected()) {
+    if (!connection_game_->IsConnected()) {
         UWL_DBG("[PROFILE] 3 SendEnterGame timestamp = %ld", GetTickCount());
         if (!ConnectGame(room.szGameIP, room.nGamePort, nNofifyThrId)) {
             UWL_ERR("m_ConnGame not connect fail ip = %s, port = %d", room.szGameIP, room.nGamePort);
@@ -408,14 +407,14 @@ TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::strin
 
 //@zhuhangmin
 TTueRet Robot::SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, NTF_GET_NEWTABLE& lpNewTableInfo) {
-    std::lock_guard<std::mutex> lg(m_mutex);
-    if (!m_ConnRoom) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!connection_room_) {
         UWL_ERR("m_ConnRoom nil");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
     }
 
-    if (!m_ConnRoom->IsConnected()) {
+    if (!connection_room_->IsConnected()) {
         UWL_ERR("room not connected");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_DISABLE);
@@ -466,7 +465,7 @@ TTueRet Robot::SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, NTF_GET_
 }
 
 TTueRet	Robot::SendRoomPulse() {
-    if (!m_ConnRoom) {
+    if (!connection_room_) {
         UWL_ERR("m_ConnRoom nil");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
@@ -488,7 +487,7 @@ TTueRet	Robot::SendRoomPulse() {
         return SendRoomRequest(GR_ROOMUSER_PULSE, nDataLen, &rp, nResponse, pRetData, false);*/
 }
 TTueRet	Robot::SendGamePulse() {
-    if (!m_ConnGame) {
+    if (!connection_game_) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);

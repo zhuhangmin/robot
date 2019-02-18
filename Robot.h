@@ -14,8 +14,8 @@ public:
     int32_t		GetRoomID() { return m_nRoomId; }
     bool		IsGaming() { return m_bRunGame; }
     void		SetGaming(bool isGame) { m_bRunGame = isGame; }
-    TokenID	RoomToken() { return m_ConnRoom->GetTokenID(); }
-    TokenID	GameToken() { return m_ConnGame->GetTokenID(); }
+    TokenID	RoomToken() { return connection_room_->GetTokenID(); }
+    TokenID	GameToken() { return connection_game_->GetTokenID(); }
 
     void		SetLogonData(LPLOGON_SUCCEED_V2 logonOk) { m_LogonData = *logonOk; }
 
@@ -59,7 +59,6 @@ public:
         UWL_INF("SetPlayerRoomStatus = %d", status);
     }
 protected:
-    CCritSec        m_csClit;
     int32_t			userid_{0};
     std::string		m_Password;
     int32_t			m_nRoomId{};
@@ -68,11 +67,9 @@ protected:
     ENTER_ROOM_OK   m_EnterRoomData{};
     PLAYER			m_PlayerData{};
 
-    CCritSec        m_csConnRoom;
-    CDefSocketClientPtr m_ConnRoom{std::make_shared<CDefSocketClient>()};
+    CDefSocketClientPtr connection_room_{std::make_shared<CDefSocketClient>()};
 
-    CCritSec        m_csConnGame;
-    CDefSocketClientPtr m_ConnGame{std::make_shared<CDefSocketClient>()};
+    CDefSocketClientPtr connection_game_{std::make_shared<CDefSocketClient>()};
 
 public:
     // 游戏的银子

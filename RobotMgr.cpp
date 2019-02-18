@@ -119,10 +119,10 @@ bool	CRobotMgr::InitConnectHall(bool bReconn) {
     auto nHallSvrPort = GetPrivateProfileInt(_T("HallServer"), _T("Port"), 0, g_szIniFile);
 
     {
-        CAutoLock lock(&m_csConnHall);
-        m_ConnHall->InitKey(KEY_HALL, ENCRYPT_AES, 0);
+        std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+        hall_connection_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
 
-        if (!m_ConnHall->Create(szHallSvrIP, nHallSvrPort, 5, 0, m_thrdHallNotify.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
+        if (!hall_connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, m_thrdHallNotify.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
             UWL_ERR("[ROUTE] ConnectHall Faild! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
             assert(false);
             return false;
@@ -143,13 +143,13 @@ bool	CRobotMgr::InitGameRoomDatas() {
 }
 
 TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
-    if (!m_ConnHall) {
+    if (!hall_connection_) {
         UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", nReqId);
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
     }
 
-    if (!m_ConnHall->IsConnected()) {
+    if (!hall_connection_->IsConnected()) {
         UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", nReqId);
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_DISABLE);
@@ -158,7 +158,7 @@ TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pD
     CONTEXT_HEAD	Context = {};
     REQUEST			Request = {};
     REQUEST			Response = {};
-    Context.hSocket = m_ConnHall->GetSocket();
+    Context.hSocket = hall_connection_->GetSocket();
     Context.lSession = 0;
     Context.bNeedEcho = bNeedEcho;
     Request.head.nRepeated = 0;
@@ -168,8 +168,8 @@ TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pD
 
     BOOL bTimeOut = FALSE, bResult = TRUE;
     {
-        CAutoLock lock(&m_csConnHall);
-        bResult = m_ConnHall->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
+        std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+        bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
     }
 
     if (!bResult)///if timeout or disconnect 
@@ -195,8 +195,6 @@ TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pD
 }
 
 bool CRobotMgr::GetRobotSetting(int account, RobotSetting& unit) {
-    CAutoLock lock(&m_csRobot);
-
     if (account == 0)	return false;
 
     auto it = account_setting_map_.find(account);
@@ -207,7 +205,6 @@ bool CRobotMgr::GetRobotSetting(int account, RobotSetting& unit) {
     return true;
 }
 bool	CRobotMgr::GetRoomData(int32_t nRoomId, OUT ROOM& room) {
-    CAutoLock lock(&m_csRoomData);
     auto && it = m_mapRoomData.find(nRoomId);
     if (it == m_mapRoomData.end()) {
         UWL_ERR("can not find roomid = %d room data", nRoomId);
@@ -219,22 +216,19 @@ bool	CRobotMgr::GetRoomData(int32_t nRoomId, OUT ROOM& room) {
     return true;
 }
 uint32_t CRobotMgr::GetRoomDataLastTime(int32_t nRoomId) {
-    CAutoLock lock(&m_csRoomData);
     auto && it = m_mapRoomData.find(nRoomId);
     if (it == m_mapRoomData.end())
         return 0;
     return it->second.nLastGetTime;
 }
 void	CRobotMgr::SetRoomData(int32_t nRoomId, const LPROOM& pRoom) {
-    CAutoLock lock(&m_csRoomData);
     m_mapRoomData[nRoomId] = HallRoomData{*pRoom, time(nullptr)};
 }
 
 
 
 RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
-    CAutoLock lock(&m_csTknRobot);
-
+    std::lock_guard<std::mutex> lock(robot_map_mutex_);
     auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& it) {
         switch (type) {
             case ECT_ROOM:
@@ -253,14 +247,14 @@ RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
 
 //try to enter room amount of robots
 int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t nMaxCount) {
-    if (!m_ConnHall) {
+    if (!hall_connection_) {
         UWL_ERR("ApplyRobotForRoom m_ConnHall is nil nGameId = %d, nRoomId = %d, nMaxCount = %d", nGameId, nRoomId, nMaxCount);
         assert(false);
         return 0;
     }
 
 
-    if (!m_ConnHall->IsConnected()) {
+    if (!hall_connection_->IsConnected()) {
         UWL_ERR("ApplyRobotForRoom m_ConnHall not connected nGameId = %d, nRoomId = %d, nMaxCount = %d", nGameId, nRoomId, nMaxCount);
         assert(false);
         return 0;
@@ -293,7 +287,7 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
     // 3 from UIdRobot to enter
     n = 0;
     {
-        CAutoLock lock(&m_csRobot);
+        std::lock_guard<std::mutex> lock(robot_map_mutex_);
         std::unordered_map<UserID, RobotPtr> filterRobotMap;
         //filter user 
         for (auto&& it = robot_map_.begin(); it != robot_map_.end() && n < nMaxCount; it++) {
@@ -399,13 +393,13 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
 
 //try to enter room amount of sepcific accounts robot
 int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec accounts) {
-    if (!m_ConnHall) {
+    if (!hall_connection_) {
         UWL_ERR("ApplyRobotForRoom2 m_ConnHall is nil nGameId = %d, nRoomId = %d", nGameId, nRoomId);
         assert(false);
         return 0;
     }
 
-    if (!m_ConnHall->IsConnected()) {
+    if (!hall_connection_->IsConnected()) {
         UWL_ERR("ApplyRobotForRoom2 m_ConnHall not connected nGameId = %d, nRoomId = %d", nGameId, nRoomId);
         assert(false);
         return 0;
@@ -434,7 +428,7 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec
     }
     // 3 from AntRobot to enter
     {
-        CAutoLock lock(&m_csRobot);
+        std::lock_guard<std::mutex> lock(robot_map_mutex_);
         for (auto&& it = accounts.begin(); it != accounts.end(); it++) {
             auto&& it_ = robot_map_.find(*it); // 已经登陆大厅的机器人
             if (it_ == robot_map_.end()) continue;
@@ -719,7 +713,7 @@ void CRobotMgr::OnGameNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, i
     }
 }
 void	CRobotMgr::OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr) {
-    CAutoLock lock(&m_csRobot);
+    std::lock_guard<std::mutex> lock(robot_map_mutex_);
     ITEM_COUNT* pItemCount = (ITEM_COUNT*) pDataPtr;
     ITEM_USERS* pItemUsers = (ITEM_USERS*) ((PBYTE) pDataPtr + sizeof(ITEM_COUNT));
     for (int32_t i = 0; i < pItemCount->nCount; i++, pItemUsers++) {
@@ -738,9 +732,9 @@ void CRobotMgr::OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nCha
 void CRobotMgr::OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     UWL_ERR(_T("与大厅服务断开连接"));
     assert(false);
-    m_ConnHall->DestroyEx();
+    hall_connection_->DestroyEx();
     {
-        CAutoLock lock(&m_csRobot);
+        std::lock_guard<std::mutex> lock(robot_map_mutex_);
 
         for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
             it->second->SetLogon(false);
@@ -748,20 +742,19 @@ void CRobotMgr::OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize)
     }
 }
 void CRobotMgr::OnCliDisconnRoom(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
-    CAutoLock lock(&m_csRobot);
+    std::lock_guard<std::mutex> lock(robot_map_mutex_);
     UWL_WRN("userid = %d disconnect room %d", client->GetUserID(), client->GetRoomID());
     SetRoomID(client->GetUserID(), 0);
     client->OnDisconnRoom();
 
 }
 void CRobotMgr::OnCliDisconnGame(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
-    CAutoLock lock(&m_csRobot);
+    std::lock_guard<std::mutex> lock(robot_map_mutex_);
     UWL_WRN("userid = %d disconnect game ", client->GetUserID());
     client->OnDisconnGame();
 }
 
 TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
-    CAutoLock lock(&m_csRobot);
 
     AccountSettingMap::iterator itRobot = account_setting_map_.end();
 
@@ -1012,14 +1005,14 @@ void    CRobotMgr::OnServerMainTimer(time_t nCurrTime) {
     OnTimerUpdateDeposit(nCurrTime);
 }
 bool	CRobotMgr::OnTimerReconnectHall(time_t nCurrTime) {
-    if (!m_ConnHall) {
+    if (!hall_connection_) {
         UWL_ERR("SendHallRequest OnTimerReconnectHall nil ERR_CONNECT_NOT_EXIST");
         assert(false);
         return false;
     }
 
 
-    if (m_ConnHall->IsConnected()) return true;
+    if (hall_connection_->IsConnected()) return true;
 
     //@zhuhangmin 10s重连代码，200+机器人 100s 重连 2000多次, 回导致短时间大厅登陆压力过大
 #define MAIN_RECONNECT_HALL_GAP_TIME (60) // 60s
@@ -1037,7 +1030,6 @@ bool	CRobotMgr::OnTimerReconnectHall(time_t nCurrTime) {
     int32_t nCount = 0;
     std::vector<int32_t> vecAccounts;
     {
-        CAutoLock lock(&m_csRobot);
         for (auto&& it = account_setting_map_.begin(); it != account_setting_map_.end(); it++) {
             if (!IsLogon(it->first)) continue;
 
@@ -1057,14 +1049,14 @@ bool	CRobotMgr::OnTimerReconnectHall(time_t nCurrTime) {
     return true;
 }
 void    CRobotMgr::OnTimerSendHallPluse(time_t nCurrTime) {
-    if (!m_ConnHall) {
+    if (!hall_connection_) {
         UWL_ERR("SendHallRequest OnTimerSendHallPluse nil ERR_CONNECT_NOT_EXIST nReqId");
         assert(false);
         return;
     }
 
 
-    if (!m_ConnHall->IsConnected()) {
+    if (!hall_connection_->IsConnected()) {
         UWL_ERR("SendHallRequest OnTimerSendHallPluse not connect ERR_CONNECT_DISABLE nReqId");
         assert(false);
         return;
@@ -1095,7 +1087,7 @@ void    CRobotMgr::OnTimerSendRoomPluse(time_t nCurrTime) {
         sLastSendRPulseGapTime = nCurrTime;
     else return;
     {
-        CAutoLock lock(&m_csRobot);
+        std::lock_guard<std::mutex> lock(robot_map_mutex_);
         for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
             if (it->second->GetRoomID() == 0)	continue;
 
@@ -1110,7 +1102,7 @@ void    CRobotMgr::OnTimerSendGamePluse(time_t nCurrTime) {
         sLastSendGPulseGapTime = nCurrTime;
     else return;
     {
-        CAutoLock lock(&m_csRobot);
+        std::lock_guard<std::mutex> lock(robot_map_mutex_);
         for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
             if (!it->second->IsGaming())	continue;
 
@@ -1119,13 +1111,13 @@ void    CRobotMgr::OnTimerSendGamePluse(time_t nCurrTime) {
     }
 }
 void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
-    if (!m_ConnHall) {
+    if (!hall_connection_) {
         UWL_ERR("SendHallRequest OnTimerCtrlRoomActiv nil ERR_CONNECT_NOT_EXIST");
         assert(false);
         return;
     }
 
-    if (!m_ConnHall->IsConnected()) {
+    if (!hall_connection_->IsConnected()) {
         UWL_ERR("SendHallRequest OnTimerCtrlRoomActiv not connect ERR_CONNECT_DISABLE nReqId");
         assert(false);
         return;
@@ -1146,7 +1138,6 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
     std::unordered_map<int32_t, int32_t> roomNeedApply;
 
     {
-        CAutoLock lock(&m_csRobot);
         for (auto&& it_2 = room_setting_map_.begin(); it_2 != room_setting_map_.end(); it_2++) {
             if (it_2->second.nCtrlMode == EACM_Hold) {
                 gr.nRoomID[gr.nRoomCount] = it_2->second.nRoomId;
@@ -1217,14 +1208,14 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
     }
 }
 void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
-    if (!m_ConnHall) {
+    if (!hall_connection_) {
         UWL_ERR("SendHallRequest OnTimerCtrlRoomActiv nil ERR_CONNECT_NOT_EXIST nReqId");
         assert(false);
         return;
     }
 
 
-    if (!m_ConnHall->IsConnected()) {
+    if (!hall_connection_->IsConnected()) {
         UWL_ERR("SendHallRequest OnTimerUpdateDeposit not connect ERR_CONNECT_DISABLE");
         assert(false);
         return;
@@ -1239,7 +1230,7 @@ void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
 
     int nCount = 0;
     {
-        CAutoLock lock(&m_csRobot);
+        std::lock_guard<std::mutex> lock(robot_map_mutex_);
         for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
             if (!it->second->IsLogon())	continue;
 
