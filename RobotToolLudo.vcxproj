@@ -295,7 +295,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="RobotClient.cpp" />
+    <ClCompile Include="Robot.cpp" />
     <ClCompile Include="RobotMgr.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="Service.cpp" />
@@ -304,7 +304,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   <ItemGroup>
     <ClInclude Include="Main.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="RobotClient.h" />
+    <ClInclude Include="Robot.h" />
     <ClInclude Include="RobotDef.h" />
     <ClInclude Include="RobotMgr.h" />
     <ClInclude Include="RobotReq.h" />

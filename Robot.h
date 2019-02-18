@@ -97,3 +97,5 @@ public:
     bool		logon_{false}; // ÊÇ·ñµÇÈë´óÌü
 
 };
+
+using RobotPtr = std::shared_ptr<Robot>;

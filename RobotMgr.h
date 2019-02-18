@@ -9,7 +9,7 @@ public:
     using AccountSettingMap = std::unordered_map<AccountID, RobotSetting>;
     using RoomDataMap = std::unordered_map<RoomID, HallRoomData>;
 
-    using RobotMap = std::unordered_map<UserID, Robot*>;
+    using RobotMap = std::unordered_map<UserID, RobotPtr>;
     using RoomCurUsersMap = std::unordered_map<RoomID, CurUserCount>;
 
 public:
@@ -28,7 +28,7 @@ public:
 
     // 机器人数据管理
     uint32_t	  GetAccountSettingSize() { return account_setting_map_.size(); }
-    Robot* GetRobotByToken(const EConnType& type, const TokenID& id);
+    RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
 
 
     // 主定时器
@@ -60,15 +60,15 @@ protected:
 
     // 通知消息处理回调
     void OnHallNotify(TReqstId nReqId, void* pDataPtr, int32_t nSize);
-    void	OnRoomNotify(Robot* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
-    void	OnGameNotify(Robot* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
+    void OnRoomNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
+    void OnGameNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
 
     void	OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr);
-    void	OnRoomRobotEnter(Robot* client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay);
+    void OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay);
 
     void OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize);
-    void    OnCliDisconnRoom(Robot* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
-    void    OnCliDisconnGame(Robot* client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
+    void OnCliDisconnRoom(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
+    void OnCliDisconnGame(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
 
     // 定时器回调方法
     bool	OnTimerReconnectHall(time_t nCurrTime);
@@ -81,14 +81,14 @@ protected:
     // 网络辅助请求
     TTueRet	RobotLogonHall(const int32_t& account = 0);
     TTueRet SendGetRoomData(const int32_t nRoomId);
-    TTueRet	RobotGainDeposit(Robot* client);
-    TTueRet	RobotBackDeposit(Robot* client);
+    TTueRet RobotGainDeposit(RobotPtr client);
+    TTueRet RobotBackDeposit(RobotPtr client);
 
     //@zhuhangmin
     bool IsLogon(UserID userid);
     void SetLogon(UserID userid, bool status);
-    Robot* GetRobotClient(UserID userid);
-    void SetRobotClient(Robot* client);
+    RobotPtr GetRobotClient(UserID userid);
+    void SetRobotClient(RobotPtr client);
 
     bool IsInRoom(UserID userid);
     void SetRoomID(UserID userid, RoomID roomid);

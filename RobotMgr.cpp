@@ -233,10 +233,10 @@ void	CRobotMgr::SetRoomData(int32_t nRoomId, const LPROOM& pRoom) {
 
 
 
-Robot* CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
+RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
     CAutoLock lock(&m_csTknRobot);
 
-    auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, Robot*>& it) {
+    auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& it) {
         switch (type) {
             case ECT_ROOM:
                 return it.second->RoomToken() == id;
@@ -295,7 +295,7 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
     n = 0;
     {
         CAutoLock lock(&m_csRobot);
-        std::unordered_map<UserID, Robot*> filterRobotMap;
+        std::unordered_map<UserID, RobotPtr> filterRobotMap;
         //filter user 
         for (auto&& it = robot_map_.begin(); it != robot_map_.end() && n < nMaxCount; it++) {
             if (!it->second->IsLogon()) {
@@ -613,7 +613,7 @@ void CRobotMgr::OnHallNotify(TReqstId nReqId, void* pDataPtr, int32_t nSize) {
             return;
     }
 }
-void	CRobotMgr::OnRoomNotify(Robot* client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnRoomNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     if (nReqId == GR_PLAYER_ENTERED ||
         nReqId == GR_PLAYER_ENTERED ||
         nReqId == GR_PLAYER_SEATED ||
@@ -690,7 +690,7 @@ void	CRobotMgr::OnRoomNotify(Robot* client, TReqstId nReqId, void* pDataPtr, int
         OnRoomRobotEnter(client, nTableNo, nChairNo, sEnterWay);
     }
 }
-void	CRobotMgr::OnGameNotify(Robot* client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnGameNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     if (nReqId == 229500 ||
         (nReqId >= 402000 && nReqId <= 4030000) ||
         nReqId == 211080 ||
@@ -730,7 +730,7 @@ void	CRobotMgr::OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr) {
         }
     }
 }
-void	CRobotMgr::OnRoomRobotEnter(Robot* client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay) {
+void CRobotMgr::OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay) {
     client->m_nToTable = nTableNo;
     client->m_nToChair = nChairNo;
     client->m_sEnterWay = sEnterWay;
@@ -748,14 +748,14 @@ void CRobotMgr::OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize)
         }
     }
 }
-void    CRobotMgr::OnCliDisconnRoom(Robot* client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnCliDisconnRoom(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     CAutoLock lock(&m_csRobot);
     UWL_WRN("userid = %d disconnect room %d", client->GetUserID(), client->GetRoomID());
     SetRoomID(client->GetUserID(), 0);
     client->OnDisconnRoom();
 
 }
-void    CRobotMgr::OnCliDisconnGame(Robot* client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnCliDisconnGame(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
     CAutoLock lock(&m_csRobot);
     UWL_WRN("userid = %d disconnect game ", client->GetUserID());
     client->OnDisconnGame();
@@ -805,7 +805,7 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
     //账号对应client是否已经生成, 是否已经登入大厅
     auto client = GetRobotClient(itRobot->first);
     if (!client)
-        client = new Robot(itRobot->second);
+        client = std::make_shared<Robot>(itRobot->second);
 
     if (client->IsLogon())
         return std::make_tuple(false, "已经登录");
@@ -830,14 +830,12 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
     auto it = SendHallRequest(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData);
     if (!TUPLE_ELE(it, 0)) {
         UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", client->GetUserID());
-        SAFE_DELETE(client);
         return it;
     }
 
     if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
         UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", client->GetUserID());
         SAFE_DELETE_ARRAY(pRetData);
-        SAFE_DELETE(client);
         return std::make_tuple(false, std::to_string(nResponse));
     }
 
@@ -884,7 +882,7 @@ TTueRet CRobotMgr::SendGetRoomData(const int32_t nRoomId) {
     SAFE_DELETE_ARRAY(pRetData);
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
-TTueRet	CRobotMgr::RobotGainDeposit(Robot* client) {
+TTueRet CRobotMgr::RobotGainDeposit(RobotPtr client) {
     static TCHAR szHttpUrl[128];
     static int nResult = GetPrivateProfileString(_T("RobotReward"), _T("HttpUrl_G"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
     if (0 == strcmp(szHttpUrl, "null"))
@@ -924,7 +922,7 @@ TTueRet	CRobotMgr::RobotGainDeposit(Robot* client) {
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
-TTueRet	CRobotMgr::RobotBackDeposit(Robot* client) {
+TTueRet CRobotMgr::RobotBackDeposit(RobotPtr client) {
     static TCHAR szHttpUrl[128];
     static int nResult = GetPrivateProfileString(_T("RobotReward"), _T("HttpUrl_C"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
     if (0 == strcmp(szHttpUrl, "null"))
@@ -973,14 +971,14 @@ void CRobotMgr::SetLogon(UserID userid, bool status) {
     }
 }
 
-Robot* CRobotMgr::GetRobotClient(UserID userid) {
+RobotPtr CRobotMgr::GetRobotClient(UserID userid) {
     if (robot_map_.find(userid) != robot_map_.end()) {
         return robot_map_[userid];
     }
     return nullptr;
 }
 
-void CRobotMgr::SetRobotClient(Robot* client) {
+void CRobotMgr::SetRobotClient(RobotPtr client) {
     robot_map_.insert(std::make_pair(client->GetUserID(), client));
 }
 
@@ -1203,7 +1201,7 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
         }
     }
 
-    std::unordered_set<Robot*>  vecWantClient;
+    std::unordered_set<RobotPtr>  vecWantClient;
     for (auto&& it : vecWantClient) {
         ApplyRobotForRoom(g_gameID, it->m_nWantRoomId, TInt32Vec{it->GetUserID()});
     }
