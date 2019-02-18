@@ -5,13 +5,12 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
-    typedef std::unordered_map<AccountID, stRobotUnit>			AccountSettingMap;
-    typedef std::unordered_map<AccountID, CRobotClient*>		AccountRobotMap;
-    typedef std::unordered_map<RoomID, stActiveCtrl>			RoomSettingMap;
-    typedef std::unordered_map<RoomID, stRoomData>				RoomDataMap;
+    using RoomSettingMap = std::unordered_map<RoomID, stActiveCtrl>;
+    using AccountSettingMap = std::unordered_map<AccountID, stRobotUnit>;
+    using RoomDataMap = std::unordered_map<RoomID, stRoomData>;
 
     using RobotMap = std::unordered_map<UserID, CRobotClient*>;//TODO 所有RobotClient 的类都是cache 需要合并重构
-    using RoomCurUsersMap = std::unordered_map<RoomID, int32_t>;
+    using RoomCurUsersMap = std::unordered_map<RoomID, CurUserCount>;
 
 public:
     // 开始|结束
@@ -109,13 +108,13 @@ protected:
     CCritSec        m_csWaitEnters;
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
 
-    //不变数据类 配置（热更新,允许脏读）。初始化后，不改变状态，不用加锁
+    //immutable数据类 配置（热更新,允许脏读),初始化后,不改变状态,不用加锁
     CCritSec        m_csRobot;
-    AccountSettingMap	account_setting_map_; // 账号信息  robot.setting
+    AccountSettingMap	account_setting_map_; // 机器人账号配置  robot.setting
     RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
     RoomDataMap	m_mapRoomData; // 大厅房间配置 大厅获得 
 
-    //变化数据类 需加锁
+    //mutable数据类 需加锁
     CCritSec        m_csRoomData;
     CCritSec        m_csTknRobot;
     RobotMap robot_map_; //管理所有robot信息

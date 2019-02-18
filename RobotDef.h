@@ -41,19 +41,20 @@
 #define	ROOM_PLAYER_STATUS_BEGAN		16	// ¿ªÊ¼ÓÎÏ·
 using AccountID = int32_t;
 using RoomID = int32_t;
-typedef int32_t			UserID;
-typedef int32_t			TokenID;
-typedef uint32_t		TReqstId;
+using CurUserCount = int32_t;
 
-typedef std::unordered_map<LONG, SOCKET>	TTokenSockMap;
+using          UserID = int32_t;
+using         TokenID = int32_t;
+using        TReqstId = uint32_t;
 
-typedef std::unordered_map<int, LONG>		TClientTokenMap;
+using   TTokenSockMap = std::unordered_map<LONG, SOCKET>;
 
-typedef std::vector<int32_t>				TInt32Vec;
+using TClientTokenMap = std::unordered_map<int, LONG>;
 
+using       TInt32Vec = std::vector<int32_t>;
 
+using        TTueRet = std::tuple<bool, std::string>;
 
-typedef std::tuple<bool, std::string>		TTueRet;
 #define TUPLE_NUM(_t_) std::tuple_size<decltype(_t_)>::value
 #define TUPLE_ELE(_t_,_index_) std::get<_index_>(_t_)
 #define TUPLE_ELE_C(_t_,_index_) std::get<_index_>(_t_).c_str()
