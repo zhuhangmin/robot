@@ -288,80 +288,28 @@ TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
 
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
-TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
+int Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
     std::lock_guard<std::mutex> lock(mutex_);
     UWL_DBG("[PROFILE] 1 SendEnterGame timestamp = %ld", GetTickCount());
-    if (!connection_game_) {
-        UWL_ERR("m_ConnGame is nil");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    }
-    UWL_DBG("[PROFILE] 2 SendEnterGame timestamp = %ld", GetTickCount());
+    //if (!connection_game_) {
+    //    UWL_ERR("m_ConnGame is nil");
+    //    assert(false);
+    //    return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
+    //}
+    //UWL_DBG("[PROFILE] 2 SendEnterGame timestamp = %ld", GetTickCount());
 
-    if (!connection_game_->IsConnected()) {
-        UWL_DBG("[PROFILE] 3 SendEnterGame timestamp = %ld", GetTickCount());
-        if (!ConnectGameWithLock(room.szGameIP, room.nGamePort, nNofifyThrId)) {
-            UWL_ERR("m_ConnGame not connect fail ip = %s, port = %d", room.szGameIP, room.nGamePort);
-            //assert(false);
-            return std::make_tuple(false, ERR_CONNECT_DISABLE);
-        }
-    }
-
-    UWL_DBG("[PROFILE] 4 SendEnterGame timestamp = %ld", GetTickCount());
-    // enter_game
-    ENTER_GAME_EX enter = {};
-    enter.nUserID = GetUserID();
-    enter.nUserType = m_LogonData.nUserType;
-
-    enter.nGameID = room.nGameID;
-    enter.nRoomID = room.nRoomID;
-    enter.nTableNO = nTableNo; // 赋值
-    enter.nChairNO = nChairNo; // 赋值
-
-    xyGetHardID(enter.szHardID);
-    enter.dwLookOn = 0;
-    enter.dwUserConfigs = 0;
-    //enter.nRoomTokenID = m_ConnRoom->GetTokenID();
-    enter.nRoomTokenID = m_EnterRoomData.nRoomTokenID;
-
-    // solo_player
-    SOLO_PLAYER splayer = {};
-    splayer.nUserID = GetUserID();
-    splayer.nUserType = m_LogonData.nUserType;
-    splayer.nStatus = ROOM_PLAYER_STATUS_SEATED;
-    splayer.nTableNO = nTableNo;
-    splayer.nChairNO = nChairNo;
-    splayer.nNickSex = m_LogonData.nNickSex;
-    splayer.nPortrait = m_LogonData.nPortrait;
-    splayer.nNetSpeed = 10;
-    splayer.nClothingID = m_LogonData.nClothingID;
-
-    splayer.nDeposit = m_PlayerData.nDeposit;
-    splayer.nPlayerLevel = m_PlayerData.nPlayerLevel;
-    splayer.nScore = m_PlayerData.nScore;
-    splayer.nBreakOff = m_PlayerData.nBreakOff;
-    splayer.nWin = m_PlayerData.nWin;
-    splayer.nLoss = m_PlayerData.nLoss;
-    splayer.nStandOff = m_PlayerData.nStandOff;
-    splayer.nBout = m_PlayerData.nBout;
-    splayer.nTimeCost = m_PlayerData.nTimeCost;
-
-    lstrcpy(splayer.szUsername, (LPCTSTR) xyAnsiToUtf8(sNick.c_str()));
-    //lstrcpy(splayer.szNickName, (LPCTSTR)xyAnsiToUtf8(sNick.c_str()));
-    lstrcpy(splayer.szPortrait, sPortr.c_str());
-    // build datas
-    uint32_t nDataLen = sizeof(ENTER_GAME_EX) + sizeof(SOLO_PLAYER);
-    //BYTE * pSendData = new BYTE[nDataLen] {};
-    auto pSendData = std::make_unique<BYTE>(nDataLen);
-    memcpy(pSendData.get(), &enter, sizeof(enter));
-    memcpy(pSendData.get() + sizeof(enter), &splayer, sizeof(splayer));
-    if (!IS_BIT_SET(room.dwConfigs, RC_SOLO_ROOM))
-        nDataLen = sizeof(ENTER_GAME_EX);
-
+    //if (!connection_game_->IsConnected()) {
+    //    UWL_DBG("[PROFILE] 3 SendEnterGame timestamp = %ld", GetTickCount());
+    //    if (!ConnectGameWithLock(room.szGameIP, room.nGamePort, nNofifyThrId)) {
+    //        UWL_ERR("m_ConnGame not connect fail ip = %s, port = %d", room.szGameIP, room.nGamePort);
+    //        //assert(false);
+    //        return std::make_tuple(false, ERR_CONNECT_DISABLE);
+    //    }
+    //}
     TReqstId nResponse;
-    //LPVOID	 pRetData = NULL;
+    auto pSendData = std::make_unique<BYTE>();
     std::shared_ptr<void> pRetData;
-    //uint32_t nDataLen = 0;
+    uint32_t nDataLen = 0;
 
     //@zhuhangmin 20190218 pb
     TCHAR hard_id[MAX_HARDID_LEN_EX];			// 硬件标识
@@ -374,7 +322,7 @@ TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::strin
     bool is_succ = enter_req.SerializePartialToArray(pSendData.get(), nDataLen);
     if (false == is_succ) {
         UWL_ERR("SerializePartialToArray faild.");
-        //return kCommFaild;
+        return kCommFaild;
     }
     //@zhuhangmin 20190218 pb
 
@@ -386,25 +334,25 @@ TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::strin
     if (!TUPLE_ELE(it, 0)) {
         UWL_ERR("GR_ENTER_GAME_EX fail userid = %d", GetUserID());
         //assert(false);
-        return it;
+        return kCommFaild;
     }
 
     if (nResponse == GR_RESPONE_ENTER_GAME_OK) {
         m_bRunGame = true;
         UWL_DBG("[PROFILE] 6 SendEnterGame timestamp = %ld", GetTickCount());
-        return std::make_tuple(true, "GR_RESPONE_ENTER_GAME_OK");
+        return kCommSucc;
     } else if (nResponse == GR_RESPONE_ENTER_GAME_DXXW) {
         m_bRunGame = true;
-        return std::make_tuple(true, "GR_RESPONE_ENTER_GAME_DXXW");
+        return kCommSucc;
     } else if (nResponse == GR_RESPONE_ENTER_GAME_IDLE)		//游戏中，空闲玩家进入游戏
     {
         m_bRunGame = true;
-        return std::make_tuple(true, "GR_RESPONE_ENTER_GAME_IDLE");
+        return kCommSucc;
     } else {
         UWL_ERR("UNHANDLE RESPOSE %d = ", nResponse);
     }
 
-    return std::make_tuple(false, std::to_string(nResponse));
+    return kCommFaild;
 }
 
 //@zhuhangmin

@@ -306,6 +306,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   <ItemGroup>
     <ClInclude Include="..\SEA\NEW_GAME\pb\game_base.pb.h" />
     <ClInclude Include="..\SEA\NEW_GAME\pb\hall_base.pb.h" />
+    <ClInclude Include="gamedef.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Robot.h" />

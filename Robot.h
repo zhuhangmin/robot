@@ -39,7 +39,7 @@ public:
 
     // for Send
     TTueRet		SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId);
-    TTueRet		SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo);
+    int SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo);
     //@zhuhangmin 20181017
     TTueRet		SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, NTF_GET_NEWTABLE& lpNewTableInfo);
 
