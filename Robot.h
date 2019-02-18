@@ -69,10 +69,10 @@ protected:
     PLAYER			m_PlayerData{};
 
     CCritSec        m_csConnRoom;
-    CDefSocketClient* m_ConnRoom{new CDefSocketClient()};
+    CDefSocketClientPtr m_ConnRoom{std::make_shared<CDefSocketClient>()};
 
     CCritSec        m_csConnGame;
-    CDefSocketClient* m_ConnGame{new CDefSocketClient()};
+    CDefSocketClientPtr m_ConnGame{std::make_shared<CDefSocketClient>()};
 
 public:
     // 游戏的银子

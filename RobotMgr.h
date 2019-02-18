@@ -99,7 +99,7 @@ protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 
     CCritSec        m_csConnHall;
-    CDefSocketClient* m_ConnHall{new CDefSocketClient()};
+    CDefSocketClientPtr m_ConnHall{std::make_shared<CDefSocketClient>()};
 
     UThread			m_thrdHallNotify;
     UThread			m_thrdRoomNotify;
