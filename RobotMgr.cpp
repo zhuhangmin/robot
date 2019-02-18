@@ -838,6 +838,7 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
     UWL_INF("account:%d userid:%d logon hall ok.", client->GetUserID(), client->GetUserID());
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
+
 TTueRet CRobotMgr::SendGetRoomData(const int32_t nRoomId) {
     if (time(nullptr) - GetRoomDataLastTime(nRoomId) < 30) {
         //UWL_INF("NO NEED TO UPDATE GetRoomDataLastTime nRoomId = %d, interval = %I32u", nRoomId, (time(nullptr) - GetRoomDataLastTime(nRoomId)));
@@ -997,14 +998,14 @@ int CRobotMgr::GetRoomCurrentRobotSize(RoomID roomid) {
 
 
 void    CRobotMgr::OnServerMainTimer(time_t nCurrTime) {
-    OnTimerReconnectHall(nCurrTime);
+    OnTimerLogonHall(nCurrTime);
     OnTimerSendHallPluse(nCurrTime);
     OnTimerSendRoomPluse(nCurrTime);
     OnTimerSendGamePluse(nCurrTime);
     OnTimerCtrlRoomActiv(nCurrTime);
     OnTimerUpdateDeposit(nCurrTime);
 }
-bool	CRobotMgr::OnTimerReconnectHall(time_t nCurrTime) {
+bool	CRobotMgr::OnTimerLogonHall(time_t nCurrTime) {
     if (!hall_connection_) {
         UWL_ERR("SendHallRequest OnTimerReconnectHall nil ERR_CONNECT_NOT_EXIST");
         assert(false);

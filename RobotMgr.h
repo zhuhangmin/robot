@@ -71,18 +71,22 @@ protected:
     void OnCliDisconnGame(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
 
     // 定时器回调方法
-    bool	OnTimerReconnectHall(time_t nCurrTime);
+    bool	OnTimerLogonHall(time_t nCurrTime);
     void    OnTimerSendHallPluse(time_t nCurrTime);
     void    OnTimerSendRoomPluse(time_t nCurrTime);
     void    OnTimerSendGamePluse(time_t nCurrTime);
     void    OnTimerCtrlRoomActiv(time_t nCurrTime);
+
+    //@zhuhangmin 20190218 仅补银线程可见 beg
     void    OnTimerUpdateDeposit(time_t nCurrTime);
+    TTueRet RobotGainDeposit(RobotPtr client);
+    TTueRet RobotBackDeposit(RobotPtr client);
+    //@zhuhangmin 20190218 仅补银线程可见 end
 
     // 网络辅助请求
     TTueRet	RobotLogonHall(const int32_t& account = 0);
     TTueRet SendGetRoomData(const int32_t nRoomId);
-    TTueRet RobotGainDeposit(RobotPtr client);
-    TTueRet RobotBackDeposit(RobotPtr client);
+
 
     //@zhuhangmin
     bool IsLogon(UserID userid);
@@ -118,6 +122,7 @@ protected:
     CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};//大厅连接
     RoomCurUsersMap room_cur_users_; //管理房间中当前玩家数(包括机器人和真人)
 
+    //TODO 记录登陆，进游戏流程状态来组合check condition 登陆大厅, 进游戏
 
 };
 #define TheRobotMgr CRobotMgr::Instance()
