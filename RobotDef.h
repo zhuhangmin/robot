@@ -157,4 +157,9 @@ protected:
 };
 
 
-const int InValidToken = -1;
+
+template <typename T>
+std::shared_ptr<T> make_shared_array(std::size_t size) {
+    //default_delete是STL中的默认删除器
+    return std::shared_ptr<T>(new T[size], std::default_delete<T[]>());
+}
