@@ -1204,7 +1204,7 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
         }
     }
 
-    RobotSet  vecWantClient;
+    std::unordered_set<CRobotClient*>  vecWantClient;
     for (auto&& it : vecWantClient) {
         ApplyRobotForRoom(g_gameID, it->m_nWantRoomId, TInt32Vec{it->GetUserID()});
     }

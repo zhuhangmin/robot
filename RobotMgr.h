@@ -6,12 +6,8 @@
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
     typedef std::unordered_map<AccountID, stRobotUnit>			AccountSettingMap;
-
-    typedef std::unordered_set<CRobotClient*>					RobotSet;
     typedef std::unordered_map<AccountID, CRobotClient*>		AccountRobotMap;
-
     typedef std::unordered_map<RoomID, stActiveCtrl>			RoomSettingMap;
-    typedef std::unordered_map<RoomID, RobotSet>			    RoomRobotSetMap;
     typedef std::unordered_map<RoomID, stRoomData>				RoomDataMap;
 
     using RobotMap = std::unordered_map<UserID, CRobotClient*>;//TODO 所有RobotClient 的类都是cache 需要合并重构
@@ -113,7 +109,7 @@ protected:
     CCritSec        m_csWaitEnters;
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
 
-    //不变数据类（热更新,允许脏读） 初始化后，不使用set改变状态，不用加锁
+    //不变数据类 配置（热更新,允许脏读）。初始化后，不改变状态，不用加锁
     CCritSec        m_csRobot;
     AccountSettingMap	account_setting_map_; // 账号信息  robot.setting
     RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
