@@ -142,7 +142,7 @@ bool	CRobotMgr::InitGameRoomDatas() {
     return true;
 }
 
-TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
+TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
     if (!m_ConnHall) {
         UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", nReqId);
         assert(false);
@@ -181,13 +181,12 @@ TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pD
 
     nDataLen = Response.nDataLen;
     nRespId = Response.head.nRequest;
-    pRetData = Response.pDataPtr;
+    pRetData.reset(Response.pDataPtr);
 
     if (nRespId == GR_ERROR_INFOMATION) {
         CHAR info[512] = {};
         sprintf_s(info, "%s", pRetData);
         nDataLen = 0;
-        SAFE_DELETE_ARRAY(pRetData);
         UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail nRespId GR_ERROR_INFOMATION nReqId = %d", nReqId);
         assert(false);
         return std::make_tuple(false, info);
@@ -825,7 +824,8 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
     strcpy_s(logonUser.szPassword, client->Password().c_str());
 
     TReqstId nResponse;
-    LPVOID	 pRetData = NULL;
+    //LPVOID	 pRetData = NULL;
+    std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(logonUser);
     auto it = SendHallRequest(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData);
     if (!TUPLE_ELE(it, 0)) {
@@ -835,15 +835,13 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
 
     if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
         UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", client->GetUserID());
-        SAFE_DELETE_ARRAY(pRetData);
         return std::make_tuple(false, std::to_string(nResponse));
     }
 
     client->SetLogon(true);
-    client->SetLogonData((LPLOGON_SUCCEED_V2) pRetData);
+    client->SetLogonData((LPLOGON_SUCCEED_V2) pRetData.get());
     SetRobotClient(client);
 
-    SAFE_DELETE_ARRAY(pRetData);
     UWL_INF("account:%d userid:%d logon hall ok.", client->GetUserID(), client->GetUserID());
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
@@ -862,7 +860,8 @@ TTueRet CRobotMgr::SendGetRoomData(const int32_t nRoomId) {
     gr.dwFlags |= FLAG_GETROOMS_INCLUDE_ONLINES;
 
     TReqstId nResponse;
-    LPVOID	 pRetData = NULL;
+    //LPVOID	 pRetData = NULL;
+    std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(GET_ROOM);
     auto _it = SendHallRequest(GR_GET_ROOM, nDataLen, &gr, nResponse, pRetData);
     if (!TUPLE_ELE(_it, 0)) {
@@ -875,11 +874,9 @@ TTueRet CRobotMgr::SendGetRoomData(const int32_t nRoomId) {
     if (nResponse != UR_FETCH_SUCCEEDED) {
         UWL_ERR("SendHallRequest GR_GET_ROOM fail nRoomId = %d, nResponse = %d", nRoomId, nResponse);
         assert(false);
-        SAFE_DELETE_ARRAY(pRetData);
         return std::make_tuple(false, std::to_string(nResponse));
     }
-    SetRoomData(nRoomId, (LPROOM) pRetData);
-    SAFE_DELETE_ARRAY(pRetData);
+    SetRoomData(nRoomId, (LPROOM) pRetData.get());
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 TTueRet CRobotMgr::RobotGainDeposit(RobotPtr client) {
@@ -1085,7 +1082,8 @@ void    CRobotMgr::OnTimerSendHallPluse(time_t nCurrTime) {
         hp.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
 
         TReqstId nResponse;
-        LPVOID	 pRetData = NULL;
+        //LPVOID	 pRetData = NULL;
+        std::shared_ptr<void> pRetData;
         uint32_t nDataLen = sizeof(HALLUSER_PULSE);
         (void) SendHallRequest(GR_HALLUSER_PULSE, nDataLen, &hp, nResponse, pRetData, false);
     }
@@ -1212,7 +1210,8 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
     }
     if (gr.nRoomCount > 0) {
         TReqstId nResponse;
-        LPVOID	 pRetData = NULL;
+        //LPVOID	 pRetData = NULL;
+        std::shared_ptr<void> pRetData;
         uint32_t nDataLen = sizeof(GET_ROOMUSERS) - sizeof(int)*MAX_QUERY_ROOMS + gr.nRoomCount*sizeof(int);
         (void) SendHallRequest(GR_GET_ROOMUSERS, nDataLen, &gr, nResponse, pRetData, false);
     }

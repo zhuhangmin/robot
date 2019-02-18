@@ -116,7 +116,7 @@ TTueRet Robot::SendRoomRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData,
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
-TTueRet Robot::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho, uint32_t wait_ms) {
+TTueRet Robot::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
     if (!m_ConnGame) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
@@ -158,22 +158,20 @@ TTueRet Robot::SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData,
 
     nDataLen = Response.nDataLen;
     nRespId = Response.head.nRequest;
-    pRetData = Response.pDataPtr;
+    pRetData.reset(Response.pDataPtr);
 
     if (nRespId == GR_ERROR_INFOMATION) {
         CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData);
+        sprintf_s(info, "%s", pRetData.get());
         nDataLen = 0;
-        SAFE_DELETE_ARRAY(pRetData);
         return std::make_tuple(false, info);
     }
     if (0 == nRespId) {
         //assert(false);
         UWL_ERR("enter game respId = 0");
         CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData);
+        sprintf_s(info, "%s", pRetData.get());
         nDataLen = 0;
-        SAFE_DELETE_ARRAY(pRetData);
         return std::make_tuple(false, info);
     }
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
@@ -367,22 +365,23 @@ TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::strin
     lstrcpy(splayer.szPortrait, sPortr.c_str());
     // build datas
     uint32_t nDataLen = sizeof(ENTER_GAME_EX) + sizeof(SOLO_PLAYER);
-    BYTE * pSendData = new BYTE[nDataLen] {};
-    memcpy(pSendData, &enter, sizeof(enter));
-    memcpy(pSendData + sizeof(enter), &splayer, sizeof(splayer));
+    //BYTE * pSendData = new BYTE[nDataLen] {};
+    auto pSendData = std::make_unique<BYTE>(nDataLen);
+    memcpy(pSendData.get(), &enter, sizeof(enter));
+    memcpy(pSendData.get() + sizeof(enter), &splayer, sizeof(splayer));
     if (!IS_BIT_SET(room.dwConfigs, RC_SOLO_ROOM))
         nDataLen = sizeof(ENTER_GAME_EX);
 
     TReqstId nResponse;
-    LPVOID	 pRetData = NULL;
+    //LPVOID	 pRetData = NULL;
+    std::shared_ptr<void> pRetData;
     //uint32_t nDataLen = 0;
 
 
     UWL_DBG("[PROFILE] 5 SendEnterGame timestamp = %ld", GetTickCount());
-    auto it = SendGameRequest(GR_ENTER_GAME_EX, nDataLen, pSendData, nResponse, pRetData, true);
+    auto it = SendGameRequest(GR_ENTER_GAME_EX, nDataLen, pSendData.get(), nResponse, pRetData, true);
     m_playerRoomStatus = ROOM_PLAYER_STATUS_WAITING;
     UWL_INF("[STATUS] account:%d userid:%d status [walking] ", GetUserID(), GetUserID());
-    SAFE_DELETE_ARRAY(pSendData);
     if (!TUPLE_ELE(it, 0)) {
         UWL_ERR("GR_ENTER_GAME_EX fail userid = %d", GetUserID());
         //assert(false);
@@ -391,84 +390,78 @@ TTueRet	Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::strin
 
     if (nResponse == GR_RESPONE_ENTER_GAME_OK) {
         m_bRunGame = true;
-        SAFE_DELETE_ARRAY(pRetData);
         UWL_DBG("[PROFILE] 6 SendEnterGame timestamp = %ld", GetTickCount());
         return std::make_tuple(true, "GR_RESPONE_ENTER_GAME_OK");
     } else if (nResponse == GR_RESPONE_ENTER_GAME_DXXW) {
         m_bRunGame = true;
-        SAFE_DELETE_ARRAY(pRetData);
         return std::make_tuple(true, "GR_RESPONE_ENTER_GAME_DXXW");
     } else if (nResponse == GR_RESPONE_ENTER_GAME_IDLE)		//游戏中，空闲玩家进入游戏
     {
         m_bRunGame = true;
-        SAFE_DELETE_ARRAY(pRetData);
         return std::make_tuple(true, "GR_RESPONE_ENTER_GAME_IDLE");
     } else {
         UWL_ERR("UNHANDLE RESPOSE %d = ", nResponse);
     }
-
-    SAFE_DELETE_ARRAY(pRetData);
-
 
     return std::make_tuple(false, std::to_string(nResponse));
 }
 
 //@zhuhangmin
 TTueRet Robot::SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, NTF_GET_NEWTABLE& lpNewTableInfo) {
-    //std::lock_guard<std::mutex> lg(m_mutex);
-    //if (!m_ConnRoom) {
-    //    UWL_ERR("m_ConnRoom nil");
-    //    assert(false);
-    //    return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    //}
+    std::lock_guard<std::mutex> lg(m_mutex);
+    if (!m_ConnRoom) {
+        UWL_ERR("m_ConnRoom nil");
+        assert(false);
+        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
+    }
 
-    //if (!m_ConnRoom->IsConnected()) {
-    //    UWL_ERR("room not connected");
-    //    assert(false);
-    //    return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    //}
+    if (!m_ConnRoom->IsConnected()) {
+        UWL_ERR("room not connected");
+        assert(false);
+        return std::make_tuple(false, ERR_CONNECT_DISABLE);
+    }
 
-    //GET_NEWTABLE gn = {};
-    //gn.nUserID = m_LogonData.nUserID;
-    //gn.nRoomID = room.nRoomID;
-    //gn.nAreaID = room.nAreaID;
-    //gn.nGameID = room.nGameID;
-    //gn.nTableNO = 0;//?
-    //gn.nChairNO = 0;//?
-    //gn.nIPConfig = 0;//?
-    //gn.nBreakReq = 0;//?
-    //gn.nSpeedReq = 0;//?
-    //gn.nMinScore = room.nMinScore;
-    //gn.nMinDeposit = room.nMinDeposit;
-    //gn.nWaitSeconds = 0;//?
-    //gn.nNetDelay = 0;//?
+    GET_NEWTABLE gn = {};
+    gn.nUserID = m_LogonData.nUserID;
+    gn.nRoomID = room.nRoomID;
+    gn.nAreaID = room.nAreaID;
+    gn.nGameID = room.nGameID;
+    gn.nTableNO = 0;//?
+    gn.nChairNO = 0;//?
+    gn.nIPConfig = 0;//?
+    gn.nBreakReq = 0;//?
+    gn.nSpeedReq = 0;//?
+    gn.nMinScore = room.nMinScore;
+    gn.nMinDeposit = room.nMinDeposit;
+    gn.nWaitSeconds = 0;//?
+    gn.nNetDelay = 0;//?
 
-    //TReqstId nResponse;
+    TReqstId nResponse;
     //LPVOID	 pRetData = NULL;
-    //uint32_t nDataLen = sizeof(GET_NEWTABLE);
-    //auto it = SendRoomRequest(MR_GET_NEWTABLE, nDataLen, &gn, nResponse, pRetData, true, 4000);
-    //if (!TUPLE_ELE(it, 0)) {
-    //    UWL_ERR("send get newtable fail");
-    //    return it;
-    //}
+    std::shared_ptr<void> pRetData;
+    uint32_t nDataLen = sizeof(GET_NEWTABLE);
+    auto it = SendRoomRequest(MR_GET_NEWTABLE, nDataLen, &gn, nResponse, pRetData, true, 4000);
+    if (!TUPLE_ELE(it, 0)) {
+        UWL_ERR("send get newtable fail");
+        return it;
+    }
 
 
-    //if (nResponse != UR_OPERATE_SUCCEEDED) {
-    //    std::string ret = std::to_string(nResponse);
-    //    /*if (nResponse == GR_DEPOSIT_NOTENOUGH)
-    //    {
+    if (nResponse != UR_OPERATE_SUCCEEDED) {
+        std::string ret = std::to_string(nResponse);
+        /*if (nResponse == GR_DEPOSIT_NOTENOUGH)
+        {
 
-    //    }*/
+        }*/
 
-    //    SAFE_DELETE_ARRAY(pRetData);
-    //    return std::make_tuple(false, ret);
-    //}
+        return std::make_tuple(false, ret);
+    }
 
-    //lpNewTableInfo = *(LPNTF_GET_NEWTABLE) pRetData;
+    lpNewTableInfo = *(LPNTF_GET_NEWTABLE) pRetData.get();
 
-    //m_playerRoomStatus = ROOM_PLAYER_STATUS_SEATED;
-    //UWL_INF("[STATUS] account:%d userid:%d room[%d] of game[%d] status [seated]", GetUserID(), GetUserID(), room.nRoomID, room.nGameID);
-    //UWL_INF("account:%d userid:%d get table [%d] of chair[%d] ok.", GetUserID(), GetUserID(), lpNewTableInfo.pp.nTableNO, lpNewTableInfo.pp.nChairNO);
+    m_playerRoomStatus = ROOM_PLAYER_STATUS_SEATED;
+    UWL_INF("[STATUS] account:%d userid:%d room[%d] of game[%d] status [seated]", GetUserID(), GetUserID(), room.nRoomID, room.nGameID);
+    UWL_INF("account:%d userid:%d get table [%d] of chair[%d] ok.", GetUserID(), GetUserID(), lpNewTableInfo.pp.nTableNO, lpNewTableInfo.pp.nChairNO);
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 

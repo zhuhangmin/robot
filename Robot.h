@@ -36,7 +36,7 @@ public:
 
     // for Game
     bool		ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
-    TTueRet		SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, void* &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    TTueRet SendGameRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
 
     // for Send
     TTueRet		SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId);
