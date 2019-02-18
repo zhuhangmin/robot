@@ -49,6 +49,17 @@
 * 一些关键信息的变化会触发CheckCondition，进一步触发Robot的行为，注意全局锁
 * 单独补银线程，因为补银为http请求阻塞较慢，不适合放在Robot中
 * 单独心跳线程
+* 机器人服务单独connection 用于接受消息
+* gamedef 先copy出来用
+* 问游戏服务器要roomdata 而不是 大厅
+* 用validate消息来区分获取游戏服务器状态的链接
+
+
+
+机器人讨论： 
+1 机器人服务器链接还需要一个特定表示， 
+2 client_id 先复用大厅client_id
+
 
 
 # 对象和线程可见性
