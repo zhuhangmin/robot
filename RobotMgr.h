@@ -7,10 +7,11 @@ class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
     //setting
     using RoomSettingMap = std::unordered_map<RoomID, RoomSetiing>;
-    using AccountSettingMap = std::unordered_map<AccountID, RobotSetting>;
+    using AccountSettingMap = std::unordered_map<UserID, RobotSetting>;
 
     //game info
-    using RoomMap = std::unordered_map<RoomID, game::base::RoomData>;
+    using RoomMap = std::unordered_map<RoomID, game::base::Room>;
+    using UserMap = std::unordered_map<UserID, game::base::User>;
 
     //robot
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
@@ -31,17 +32,12 @@ public:
     //int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec accounts); //should be first level
 
     // 机器人数据管理
-    uint32_t	  GetAccountSettingSize() { return account_setting_map_.size(); }
+    uint32_t GetAccountSettingSize() { return account_setting_map_.size(); }
     RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
 
 
     // 主定时器
     void	OnServerMainTimer(time_t nCurrTime);
-
-    //// RoomData
-    //bool	GetRoomData(int32_t nRoomId, OUT ROOM& room);
-    //uint32_t GetRoomDataLastTime(int32_t nRoomId);
-    //void	SetRoomData(int32_t nRoomId, const LPROOM& room);
 
 protected:
     // 初始化配置文件
@@ -106,6 +102,11 @@ protected:
 
     int GetRoomCurrentRobotSize(RoomID roomid); //当前在某个房间里的机器人数
 
+public:
+    int GetUserStatus(UserID userid, UserStatus& user_status);
+    int FindTable(UserID userid, game::base::Table& table);
+    int FindChair(UserID userid, game::base::ChairInfo& chair);
+
 private:
     void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
     void OnDisconnRoomWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
@@ -125,12 +126,15 @@ protected:
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
 
 
-    //immutable数据类 配置（热更新,允许脏读),初始化后,不改变状态,不用加锁
-    AccountSettingMap	account_setting_map_; // 机器人账号配置  robot.setting
-    RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
-    //RoomDataMap	m_mapRoomData; // 大厅房间配置 大厅服务器获得 
+    // immutable数据类: 初始化后不改变状态 ,不用加锁 （配置热更新,允许脏读)
+    // 机器人账号配置  robot.setting
+    AccountSettingMap	account_setting_map_;
 
-    //mutable数据类 需加锁
+    // 机器人房间配置 robot.setting
+    RoomSettingMap room_setting_map_;
+
+
+    // mutable数据类 需加锁
     std::mutex        robot_map_mutex_;
     RobotMap robot_map_; //管理所有robot动态信息
 
@@ -140,6 +144,7 @@ protected:
     std::mutex game_info_connection_mutex_; // 用于同步游戏服务器集合信息
     CDefSocketClientPtr game_info_connection_{std::make_shared<CDefSocketClient>()};//游戏连接
     RoomMap room_map_;
+    UserMap user_map_;
 
 
 

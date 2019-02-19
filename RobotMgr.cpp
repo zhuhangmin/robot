@@ -233,12 +233,19 @@ int CRobotMgr::SendGetGameInfo(RoomID roomid /*= 0*/) {
         return kCommFaild;
     }
 
-    resp.rooms();
-    resp.rooms_size();
+    room_map_.clear();
+    for (int index = 0; index < resp.rooms_size(); index++) {
+        game::base::Room room = resp.rooms(index);
+        RoomID roomid = room.room_data().roomid();
+        room_map_.insert(std::make_pair(roomid, room));
+    }
 
-    resp.users();
-    resp.users_size();
-
+    user_map_.clear();
+    for (int index = 0; index < resp.users_size(); index++) {
+        game::base::User user = resp.users(index);
+        UserID userid = user.userid();
+        user_map_.insert(std::make_pair(userid, user));
+    }
     return kCommSucc;
 }
 
@@ -304,28 +311,6 @@ bool CRobotMgr::GetRobotSetting(int account, RobotSetting& unit) {
 
     return true;
 }
-//bool	CRobotMgr::GetRoomData(int32_t nRoomId, OUT ROOM& room) {
-//    auto && it = m_mapRoomData.find(nRoomId);
-//    if (it == m_mapRoomData.end()) {
-//        UWL_ERR("can not find roomid = %d room data", nRoomId);
-//        //assert(false);
-//        return false;
-//    }
-//
-//    room = it->second.room;
-//    return true;
-//}
-//uint32_t CRobotMgr::GetRoomDataLastTime(int32_t nRoomId) {
-//    auto && it = m_mapRoomData.find(nRoomId);
-//    if (it == m_mapRoomData.end())
-//        return 0;
-//    return it->second.nLastGetTime;
-//}
-//void	CRobotMgr::SetRoomData(int32_t nRoomId, const LPROOM& pRoom) {
-//    m_mapRoomData[nRoomId] = HallRoomData{*pRoom, time(nullptr)};
-//}
-
-
 
 RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
@@ -708,12 +693,22 @@ void CRobotMgr::OnGameInfoNotify(RequestID nReqstID, const REQUEST &request) {
 }
 
 void CRobotMgr::OnRecvGameInfo(const REQUEST &request) {
-    game::base::Status2RobotSvrNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    game::base::Status2RobotSvrNotify user_status_ntf;
+    int parse_ret = ParseFromRequest(request, user_status_ntf);
     if (kCommSucc != parse_ret) {
         UWL_WRN("ParseFromRequest failed.");
         return;
     }
+
+    UserID userid = user_status_ntf.userid();
+    if (user_map_.find(userid) == user_map_.end()) return;
+
+    auto user = user_map_[userid];
+    user.set_userid(user_status_ntf.userid());
+    user.set_roomid(user_status_ntf.roomid());
+    user.set_tableno(user_status_ntf.tableno());
+    user.set_chairno(user_status_ntf.chairno());
+    user.set_user_type(user_status_ntf.user_type());
 
 }
 
@@ -1091,6 +1086,51 @@ int CRobotMgr::GetRoomCurrentRobotSize(RoomID roomid) {
 }
 
 
+int CRobotMgr::GetUserStatus(UserID userid, UserStatus& user_status) {
+    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+
+    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
+    auto user = user_map_[userid];
+    auto chairno = user.chairno();
+
+    // 玩家信息中token为0则说明玩家离线； kUserOffline = 0x10000000		// 断线
+
+
+    // 玩家信息中椅子号为0则说明在旁观；
+    if (chairno == 0) {
+        user_status = kUserLooking;
+        return kCommSucc;
+    }
+
+    // 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
+    game::base::Table table;
+    if (kCommFaild == FindTable(userid, table)) return kCommFaild;
+    auto table_status = table.table_status();
+    if (table_status == kTableWaiting) {
+        user_status = kUserWaiting;
+        return kCommSucc;
+    }
+
+    // 桌子playing && 椅子playing -> 玩家playing
+    game::base::ChairInfo chair;
+    if (kCommFaild == FindChair(userid, chair)) return kCommFaild;
+    auto chair_status = chair.chair_status();
+    if (table_status != kTablePlaying) return kCommFaild;
+
+    if (chair_status == kChairPlaying) {
+        user_status = kUserPlaying;
+        return kCommSucc;
+    }
+
+    // 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）
+    if (chair_status == kChairWaiting) {
+        user_status = kUserWaiting;
+        return kCommSucc;
+    }
+
+    return kCommFaild;
+}
+
 void    CRobotMgr::OnServerMainTimer(time_t nCurrTime) {
     OnTimerLogonHall(nCurrTime);
     OnTimerSendHallPluse(nCurrTime);
@@ -1218,7 +1258,7 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
         return;
     }
 
-    //#define MAIN_ROOM_ACTIV_CHECK_GAP_TIME (8) 
+    //#define MAIN_ROOM_ACTIV_CHECK_GAP_TIME (8)
     int MAIN_ROOM_ACTIV_CHECK_GAP_TIME = GetPrivateProfileInt(_T("roominterval"), _T("interval"), 1, g_szIniFile);
 
 
@@ -1393,3 +1433,44 @@ void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
 //
 //    } while (true);
 //}
+
+
+int CRobotMgr::FindTable(UserID userid, game::base::Table& table) {
+    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
+    auto user = user_map_[userid];
+    auto tableno = user.tableno();
+
+    auto roomid = user.roomid();
+    if (room_map_.find(roomid) == room_map_.end()) return kCommFaild;
+
+    auto tables = room_map_[roomid].tables();
+
+    for (auto& table : tables) {
+        if (table.tableno() == tableno) {
+            table = tables[tableno];
+            return kCommSucc;
+        }
+    }
+    return kCommFaild;
+}
+
+
+int CRobotMgr::FindChair(UserID userid, game::base::ChairInfo& chair) {
+    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
+    auto user = user_map_[userid];
+    auto chairno = user.chairno();
+
+    game::base::Table table;
+    if (kCommFaild == FindTable(userid, table)) return kCommFaild;
+
+    auto chairs = table.chairs();
+
+    for (auto& chair : chairs) {
+        if (chair.chairno() == chairno) {
+            chair = chairs[chairno];
+            return kCommSucc;
+        }
+    }
+
+    return kCommFaild;
+}

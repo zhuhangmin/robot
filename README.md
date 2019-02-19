@@ -53,6 +53,22 @@
 * gamedef 先copy出来用
 * 问游戏服务器要roomdata 而不是 大厅
 * 用validate消息来区分获取游戏服务器状态的链接
+* 状态需要通过桌椅判断，没有（walking,seat,waitting,playing）
+// 玩家状态推导：
+// 玩家信息中椅子号为0则说明在旁观；
+// 玩家信息中token为0则说明玩家离线；
+// 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
+// 桌子playing && 椅子playing -> 玩家playing
+// 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）
+enum UserStatus {
+    kUserWaiting = 0x00000001,		// 等待游戏开始
+    kUserPlaying = 0x00000002,		// 游戏中
+    kUserLooking = 0x00000004,		// 旁观
+    kUserLeaved = 0x00000008,		// 离开游戏
+    kUserOffline = 0x10000000		// 断线
+};
+
+* 是否需要补充或消耗银子通过得到的银子数 和房间配置的上下限来触发
 
 
 

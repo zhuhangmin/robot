@@ -39,8 +39,9 @@
 #define	ROOM_PLAYER_STATUS_PLAYING		14	// 玩游戏中
 #define	ROOM_PLAYER_STATUS_LOOKON		15	// 旁观
 #define	ROOM_PLAYER_STATUS_BEGAN		16	// 开始游戏
-using AccountID = int32_t;
 using RoomID = int32_t;
+using TableNO = int32_t;
+using ChairNO = int32_t;
 using CurUserCount = int32_t;
 
 using          UserID = int32_t;
