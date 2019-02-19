@@ -2,6 +2,7 @@
 #include "Robot.h"
 #include "Main.h"
 #include "RobotReq.h"
+#include "common_func.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -52,7 +53,7 @@ bool Robot::ConnectGameWithLock(const std::string& strIP, const int32_t nPort, u
     ////@zhuhangmin 20181129 立即加上token信息 以免丢包
     return true;
 }
-TTueRet Robot::SendRoomRequestWithLock(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
+TTueRet Robot::SendRoomRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
     if (!connection_room_) {
         UWL_ERR("m_ConnRoom nil");
         assert(false);
@@ -105,7 +106,7 @@ TTueRet Robot::SendRoomRequestWithLock(TReqstId nReqId, uint32_t& nDataLen, void
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
-TTueRet Robot::SendGameRequestWithLock(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
+TTueRet Robot::SendGameRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
     if (!connection_game_) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
@@ -161,6 +162,48 @@ TTueRet Robot::SendGameRequestWithLock(TReqstId nReqId, uint32_t& nDataLen, void
         return std::make_tuple(false, info);
     }
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
+}
+
+int Robot::NewSendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
+    CONTEXT_HEAD	context_head = {};
+    context_head.hSocket = connection_game_->GetSocket();
+    context_head.lSession = 0;
+    context_head.bNeedEcho = bNeedEcho;
+
+    std::unique_ptr<char> data(new char[val.ByteSize()]);
+    bool is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
+    if (false == is_succ) {
+        UWL_ERR("SerializePartialToArray faild.");
+        return kCommFaild;
+    }
+
+    REQUEST request(requestid, data.get(), val.ByteSize());
+
+    BOOL timeout = false;
+    bool result = connection_game_->SendRequest(&context_head, &request, &response, timeout, REQ_TIMEOUT_INTERVAL);
+
+    if (!result)///if timeout or disconnect 
+    {
+        UWL_ERR("game send quest fail");
+        //assert(false);
+        return timeout ? ERROR_CODE::REQUEST_TIMEOUT : ERROR_CODE::OPERATION_FAILED;
+    }
+
+    auto nRespId = response.head.nRequest;
+
+    //TODO ?
+    if (nRespId == GR_ERROR_INFOMATION) {
+        assert(false);
+        return kCommFaild;
+    }
+    if (0 == nRespId) {
+        assert(false);
+        /*       UWL_ERR("game respId = 0");
+               CHAR info[512] = {};
+               sprintf_s(info, "%s", pRetData.get());*/
+        return kCommFaild;
+    }
+    return kCommSucc;
 }
 
 TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
@@ -224,7 +267,7 @@ TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
     //er.stClientGateway; 默认值
     er.dwClientDNS = xydyGetPrimaryDNSByIP(er.stClientLANIP.v4_addr.sin_addr.s_addr);
 
-    TReqstId nResponse;
+    RequestID nResponse;
     //LPVOID	 pRetData = NULL;
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(ENTER_ROOM);
@@ -288,25 +331,10 @@ TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
 
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
+
 int Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
     std::lock_guard<std::mutex> lock(mutex_);
-    UWL_DBG("[PROFILE] 1 SendEnterGame timestamp = %ld", GetTickCount());
-    //if (!connection_game_) {
-    //    UWL_ERR("m_ConnGame is nil");
-    //    assert(false);
-    //    return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    //}
-    //UWL_DBG("[PROFILE] 2 SendEnterGame timestamp = %ld", GetTickCount());
-
-    //if (!connection_game_->IsConnected()) {
-    //    UWL_DBG("[PROFILE] 3 SendEnterGame timestamp = %ld", GetTickCount());
-    //    if (!ConnectGameWithLock(room.szGameIP, room.nGamePort, nNofifyThrId)) {
-    //        UWL_ERR("m_ConnGame not connect fail ip = %s, port = %d", room.szGameIP, room.nGamePort);
-    //        //assert(false);
-    //        return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    //    }
-    //}
-    TReqstId nResponse;
+    RequestID nResponse;
     auto pSendData = std::make_unique<BYTE>();
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = 0;
@@ -319,40 +347,30 @@ int Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sN
     enter_req.set_roomid(roomid_);
     enter_req.set_flag(0);//TODO
     enter_req.set_hardid(hard_id);
-    bool is_succ = enter_req.SerializePartialToArray(pSendData.get(), nDataLen);
-    if (false == is_succ) {
-        UWL_ERR("SerializePartialToArray faild.");
+    REQUEST response = {};
+    auto result = NewSendGameRequestWithLock(GR_ENTER_NORMAL_GAME, enter_req, response);
+    if (kCommSucc != result) {
+        UWL_ERR("ParseFromRequest faild.");
         return kCommFaild;
     }
+
+    game::base::EnterNormalGameResp enter_resp;
+    int ret = ParseFromRequest(response, enter_resp);
+    if (kCommSucc != ret) {
+        UWL_ERR("ParseFromRequest faild.");
+        return kCommFaild;
+    }
+
+    if (kCommSucc != enter_resp.code()) {
+        UWL_ERR("enter game faild. check return[%d]. req = %s", enter_resp.code(), GetStringFromPb(enter_req).c_str());
+        return kCommFaild;
+    }
+
+    //TODO 银子不够 case
+    m_bRunGame = true;
+
     //@zhuhangmin 20190218 pb
-
-
-    UWL_DBG("[PROFILE] 5 SendEnterGame timestamp = %ld", GetTickCount());
-    auto it = SendGameRequestWithLock(GR_ENTER_GAME_EX, nDataLen, pSendData.get(), nResponse, pRetData, true);
-    m_playerRoomStatus = ROOM_PLAYER_STATUS_WAITING;
-    UWL_INF("[STATUS] account:%d userid:%d status [walking] ", GetUserID(), GetUserID());
-    if (!TUPLE_ELE(it, 0)) {
-        UWL_ERR("GR_ENTER_GAME_EX fail userid = %d", GetUserID());
-        //assert(false);
-        return kCommFaild;
-    }
-
-    if (nResponse == GR_RESPONE_ENTER_GAME_OK) {
-        m_bRunGame = true;
-        UWL_DBG("[PROFILE] 6 SendEnterGame timestamp = %ld", GetTickCount());
-        return kCommSucc;
-    } else if (nResponse == GR_RESPONE_ENTER_GAME_DXXW) {
-        m_bRunGame = true;
-        return kCommSucc;
-    } else if (nResponse == GR_RESPONE_ENTER_GAME_IDLE)		//游戏中，空闲玩家进入游戏
-    {
-        m_bRunGame = true;
-        return kCommSucc;
-    } else {
-        UWL_ERR("UNHANDLE RESPOSE %d = ", nResponse);
-    }
-
-    return kCommFaild;
+    return kCommSucc;
 }
 
 //@zhuhangmin
@@ -385,7 +403,7 @@ TTueRet Robot::SendGetNewTable(const ROOM& room, uint32_t nNofifyThrId, NTF_GET_
     gn.nWaitSeconds = 0;//?
     gn.nNetDelay = 0;//?
 
-    TReqstId nResponse;
+    RequestID nResponse;
     //LPVOID	 pRetData = NULL;
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(GET_NEWTABLE);
@@ -432,7 +450,7 @@ TTueRet	Robot::SendRoomPulse() {
     rp.nUserID = GetUserID();
     rp.nRoomID = GetRoomID();
 
-    TReqstId nResponse;
+    RequestID nResponse;
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(ROOMUSER_PULSE);
     return SendRoomRequestWithLock(GR_ROOMUSER_PULSE, nDataLen, &rp, nResponse, pRetData, false);
@@ -458,7 +476,7 @@ TTueRet	Robot::SendGamePulse() {
     gp.dwAveDelay = 11;
     gp.dwMaxDelay = 22;
 
-    TReqstId nResponse;
+    RequestID nResponse;
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(GAME_PULSE);
     return SendRoomRequestWithLock(GR_GAME_PULSE, nDataLen, &gp, nResponse, pRetData, false);

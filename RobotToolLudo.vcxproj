@@ -296,6 +296,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   <ItemGroup>
     <ClCompile Include="..\SEA\NEW_GAME\pb\game_base.pb.cc" />
     <ClCompile Include="..\SEA\NEW_GAME\pb\hall_base.pb.cc" />
+    <ClCompile Include="common_func.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Robot.cpp" />
     <ClCompile Include="RobotMgr.cpp" />
@@ -306,6 +307,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   <ItemGroup>
     <ClInclude Include="..\SEA\NEW_GAME\pb\game_base.pb.h" />
     <ClInclude Include="..\SEA\NEW_GAME\pb\hall_base.pb.h" />
+    <ClInclude Include="common_func.h" />
     <ClInclude Include="gamedef.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Resource.h" />

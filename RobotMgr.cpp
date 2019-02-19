@@ -142,7 +142,7 @@ bool	CRobotMgr::InitGameRoomDatas() {
     return true;
 }
 
-TTueRet CRobotMgr::SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
+TTueRet CRobotMgr::SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
     if (!hall_connection_) {
         UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", nReqId);
         assert(false);
@@ -501,7 +501,7 @@ void	CRobotMgr::ThreadRunHallNotify() {
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
             TokenID		nTokenID = pContext->lTokenID;
-            TReqstId		nReqstID = pRequest->head.nRequest;
+            RequestID		nReqstID = pRequest->head.nRequest;
 
             OnHallNotify(nReqstID, pRequest->pDataPtr, pRequest->nDataLen);
 
@@ -526,7 +526,7 @@ void	CRobotMgr::ThreadRunRoomNotify() {
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
             TokenID		nTokenID = pContext->lTokenID;
-            TReqstId		nReqstID = pRequest->head.nRequest;
+            RequestID		nReqstID = pRequest->head.nRequest;
 
             auto client = GetRobotByToken(ECT_ROOM, nTokenID);
             if (client == nullptr) {
@@ -557,7 +557,7 @@ void	CRobotMgr::ThreadRunGameNotify() {
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
             TokenID		nTokenID = pContext->lTokenID;
-            TReqstId		nReqstID = pRequest->head.nRequest;
+            RequestID		nReqstID = pRequest->head.nRequest;
 
             auto client = GetRobotByToken(ECT_GAME, nTokenID);
             if (client == nullptr) {
@@ -594,7 +594,7 @@ void    CRobotMgr::ThreadRunEnterGame() {
     return;
 }
 
-void CRobotMgr::OnHallNotify(TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     switch (nReqId) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
@@ -606,7 +606,7 @@ void CRobotMgr::OnHallNotify(TReqstId nReqId, void* pDataPtr, int32_t nSize) {
             return;
     }
 }
-void CRobotMgr::OnRoomNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnRoomNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
     if (nReqId == GR_PLAYER_ENTERED ||
         nReqId == GR_PLAYER_ENTERED ||
         nReqId == GR_PLAYER_SEATED ||
@@ -683,7 +683,7 @@ void CRobotMgr::OnRoomNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, i
         OnRoomRobotEnter(client, nTableNo, nChairNo, sEnterWay);
     }
 }
-void CRobotMgr::OnGameNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnGameNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
     if (nReqId == 229500 ||
         (nReqId >= 402000 && nReqId <= 4030000) ||
         nReqId == 211080 ||
@@ -712,7 +712,7 @@ void CRobotMgr::OnGameNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, i
         break;
     }
 }
-void	CRobotMgr::OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr) {
+void	CRobotMgr::OnHallRoomUsersOK(RequestID nReqId, void* pDataPtr) {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     ITEM_COUNT* pItemCount = (ITEM_COUNT*) pDataPtr;
     ITEM_USERS* pItemUsers = (ITEM_USERS*) ((PBYTE) pDataPtr + sizeof(ITEM_COUNT));
@@ -729,7 +729,7 @@ void CRobotMgr::OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nCha
     client->m_sEnterWay = sEnterWay;
     //UWL_INF("AddWaitEnter 已进入房间，等待进入游戏的机器人 %s: client[%d] room[%d].", sEnterWay.c_str(), client->GetUserID(), client->RoomId());
 }
-void CRobotMgr::OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnCliDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     UWL_ERR(_T("与大厅服务断开连接"));
     assert(false);
     hall_connection_->DestroyEx();
@@ -741,14 +741,14 @@ void CRobotMgr::OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize)
         }
     }
 }
-void CRobotMgr::OnCliDisconnRoom(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnCliDisconnRoom(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     UWL_WRN("userid = %d disconnect room %d", client->GetUserID(), client->GetRoomID());
     SetRoomID(client->GetUserID(), 0);
     client->OnDisconnRoom();
 
 }
-void CRobotMgr::OnCliDisconnGame(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnCliDisconnGame(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     UWL_WRN("userid = %d disconnect game ", client->GetUserID());
     client->OnDisconnGame();
@@ -816,7 +816,7 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
     logonUser.nHallRunCount = 1;
     strcpy_s(logonUser.szPassword, client->Password().c_str());
 
-    TReqstId nResponse;
+    RequestID nResponse;
     //LPVOID	 pRetData = NULL;
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(logonUser);
@@ -853,7 +853,7 @@ TTueRet CRobotMgr::SendGetRoomData(const int32_t nRoomId) {
     gr.dwFlags |= FLAG_GETROOMS_INCLUDE_HIDE;
     gr.dwFlags |= FLAG_GETROOMS_INCLUDE_ONLINES;
 
-    TReqstId nResponse;
+    RequestID nResponse;
     //LPVOID	 pRetData = NULL;
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(GET_ROOM);
@@ -1074,7 +1074,7 @@ void    CRobotMgr::OnTimerSendHallPluse(time_t nCurrTime) {
         hp.nUserID = 0;
         hp.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
 
-        TReqstId nResponse;
+        RequestID nResponse;
         //LPVOID	 pRetData = NULL;
         std::shared_ptr<void> pRetData;
         uint32_t nDataLen = sizeof(HALLUSER_PULSE);
@@ -1201,7 +1201,7 @@ void    CRobotMgr::OnTimerCtrlRoomActiv(time_t nCurrTime) {
         //ApplyRobotForRoom(it.second, it.first, m_mapAcntSett.size());
     }
     if (gr.nRoomCount > 0) {
-        TReqstId nResponse;
+        RequestID nResponse;
         //LPVOID	 pRetData = NULL;
         std::shared_ptr<void> pRetData;
         uint32_t nDataLen = sizeof(GET_ROOMUSERS) - sizeof(int)*MAX_QUERY_ROOMS + gr.nRoomCount*sizeof(int);

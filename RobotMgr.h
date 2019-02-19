@@ -18,7 +18,7 @@ public:
     void Term();
 
     // 大厅服务请求发送
-    TTueRet SendHallRequest(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    TTueRet SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
 
     // 机器人配置接口
     bool GetRobotSetting(int account, RobotSetting& robot_setting_);
@@ -59,16 +59,16 @@ protected:
     void	ThreadRunEnterGame();
 
     // 通知消息处理回调
-    void OnHallNotify(TReqstId nReqId, void* pDataPtr, int32_t nSize);
-    void OnRoomNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
-    void OnGameNotify(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
+    void OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnRoomNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnGameNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    void OnHallRoomUsersOK(TReqstId nReqId, void* pDataPtr);
+    void OnHallRoomUsersOK(RequestID nReqId, void* pDataPtr);
     void OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay);
 
-    void OnCliDisconnHall(TReqstId nReqId, void* pDataPtr, int32_t nSize);
-    void OnCliDisconnRoom(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
-    void OnCliDisconnGame(RobotPtr client, TReqstId nReqId, void* pDataPtr, int32_t nSize);
+    void OnCliDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnCliDisconnRoom(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnCliDisconnGame(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
 
     // 定时器回调方法
     bool	OnTimerLogonHall(time_t nCurrTime);

@@ -53,8 +53,9 @@ public:
 private:
     bool ConnectRoomWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId); //caller must require with lock
     bool ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
-    TTueRet SendRoomRequestWithLock(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
-    TTueRet SendGameRequestWithLock(TReqstId nReqId, uint32_t& nDataLen, void *pData, TReqstId &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    TTueRet SendRoomRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    TTueRet SendGameRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    int NewSendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
 
 
 protected:

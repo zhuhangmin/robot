@@ -35,3 +35,4 @@
 //@zhuhangmin 20192015 请勿在预编译中加入任何具体业务逻辑相关文件！！
 #include "game_base.pb.h"
 #include "gamedef.h"
+#include "google/protobuf/text_format.h" 

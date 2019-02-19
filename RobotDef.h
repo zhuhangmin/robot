@@ -45,7 +45,7 @@ using CurUserCount = int32_t;
 
 using          UserID = int32_t;
 using         TokenID = int32_t;
-using        TReqstId = uint32_t;
+using        RequestID = uint32_t;
 
 using   TTokenSockMap = std::unordered_map<LONG, SOCKET>;
 
@@ -68,6 +68,14 @@ using        TTueRet = std::tuple<bool, std::string>;
 #define ERR_OPERATE_SUCESS      "请求处理OK"
 #define ERR_NOT_NEED_OPERATE    "无需请求"
 
+enum ERROR_CODE {
+    CONNECT_NOT_EXIST = -1000, // "与服务器连接不存在"
+    CONNECT_DISABLE, // "ROOM_SOCKET_ERROR"
+    REQUEST_TIMEOUT, // "ROOM_REQUEST_TIEM_OUT"
+    OPERATION_FAILED, // "操作失败"
+    OPERATE_SUCESS, // "请求处理OK"
+    NOT_NEED_OPERATE, // "无需请求"
+};
 
 
 enum EConnType :uint32_t {
