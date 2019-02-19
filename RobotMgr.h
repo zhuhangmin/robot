@@ -28,9 +28,6 @@ public:
     // 机器人配置接口
     bool GetRobotSetting(int account, RobotSetting& robot_setting_);
 
-    //int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t nMaxCount); // second level
-    //int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec accounts); //should be first level
-
     // 机器人数据管理
     uint32_t GetAccountSettingSize() { return account_setting_map_.size(); }
     RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
@@ -51,35 +48,31 @@ protected:
 
     int InitConnectGame();
 
-    //bool	InitGameRoomDatas();
-
+public:
     //@zhuhangmin new pb
     int SendValidateReq();
     int SendGetGameInfo(RoomID roomid = 0);
-
     //@zhuhangmin new pb
 
     // 通知消息线程方法
     void	ThreadRunHallNotify();
-    void	ThreadRunRoomNotify();
     void	ThreadRunGameNotify();
     void	ThreadRunGameInfoNotify();
+    //TODO KEEPALIVE THREAD
+public:
     void	ThreadRunEnterGame();
 
+protected:
     // 通知消息处理回调
     void OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize);
-    void OnRoomNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
     void OnGameNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
-
-    void OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay);
-
+    void OnGameInfoNotify(RequestID nReqstID, const REQUEST &request);
+    //TODO KEEPALIVE THREAD NOTIFY
 
     // 定时器回调方法
     bool	OnTimerLogonHall(time_t nCurrTime);
-    void    OnTimerSendHallPluse(time_t nCurrTime);
-    void    OnTimerSendRoomPluse(time_t nCurrTime);
-    void    OnTimerSendGamePluse(time_t nCurrTime);
-    void    OnTimerCtrlRoomActiv(time_t nCurrTime);
+    /*   void    OnTimerSendHallPluse(time_t nCurrTime);
+       void    OnTimerSendGamePluse(time_t nCurrTime);*/
 
     //@zhuhangmin 20190218 仅补银线程可见 beg
     void    OnTimerUpdateDeposit(time_t nCurrTime);
@@ -109,17 +102,14 @@ public:
 
 private:
     void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
-    void OnDisconnRoomWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
     void OnDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
     void OnDisconnGameInfo();
-    void OnCliDisconnGameInfoWithLock();
-    void OnGameInfoNotify(RequestID nReqstID, const REQUEST &request);
+
     void OnRecvGameInfo(const REQUEST &request);
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 
     UThread			m_thrdHallNotify;
-    UThread			m_thrdRoomNotify;
     UThread			m_thrdGameNotify;
     UThread			m_thrdGameInfoNotify;
 

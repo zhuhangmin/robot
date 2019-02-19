@@ -73,7 +73,6 @@ enum UserStatus {
 
 
 机器人讨论： 
-1 机器人服务器链接还需要一个特定表示， 
 2 client_id 先复用大厅client_id
 
 
