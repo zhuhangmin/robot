@@ -5,10 +5,14 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
+    //setting
     using RoomSettingMap = std::unordered_map<RoomID, RoomSetiing>;
     using AccountSettingMap = std::unordered_map<AccountID, RobotSetting>;
-    using RoomDataMap = std::unordered_map<RoomID, HallRoomData>;
 
+    //game info
+    using RoomMap = std::unordered_map<RoomID, game::base::RoomData>;
+
+    //robot
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
     using RoomCurUsersMap = std::unordered_map<RoomID, CurUserCount>;
 
@@ -23,8 +27,8 @@ public:
     // 机器人配置接口
     bool GetRobotSetting(int account, RobotSetting& robot_setting_);
 
-    int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t nMaxCount); // second level
-    int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec accounts); //should be first level
+    //int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t nMaxCount); // second level
+    //int32_t ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec accounts); //should be first level
 
     // 机器人数据管理
     uint32_t	  GetAccountSettingSize() { return account_setting_map_.size(); }
@@ -34,10 +38,10 @@ public:
     // 主定时器
     void	OnServerMainTimer(time_t nCurrTime);
 
-    // RoomData
-    bool	GetRoomData(int32_t nRoomId, OUT ROOM& room);
-    uint32_t GetRoomDataLastTime(int32_t nRoomId);
-    void	SetRoomData(int32_t nRoomId, const LPROOM& room);
+    //// RoomData
+    //bool	GetRoomData(int32_t nRoomId, OUT ROOM& room);
+    //uint32_t GetRoomDataLastTime(int32_t nRoomId);
+    //void	SetRoomData(int32_t nRoomId, const LPROOM& room);
 
 protected:
     // 初始化配置文件
@@ -71,7 +75,6 @@ protected:
     void OnRoomNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
     void OnGameNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    void OnHallRoomUsersOK(RequestID nReqId, void* pDataPtr);
     void OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay);
 
 
@@ -90,7 +93,6 @@ protected:
 
     // 网络辅助请求
     TTueRet	RobotLogonHall(const int32_t& account = 0);
-    TTueRet SendGetRoomData(const int32_t nRoomId);
 
 
     //@zhuhangmin
@@ -126,7 +128,7 @@ protected:
     //immutable数据类 配置（热更新,允许脏读),初始化后,不改变状态,不用加锁
     AccountSettingMap	account_setting_map_; // 机器人账号配置  robot.setting
     RoomSettingMap room_setting_map_; //机器人房间配置 robot.setting
-    RoomDataMap	m_mapRoomData; // 大厅房间配置 大厅服务器获得 
+    //RoomDataMap	m_mapRoomData; // 大厅房间配置 大厅服务器获得 
 
     //mutable数据类 需加锁
     std::mutex        robot_map_mutex_;
@@ -134,12 +136,12 @@ protected:
 
     std::mutex hall_connection_mutex_;
     CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};//大厅连接
-    RoomCurUsersMap room_cur_users_; //管理房间中当前玩家数(包括机器人和真人)
 
     std::mutex game_info_connection_mutex_; // 用于同步游戏服务器集合信息
     CDefSocketClientPtr game_info_connection_{std::make_shared<CDefSocketClient>()};//游戏连接
+    RoomMap room_map_;
 
-    //TODO 记录登陆，进游戏流程状态来组合check condition 登陆大厅, 进游戏
+
 
 };
 #define TheRobotMgr CRobotMgr::Instance()
