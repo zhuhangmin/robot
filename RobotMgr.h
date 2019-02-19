@@ -49,11 +49,15 @@ protected:
 
     bool	InitConnectHall(bool bReconn = false);
 
-    bool	InitConnectGame();
+    int InitConnectGame();
 
-    bool	InitGameRoomDatas();
+    //bool	InitGameRoomDatas();
 
+    //@zhuhangmin new pb
     int SendValidateReq();
+    int SendGetGameInfo(RoomID roomid = 0);
+
+    //@zhuhangmin new pb
 
     // 通知消息线程方法
     void	ThreadRunHallNotify();

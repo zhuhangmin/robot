@@ -39,11 +39,18 @@ bool	CRobotMgr::Init() {
     }
     UWL_INF("InitConnectHall Sucessed.");
 
-    if (!InitGameRoomDatas()) {
+    /*if (!InitGameRoomDatas()) {
         UWL_ERR("InitGameRoomDatas() return false");
         assert(false);
         return false;
+        }*/
+
+    if (kCommFaild == InitConnectGame()) {
+        UWL_ERR("InitConnectGame failed");
+        assert(false);
+        return false;
     }
+
     return true;
 }
 void	CRobotMgr::Term() {
@@ -136,7 +143,7 @@ bool	CRobotMgr::InitConnectHall(bool bReconn) {
     return true;
 }
 
-bool	CRobotMgr::InitConnectGame() {
+int CRobotMgr::InitConnectGame() {
     TCHAR szGameSvrIP[MAX_SERVERIP_LEN] = {};
     GetPrivateProfileString(_T("GameServer"), _T("IP"), _T(""), szGameSvrIP, sizeof(szGameSvrIP), g_szIniFile);
     auto nGameSvrPort = GetPrivateProfileInt(_T("GameServer"), _T("Port"), 0, g_szIniFile);
@@ -148,29 +155,38 @@ bool	CRobotMgr::InitConnectGame() {
         if (!game_info_connection_->Create(szGameSvrIP, nGameSvrPort, 5, 0, m_thrdGameInfoNotify.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
             UWL_ERR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
             assert(false);
-            return false;
+            return kCommFaild;
         }
         UWL_INF("ConnectGame OK! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
 
-        SendValidateReq();
+        auto ret = SendValidateReq();
+
+        if (ret == kCommFaild) return ret;
 
         UWL_INF("SendValidateReq OK!");
+
+        ret = SendGetGameInfo();
+
+        if (ret == kCommFaild) return ret;
+
+        UWL_INF("SendGetGameInfo OK!");
+
     }
 
 
-    return true;
+    return kCommSucc;
 }
 
-bool	CRobotMgr::InitGameRoomDatas() {
-    for (auto& itr : room_setting_map_) {
-        auto&& tRet = SendGetRoomData(itr.first);
-        if (!TUPLE_ELE(tRet, 0)) {
-            UWL_ERR("SendGetRoomData Faild! nRoomId:%d err:%s", itr.first, TUPLE_ELE_C(tRet, 1));
-            assert(false);
-        }
-    }
-    return true;
-}
+//bool	CRobotMgr::InitGameRoomDatas() {
+//    for (auto& itr : room_setting_map_) {
+//        auto&& tRet = SendGetRoomData(itr.first);
+//        if (!TUPLE_ELE(tRet, 0)) {
+//            UWL_ERR("SendGetRoomData Faild! nRoomId:%d err:%s", itr.first, TUPLE_ELE_C(tRet, 1));
+//            assert(false);
+//        }
+//    }
+//    return true;
+//}
 
 int CRobotMgr::SendValidateReq() {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
@@ -194,6 +210,36 @@ int CRobotMgr::SendValidateReq() {
 
     if (kCommSucc != resp.code()) {
         UWL_ERR("SendValidateReq faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(req).c_str());
+        return kCommFaild;
+    }
+
+    return kCommSucc;
+}
+
+// 机器人服务获取游戏内所有玩家信息(room、table、user)
+int CRobotMgr::SendGetGameInfo(RoomID roomid /*= 0*/) {
+    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+
+    game::base::GetGameUsersReq req;
+    req.set_clientid(g_nClientID);
+    req.set_roomid(roomid);
+    REQUEST response = {};
+    auto result = RobotUitls::SendRequest(game_info_connection_, GR_GET_GAMEUSERS, req, response);
+
+    if (kCommSucc != result) {
+        UWL_ERR("SendGetGameInfo failed");
+        return kCommFaild;
+    }
+
+    game::base::GetGameUsersResp resp;
+    int ret = ParseFromRequest(response, resp);
+    if (kCommSucc != ret) {
+        UWL_ERR("ParseFromRequest faild.");
+        return kCommFaild;
+    }
+
+    if (kCommSucc != resp.code()) {
+        UWL_ERR("SendGetGameInfo faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(req).c_str());
         return kCommFaild;
     }
 
