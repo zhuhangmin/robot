@@ -66,9 +66,6 @@ protected:
     void OnHallRoomUsersOK(RequestID nReqId, void* pDataPtr);
     void OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nChairNo, std::string sEnterWay);
 
-    void OnCliDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize);
-    void OnCliDisconnRoom(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
-    void OnCliDisconnGame(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
 
     // 定时器回调方法
     bool	OnTimerLogonHall(time_t nCurrTime);
@@ -98,6 +95,11 @@ protected:
     void SetRoomID(UserID userid, RoomID roomid);
 
     int GetRoomCurrentRobotSize(RoomID roomid); //当前在某个房间里的机器人数
+
+private:
+    void OnCliDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnCliDisconnRoomWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnCliDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
 
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
