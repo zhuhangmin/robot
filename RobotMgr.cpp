@@ -2,6 +2,8 @@
 #include "RobotMgr.h"
 #include "Main.h"
 #include "RobotReq.h"
+#include "common_func.h"
+#include "RobotUitls.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -148,8 +150,14 @@ bool	CRobotMgr::InitConnectGame() {
             assert(false);
             return false;
         }
+        UWL_INF("ConnectGame OK! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
+
+        SendValidateReq();
+
+        UWL_INF("SendValidateReq OK!");
     }
-    UWL_INF("ConnectGame OK! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
+
+
     return true;
 }
 
@@ -162,6 +170,34 @@ bool	CRobotMgr::InitGameRoomDatas() {
         }
     }
     return true;
+}
+
+int CRobotMgr::SendValidateReq() {
+    std::lock_guard<std::mutex> lock(game_connection_mutex_);
+
+    game::base::RobotSvrValidateReq req;
+    req.set_client_id(g_nClientID);
+    REQUEST response = {};
+    auto result = RobotUitls::SendRequest(game_connection_, GR_VALID_ROBOTSVR, req, response);
+
+    if (kCommSucc != result) {
+        UWL_ERR("SendValidateReq failed");
+        return kCommFaild;
+    }
+
+    game::base::RobotSvrValidateResp resp;
+    int ret = ParseFromRequest(response, resp);
+    if (kCommSucc != ret) {
+        UWL_ERR("ParseFromRequest faild.");
+        return kCommFaild;
+    }
+
+    if (kCommSucc != resp.code()) {
+        UWL_ERR("SendValidateReq faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(req).c_str());
+        return kCommFaild;
+    }
+
+    return kCommSucc;
 }
 
 TTueRet CRobotMgr::SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {

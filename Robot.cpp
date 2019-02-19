@@ -3,6 +3,7 @@
 #include "Main.h"
 #include "RobotReq.h"
 #include "common_func.h"
+#include "RobotUitls.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -106,104 +107,71 @@ TTueRet Robot::SendRoomRequestWithLock(RequestID nReqId, uint32_t& nDataLen, voi
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
-TTueRet Robot::SendGameRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
-    if (!connection_game_) {
-        UWL_ERR("m_ConnGame is nil");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    }
-
-
-    if (!connection_game_->IsConnected()) {
-        UWL_ERR("m_ConnGame not connected");
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    }
-
-
-    CONTEXT_HEAD	Context = {};
-    REQUEST			Request = {};
-    REQUEST			Response = {};
-    Context.hSocket = connection_game_->GetSocket();
-    Context.lSession = 0;
-    Context.bNeedEcho = bNeedEcho;
-    Request.head.nRepeated = 0;
-    Request.head.nRequest = nReqId;
-    Request.nDataLen = nDataLen;
-    Request.pDataPtr = pData;//////////////
-
-    BOOL bTimeOut = FALSE, bResult = TRUE;
-    bResult = connection_game_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
-
-    if (!bResult)///if timeout or disconnect 
-    {
+//TTueRet Robot::SendRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
+//    if (!connection_game_) {
+//        UWL_ERR("m_ConnGame is nil");
+//        assert(false);
+//        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
+//    }
+//
+//
+//    if (!connection_game_->IsConnected()) {
+//        UWL_ERR("m_ConnGame not connected");
+//        assert(false);
+//        return std::make_tuple(false, ERR_CONNECT_DISABLE);
+//    }
+//
+//
+//    CONTEXT_HEAD	Context = {};
+//    REQUEST			Request = {};
+//    REQUEST			Response = {};
+//    Context.hSocket = connection_game_->GetSocket();
+//    Context.lSession = 0;
+//    Context.bNeedEcho = bNeedEcho;
+//    Request.head.nRepeated = 0;
+//    Request.head.nRequest = nReqId;
+//    Request.nDataLen = nDataLen;
+//    Request.pDataPtr = pData;//////////////
+//
+//    BOOL bTimeOut = FALSE, bResult = TRUE;
+//    bResult = connection_game_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
+//
+//    if (!bResult)///if timeout or disconnect 
+//    {
+//        UWL_ERR("game send quest fail");
+//        //assert(false);
+//        return std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
+//    }
+//
+//
+//    nDataLen = Response.nDataLen;
+//    nRespId = Response.head.nRequest;
+//    pRetData.reset(Response.pDataPtr);
+//
+//    if (nRespId == GR_ERROR_INFOMATION) {
+//        CHAR info[512] = {};
+//        sprintf_s(info, "%s", pRetData.get());
+//        nDataLen = 0;
+//        return std::make_tuple(false, info);
+//    }
+//    if (0 == nRespId) {
+//        //assert(false);
+//        UWL_ERR("enter game respId = 0");
+//        CHAR info[512] = {};
+//        sprintf_s(info, "%s", pRetData.get());
+//        nDataLen = 0;
+//        return std::make_tuple(false, info);
+//    }
+//    return std::make_tuple(true, ERR_OPERATE_SUCESS);
+//}
+//
+int Robot::SendRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
+    int result = RobotUitls::SendRequest(connection_game_, requestid, val, response, bNeedEcho);
+    if (result != kCommSucc) {
         UWL_ERR("game send quest fail");
         //assert(false);
-        return std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
     }
-
-
-    nDataLen = Response.nDataLen;
-    nRespId = Response.head.nRequest;
-    pRetData.reset(Response.pDataPtr);
-
-    if (nRespId == GR_ERROR_INFOMATION) {
-        CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData.get());
-        nDataLen = 0;
-        return std::make_tuple(false, info);
-    }
-    if (0 == nRespId) {
-        //assert(false);
-        UWL_ERR("enter game respId = 0");
-        CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData.get());
-        nDataLen = 0;
-        return std::make_tuple(false, info);
-    }
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
-}
-
-int Robot::NewSendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
-    CONTEXT_HEAD	context_head = {};
-    context_head.hSocket = connection_game_->GetSocket();
-    context_head.lSession = 0;
-    context_head.bNeedEcho = bNeedEcho;
-
-    std::unique_ptr<char> data(new char[val.ByteSize()]);
-    bool is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
-    if (false == is_succ) {
-        UWL_ERR("SerializePartialToArray faild.");
-        return kCommFaild;
-    }
-
-    REQUEST request(requestid, data.get(), val.ByteSize());
-
-    BOOL timeout = false;
-    bool result = connection_game_->SendRequest(&context_head, &request, &response, timeout, REQ_TIMEOUT_INTERVAL);
-
-    if (!result)///if timeout or disconnect 
-    {
-        UWL_ERR("game send quest fail");
-        //assert(false);
-        return timeout ? ERROR_CODE::REQUEST_TIMEOUT : ERROR_CODE::OPERATION_FAILED;
-    }
-
-    auto nRespId = response.head.nRequest;
-
-    //TODO ?
-    if (nRespId == GR_ERROR_INFOMATION) {
-        assert(false);
-        return kCommFaild;
-    }
-    if (0 == nRespId) {
-        assert(false);
-        /*       UWL_ERR("game respId = 0");
-               CHAR info[512] = {};
-               sprintf_s(info, "%s", pRetData.get());*/
-        return kCommFaild;
-    }
-    return kCommSucc;
+    return result;
 }
 
 TTueRet Robot::SendEnterRoom(const ROOM& room, uint32_t nNofifyThrId) {
@@ -348,7 +316,7 @@ int Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sN
     enter_req.set_flag(0);//TODO
     enter_req.set_hardid(hard_id);
     REQUEST response = {};
-    auto result = NewSendGameRequestWithLock(GR_ENTER_NORMAL_GAME, enter_req, response);
+    auto result = SendRequestWithLock(GR_ENTER_NORMAL_GAME, enter_req, response);
     if (kCommSucc != result) {
         UWL_ERR("ParseFromRequest faild.");
         return kCommFaild;

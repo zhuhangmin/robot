@@ -53,6 +53,7 @@ protected:
 
     bool	InitGameRoomDatas();
 
+    int SendValidateReq();
 
     // 通知消息线程方法
     void	ThreadRunHallNotify();
