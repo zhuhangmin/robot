@@ -51,6 +51,7 @@ void	CRobotMgr::Term() {
     m_thrdHallNotify.Release();
     m_thrdRoomNotify.Release();
     m_thrdGameNotify.Release();
+    m_thrdGameInfoNotify.Release();
 }
 
 bool CRobotMgr::InitSetting() {
@@ -105,6 +106,7 @@ bool	CRobotMgr::InitNotifyThreads() {
     m_thrdHallNotify.Initial(std::thread([this] {this->ThreadRunHallNotify(); }));
     m_thrdRoomNotify.Initial(std::thread([this] {this->ThreadRunRoomNotify(); }));
     m_thrdGameNotify.Initial(std::thread([this] {this->ThreadRunGameNotify(); }));
+    m_thrdGameInfoNotify.Initial(std::thread([this] {this->ThreadRunGameNotify(); }));
     return true;
 }
 bool	CRobotMgr::InitEnterGameThreads() {
@@ -131,6 +133,26 @@ bool	CRobotMgr::InitConnectHall(bool bReconn) {
     UWL_INF("ConnectHall[ReConn:%d] OK! IP:%s Port:%d", (int) bReconn, szHallSvrIP, nHallSvrPort);
     return true;
 }
+
+bool	CRobotMgr::InitConnectGame() {
+    TCHAR szGameSvrIP[MAX_SERVERIP_LEN] = {};
+    GetPrivateProfileString(_T("GameServer"), _T("IP"), _T(""), szGameSvrIP, sizeof(szGameSvrIP), g_szIniFile);
+    auto nGameSvrPort = GetPrivateProfileInt(_T("GameServer"), _T("Port"), 0, g_szIniFile);
+
+    {
+        std::lock_guard<std::mutex> lock(game_connection_mutex_);
+        game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
+
+        if (!game_connection_->Create(szGameSvrIP, nGameSvrPort, 5, 0, m_thrdGameInfoNotify.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
+            UWL_ERR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
+            assert(false);
+            return false;
+        }
+    }
+    UWL_INF("ConnectGame OK! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
+    return true;
+}
+
 bool	CRobotMgr::InitGameRoomDatas() {
     for (auto& itr : room_setting_map_) {
         auto&& tRet = SendGetRoomData(itr.first);
@@ -547,6 +569,38 @@ void	CRobotMgr::ThreadRunRoomNotify() {
     return;
 }
 void	CRobotMgr::ThreadRunGameNotify() {
+    UWL_INF(_T("GameNotify thread started. id = %d"), GetCurrentThreadId());
+
+    MSG msg = {};
+    while (GetMessage(&msg, 0, 0, 0)) {
+        if (UM_DATA_RECEIVED == msg.message) {
+
+            LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
+            LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
+
+            TokenID		nTokenID = pContext->lTokenID;
+            RequestID		nReqstID = pRequest->head.nRequest;
+
+            auto client = GetRobotByToken(ECT_GAME, nTokenID);
+            if (client == nullptr) {
+                UWL_WRN(_T("GameNotify client not found. nTokenID = %d reqId:%d"), nTokenID, nReqstID);
+                continue;
+            }
+
+            OnGameNotify(client, nReqstID, pRequest->pDataPtr, pRequest->nDataLen);
+
+            SAFE_DELETE(pContext);
+            UwlClearRequest(pRequest);
+            SAFE_DELETE(pRequest);
+        } else {
+            DispatchMessage(&msg);
+        }
+    }
+    UWL_INF(_T("GameNotify thread exiting. id = %d"), GetCurrentThreadId());
+    return;
+}
+
+void	CRobotMgr::ThreadRunGameInfoNotify() {
     UWL_INF(_T("GameNotify thread started. id = %d"), GetCurrentThreadId());
 
     MSG msg = {};

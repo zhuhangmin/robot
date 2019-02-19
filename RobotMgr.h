@@ -49,6 +49,8 @@ protected:
 
     bool	InitConnectHall(bool bReconn = false);
 
+    bool	InitConnectGame();
+
     bool	InitGameRoomDatas();
 
 
@@ -56,6 +58,7 @@ protected:
     void	ThreadRunHallNotify();
     void	ThreadRunRoomNotify();
     void	ThreadRunGameNotify();
+    void	ThreadRunGameInfoNotify();
     void	ThreadRunEnterGame();
 
     // 通知消息处理回调
@@ -107,6 +110,7 @@ protected:
     UThread			m_thrdHallNotify;
     UThread			m_thrdRoomNotify;
     UThread			m_thrdGameNotify;
+    UThread			m_thrdGameInfoNotify;
 
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
 
@@ -123,6 +127,9 @@ protected:
     std::mutex hall_connection_mutex_;
     CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};//大厅连接
     RoomCurUsersMap room_cur_users_; //管理房间中当前玩家数(包括机器人和真人)
+
+    std::mutex game_connection_mutex_; // 用于同步游戏服务器集合信息
+    CDefSocketClientPtr game_connection_{std::make_shared<CDefSocketClient>()};//游戏连接
 
     //TODO 记录登陆，进游戏流程状态来组合check condition 登陆大厅, 进游戏
 
