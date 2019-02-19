@@ -457,12 +457,12 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
 
                 } else if (strcmp(retStr, "ROOM_SOCKET_ERROR") == 0) {
                     UWL_WRN("[interval] ApplyRobotForRoom1 ROOM_SOCKET_ERROR Account:%d enterRoom[%d] Err:%s, time = %I32u", it->second->GetUserID(), nRoomId, TUPLE_ELE_C(tRet, 1), time(nullptr));
-                    OnCliDisconnRoomWithLock(it->second, 0, nullptr, 0);
+                    OnDisconnRoomWithLock(it->second, 0, nullptr, 0);
                     //assert(false);
                     return 0;
                 } else {
                     UWL_WRN("[interval] ApplyRobotForRoom1 UNKONW ERR Account:%d enterRoom[%d] Err:%s, time = %I32u", it->second->GetUserID(), nRoomId, TUPLE_ELE_C(tRet, 1), time(nullptr));
-                    OnCliDisconnRoomWithLock(it->second, 0, nullptr, 0);
+                    OnDisconnRoomWithLock(it->second, 0, nullptr, 0);
                     /*assert(false);*/
                     return 0;
                 }
@@ -481,7 +481,7 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, int32_t n
         tRet = it->second->SendGetNewTable(theRoom, m_thrdRoomNotify.ThreadId(), lpNewTableInfo);
         if (!TUPLE_ELE(tRet, 0)) {
             UWL_ERR("[interval] ApplyRobotForRoom1 Account:%d Room[%d] askNewTable Err:%s time = %I32u", it->second->GetUserID(), nRoomId, TUPLE_ELE_C(tRet, 1), time(nullptr));
-            OnCliDisconnRoomWithLock(it->second, 0, nullptr, 0);
+            OnDisconnRoomWithLock(it->second, 0, nullptr, 0);
             return 0;
         } else {
             if (!(it->second->IsGaming())) // 如果不在游戏服务器 则加入等待进入游戏服务器的列表
@@ -561,12 +561,12 @@ int32_t CRobotMgr::ApplyRobotForRoom(int32_t nGameId, int32_t nRoomId, TInt32Vec
                         UWL_ERR("ApplyRobotForRoom2 GR_DEPOSIT_NOTENOUGH nGameId = %d, nRoomId = %d", nGameId, nRoomId);
                     } else if (strcmp(retStr, "ROOM_REQUEST_TIEM_OUT") == 0) {
                         //@zhuhangmin
-                        OnCliDisconnRoomWithLock(it_->second, 0, nullptr, 0);
+                        OnDisconnRoomWithLock(it_->second, 0, nullptr, 0);
                         UWL_ERR("ApplyRobotForRoom2 ROOM_REQUEST_TIEM_OUT nGameId = %d, nRoomId = %d", nGameId, nRoomId);
                     } else if (strcmp(retStr, "ROOM_SOCKET_ERROR") == 0) {
                         UWL_ERR("ApplyRobotForRoom2 ROOM_SOCKET_ERROR nGameId = %d, nRoomId = %d", nGameId, nRoomId);
                         //assert(false);
-                        OnCliDisconnRoomWithLock(it_->second, 0, nullptr, 0);
+                        OnDisconnRoomWithLock(it_->second, 0, nullptr, 0);
                     } else {
                         UWL_ERR("ApplyRobotForRoom2 UNKNOW ERROR  nGameId = %d, nRoomId = %d", nGameId, nRoomId);
                         assert(false);
@@ -692,16 +692,9 @@ void	CRobotMgr::ThreadRunGameInfoNotify() {
             LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
-            TokenID		nTokenID = pContext->lTokenID;
             RequestID		nReqstID = pRequest->head.nRequest;
 
-            auto client = GetRobotByToken(ECT_GAME, nTokenID);
-            if (client == nullptr) {
-                UWL_WRN(_T("GameNotify client not found. nTokenID = %d reqId:%d"), nTokenID, nReqstID);
-                continue;
-            }
-
-            OnGameNotify(client, nReqstID, pRequest->pDataPtr, pRequest->nDataLen);
+            OnGameInfoNotify(nReqstID, *pRequest);
 
             SAFE_DELETE(pContext);
             UwlClearRequest(pRequest);
@@ -713,6 +706,33 @@ void	CRobotMgr::ThreadRunGameInfoNotify() {
     UWL_INF(_T("GameNotify thread exiting. id = %d"), GetCurrentThreadId());
     return;
 }
+
+void CRobotMgr::OnGameInfoNotify(RequestID nReqstID, const REQUEST &request) {
+    switch (nReqstID) {
+        case UR_SOCKET_ERROR:
+        case UR_SOCKET_CLOSE:
+            OnDisconnGameInfo();
+            break;
+
+        case GN_USER_STATUS_TO_ROBOTSVR:
+        {
+            OnRecvGameInfo(request);
+        }
+        break;
+    }
+
+}
+
+void CRobotMgr::OnRecvGameInfo(const REQUEST &request) {
+    game::base::Status2RobotSvrNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
+
+}
+
 void    CRobotMgr::ThreadRunEnterGame() {
     UWL_INF(_T("EnterGame thread started. id = %d"), GetCurrentThreadId());
 
@@ -734,7 +754,7 @@ void CRobotMgr::OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     switch (nReqId) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            OnCliDisconnHallWithLock(nReqId, pDataPtr, nSize);
+            OnDisconnHallWithLock(nReqId, pDataPtr, nSize);
             break;
 
         case GR_GET_ROOMUSERS_OK:
@@ -780,7 +800,7 @@ void CRobotMgr::OnRoomNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, 
     switch (nReqId) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            OnCliDisconnRoomWithLock(client, nReqId, pDataPtr, nSize);
+            OnDisconnRoomWithLock(client, nReqId, pDataPtr, nSize);
             break;
         case GR_NEED_ENTERGAME: // solo房开始并进入游戏
         {
@@ -836,7 +856,7 @@ void CRobotMgr::OnGameNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, 
     switch (nReqId) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            OnCliDisconnGameWithLock(client, nReqId, pDataPtr, nSize);
+            OnDisconnGameWithLock(client, nReqId, pDataPtr, nSize);
             break;
         case 211010: //GR_PLAYER_ABORT
             break;
@@ -865,7 +885,7 @@ void CRobotMgr::OnRoomRobotEnter(RobotPtr client, int32_t nTableNo, int32_t nCha
     client->m_sEnterWay = sEnterWay;
     //UWL_INF("AddWaitEnter 已进入房间，等待进入游戏的机器人 %s: client[%d] room[%d].", sEnterWay.c_str(), client->GetUserID(), client->RoomId());
 }
-void CRobotMgr::OnCliDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     UWL_ERR(_T("与大厅服务断开连接"));
     assert(false);
     hall_connection_->DestroyEx();
@@ -875,15 +895,19 @@ void CRobotMgr::OnCliDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32
         }
     }
 }
-void CRobotMgr::OnCliDisconnRoomWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnDisconnRoomWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
     UWL_WRN("userid = %d disconnect room %d", client->GetUserID(), client->GetRoomID());
     SetRoomID(client->GetUserID(), 0);
     client->OnDisconnRoom();
 
 }
-void CRobotMgr::OnCliDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
     UWL_WRN("userid = %d disconnect game ", client->GetUserID());
     client->OnDisconnGame();
+}
+
+void CRobotMgr::OnDisconnGameInfo() {
+    game_info_connection_->DestroyEx();
 }
 
 TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {

@@ -105,10 +105,13 @@ protected:
     int GetRoomCurrentRobotSize(RoomID roomid); //当前在某个房间里的机器人数
 
 private:
-    void OnCliDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
-    void OnCliDisconnRoomWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
-    void OnCliDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
-
+    void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnDisconnRoomWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnDisconnGameInfo();
+    void OnCliDisconnGameInfoWithLock();
+    void OnGameInfoNotify(RequestID nReqstID, const REQUEST &request);
+    void OnRecvGameInfo(const REQUEST &request);
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 
