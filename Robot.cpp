@@ -26,7 +26,7 @@ void Robot::OnDisconnRoom() {
 void Robot::OnDisconnGame() {
     std::lock_guard<std::mutex> lock(mutex_);
     m_bRunGame = false;
-    connection_game_->DestroyEx();
+    game_connection_->DestroyEx();
 }
 bool Robot::ConnectRoomWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
     connection_room_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
@@ -41,10 +41,10 @@ bool Robot::ConnectRoomWithLock(const std::string& strIP, const int32_t nPort, u
     return true;
 }
 bool Robot::ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
-    connection_game_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
+    game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     //由于目前网络库不支持IPV6，所以添加配置项，可以选定本地地址
     std::string sIp = (g_useLocal) ? "127.0.0.1" : strIP;
-    if (!connection_game_->Create(sIp.c_str(), nPort, 5, 0, nThrdId, 0, GetHelloData(), GetHelloLength())) {
+    if (!game_connection_->Create(sIp.c_str(), nPort, 5, 0, nThrdId, 0, GetHelloData(), GetHelloLength())) {
         UWL_ERR("ConnectGame Faild! IP:%s Port:%d", sIp.c_str(), nPort);
         //assert(false);
         return false;
@@ -166,7 +166,7 @@ TTueRet Robot::SendRoomRequestWithLock(RequestID nReqId, uint32_t& nDataLen, voi
 //}
 //
 int Robot::SendRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
-    int result = RobotUitls::SendRequest(connection_game_, requestid, val, response, bNeedEcho);
+    int result = RobotUitls::SendRequest(game_connection_, requestid, val, response, bNeedEcho);
     if (result != kCommSucc) {
         UWL_ERR("game send quest fail");
         //assert(false);
@@ -425,14 +425,14 @@ TTueRet	Robot::SendRoomPulse() {
 }
 TTueRet	Robot::SendGamePulse() {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (!connection_game_) {
+    if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
     }
 
 
-    if (!connection_game_->IsConnected()) {
+    if (!game_connection_->IsConnected()) {
         UWL_ERR("m_ConnGame not connected");
         assert(false);
         return std::make_tuple(false, ERR_CONNECT_DISABLE);

@@ -142,10 +142,10 @@ bool	CRobotMgr::InitConnectGame() {
     auto nGameSvrPort = GetPrivateProfileInt(_T("GameServer"), _T("Port"), 0, g_szIniFile);
 
     {
-        std::lock_guard<std::mutex> lock(game_connection_mutex_);
-        game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
+        std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+        game_info_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
 
-        if (!game_connection_->Create(szGameSvrIP, nGameSvrPort, 5, 0, m_thrdGameInfoNotify.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
+        if (!game_info_connection_->Create(szGameSvrIP, nGameSvrPort, 5, 0, m_thrdGameInfoNotify.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
             UWL_ERR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
             assert(false);
             return false;
@@ -173,12 +173,12 @@ bool	CRobotMgr::InitGameRoomDatas() {
 }
 
 int CRobotMgr::SendValidateReq() {
-    std::lock_guard<std::mutex> lock(game_connection_mutex_);
+    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
 
     game::base::RobotSvrValidateReq req;
     req.set_client_id(g_nClientID);
     REQUEST response = {};
-    auto result = RobotUitls::SendRequest(game_connection_, GR_VALID_ROBOTSVR, req, response);
+    auto result = RobotUitls::SendRequest(game_info_connection_, GR_VALID_ROBOTSVR, req, response);
 
     if (kCommSucc != result) {
         UWL_ERR("SendValidateReq failed");

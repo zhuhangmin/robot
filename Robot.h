@@ -15,7 +15,7 @@ public:
     bool		IsGaming() { return m_bRunGame; }
     void		SetGaming(bool isGame) { m_bRunGame = isGame; }
     TokenID	RoomToken() { return connection_room_->GetTokenID(); }
-    TokenID	GameToken() { return connection_game_->GetTokenID(); }
+    TokenID	GameToken() { return game_connection_->GetTokenID(); }
 
     void		SetLogonData(LPLOGON_SUCCEED_V2 logonOk) { m_LogonData = *logonOk; }
 
@@ -70,7 +70,7 @@ protected:
 
     CDefSocketClientPtr connection_room_{std::make_shared<CDefSocketClient>()};
 
-    CDefSocketClientPtr connection_game_{std::make_shared<CDefSocketClient>()};
+    CDefSocketClientPtr game_connection_{std::make_shared<CDefSocketClient>()};
 
 public:
     // 游戏的银子
