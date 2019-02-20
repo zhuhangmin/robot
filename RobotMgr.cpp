@@ -179,8 +179,10 @@ void CRobotMgr::ThreadSendHallPluse() {
             RequestID nRespID = 0;
             std::shared_ptr<void> pRetData;
             uint32_t nDataLen = sizeof(HALLUSER_PULSE);
-            SendHallRequest(GR_HALLUSER_PULSE, nDataLen, &hp, nRespID, pRetData, false);
-
+            auto result = SendHallRequest(GR_HALLUSER_PULSE, nDataLen, &hp, nRespID, pRetData, false);
+            if (result == kCommFaild) {
+                UWL_ERR("Send hall pluse failed");
+            }
 
         }
     }
@@ -199,13 +201,12 @@ void CRobotMgr::ThreadMainProc() {
         if (WAIT_TIMEOUT == dwRet) { // timeout
             //UWL_DBG(_T("[interval] ---------------------- timer thread triggered. do something. interval = %ld ms."), DEF_TIMER_INTERVAL);
             //UWL_DBG("[interval] TimerThreadProc = %I32u", time(nullptr));
-            //logon 
+
+            //logon hall
+            LogonHall();
 
             //enter game
-            //OnTimerLogonHall(nCurrTime);
-            /*   OnTimerSendHallPluse(nCurrTime);
-            OnTimerSendGamePluse(nCurrTime);*/
-            //OnTimerUpdateDeposit(nCurrTime);
+
         }
     }
 
@@ -223,21 +224,6 @@ void	CRobotMgr::ThreadDeposit() {
         }
 
         if (WAIT_TIMEOUT == dwRet) {
-            //{
-            //    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-            //    if (!hall_connection_) {
-            //        UWL_ERR("SendHallRequest OnTimerCtrlRoomActiv nil ERR_CONNECT_NOT_EXIST nReqId");
-            //        assert(false);
-            //        return;
-            //    }
-
-            //    if (!hall_connection_->IsConnected()) {
-            //        UWL_ERR("SendHallRequest OnTimerUpdateDeposit not connect ERR_CONNECT_DISABLE");
-            //        assert(false);
-            //        return;
-            //    }
-            //}
-
             DepositMap deposit_map_bak;
             {
                 std::lock_guard<std::mutex> lock(deposit_map_mutex_);
@@ -342,7 +328,6 @@ int CRobotMgr::RobotBackDeposit(UserID userid, int32_t amount) {
         return kCommFaild;
     return kCommSucc;
 }
-
 
 int CRobotMgr::LogonHall() {
     //pick up a random robot who is not logon hall

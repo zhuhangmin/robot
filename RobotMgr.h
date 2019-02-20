@@ -17,28 +17,28 @@ protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 
 private:
-    // 大厅建立连接
+    // 大厅 建立连接
     int ConnectHall(bool bReconn = false);
 
-    // 大厅服务请求发送
+    // 大厅 消息发送
     int SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
 
-    // 大厅接收消息
+    // 大厅 消息接收
     void ThreadHallNotify();
 
-    // 大厅消息处理
+    // 大厅 消息处理
     void OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    // 大厅断开链接
+    // 大厅 断开链接
     void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    // 定时器 大厅心跳
+    // 大厅 定时心跳
     void ThreadSendHallPluse();
 
-    // 定时器 主流程业务
+    // 定时 业务流程
     void ThreadMainProc();
 
-    // 定时器 补银
+    // 定时 补银还银
     void ThreadDeposit();
 
 private:
