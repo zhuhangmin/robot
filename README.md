@@ -69,7 +69,14 @@ enum UserStatus {
 };
 
 * 是否需要补充或消耗银子通过得到的银子数 和房间配置的上下限来触发
-
+* looker (ChairInfo 0) (TableUserInfo 1) isLooker method
+* 	repeated ChairInfo chairs	= 9;	// 椅子信息
+	repeated TableUserInfo table_users = 10；
+* 底层基础数据类：  同步 svn  305
+* 根据模板服务器发送事件前数据的改变 来改变机器人服务器相应的状态变化
+* COPY 模板的user ，table ，room ，manager 类做映射
+* 独单的game info socket 管理类
+* 上层机器人管理类：
 
 
 机器人讨论： 

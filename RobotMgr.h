@@ -83,14 +83,12 @@ protected:
     // 网络辅助请求
     TTueRet	RobotLogonHall(const int32_t& account = 0);
 
-
     //@zhuhangmin
     bool IsLogon(UserID userid);
     void SetLogon(UserID userid, bool status);
     RobotPtr GetRobotClient(UserID userid);
     void SetRobotClient(RobotPtr client);
 
-    bool IsInRoom(UserID userid);
     void SetRoomID(UserID userid, RoomID roomid);
 
     int GetRoomCurrentRobotSize(RoomID roomid); //当前在某个房间里的机器人数

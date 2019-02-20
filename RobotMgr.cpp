@@ -463,14 +463,7 @@ void CRobotMgr::OnGameNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, 
         case UR_SOCKET_CLOSE:
             OnDisconnGameWithLock(client, nReqId, pDataPtr, nSize);
             break;
-        case 211010: //GR_PLAYER_ABORT
-            break;
 
-        case 211028://  GR_START_SOLOTABLE
-        {
-            client->SetPlayerRoomStatus(ROOM_PLAYER_STATUS_PLAYING);
-        }
-        break;
     }
 }
 
@@ -680,26 +673,15 @@ void CRobotMgr::SetRobotClient(RobotPtr client) {
     robot_map_.insert(std::make_pair(client->GetUserID(), client));
 }
 
-bool CRobotMgr::IsInRoom(UserID userid) {
-    if (robot_map_.find(userid) != robot_map_.end()) {
-        return robot_map_[userid]->IsInRoom();
-    }
-    return false;
-}
 
 void CRobotMgr::SetRoomID(UserID userid, RoomID roomid) {
-    if (robot_map_.find(userid) != robot_map_.end()) {
+    /*if (robot_map_.find(userid) != robot_map_.end()) {
         robot_map_[userid]->SetRoomID(roomid);
-    }
+        }*/
 }
 
 int CRobotMgr::GetRoomCurrentRobotSize(RoomID roomid) {
     auto count = 0;
-    for (auto& kv : robot_map_) {
-        if (kv.second->GetRoomID() == roomid) {
-            count++;
-        }
-    }
     return count;
 }
 
@@ -875,9 +857,9 @@ void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
         for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
             if (!it->second->IsLogon())	continue;
 
-            if (it->second->GetRoomID() != 0)	continue;
+            //if (it->second->GetRoomID() != 0)	continue;
 
-            if (it->second->IsGaming())		continue;
+            //if (it->second->IsGaming())		continue;
 
             if (it->second->m_bGainDeposit) {
                 it->second->m_bGainDeposit = false;

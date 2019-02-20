@@ -17,6 +17,9 @@
 #include <iostream>
 #include <functional> 
 #include <ctime>
+#include <hash_map>
+#include <array>
+
 #include <json.h>
 #include <xysoap.h>
 #include <dbghelp.h> 

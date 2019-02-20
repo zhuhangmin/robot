@@ -304,6 +304,9 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="Service.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="table.cpp" />
+    <ClCompile Include="user.cpp" />
+    <ClCompile Include="usermgr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SEA\NEW_GAME\pb\game_base.pb.h" />
@@ -320,6 +323,9 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="Server.h" />
     <ClInclude Include="Service.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="table.h" />
+    <ClInclude Include="user.h" />
+    <ClInclude Include="usermgr.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RobotToolLudo.rc" />
