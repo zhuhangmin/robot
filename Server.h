@@ -9,8 +9,8 @@ public:
     virtual BOOL Initialize();
     virtual void Shutdown();
 
+protected:
     BOOL InitBase();
-    BOOL StartServer();
 
 private:
     virtual void TimerThreadProc();

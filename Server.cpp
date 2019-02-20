@@ -2,6 +2,8 @@
 #include "Server.h"
 #include "Main.h"
 #include "RobotMgr.h"
+#include "setting_manager.h"
+#include "GameInfoManager.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -65,8 +67,20 @@ BOOL CMainServer::Initialize() {
         return FALSE;
     }
 
+    if (!SettingManager::Instance().Init()) {
+        UWL_ERR(_T("SettingManager Init Failed"));
+        assert(false);
+        return FALSE;
+    }
+
+    if (!GameInfoManager::Instance().Init()) {
+        UWL_ERR(_T("GameInfoManager Init Failed"));
+        assert(false);
+        return FALSE;
+    }
+
     if (!TheRobotMgr.Init()) {
-        UWL_ERR(_T("TheRobotMgr Init() return false"));
+        UWL_ERR(_T("TheRobotMgr Init Failed"));
         assert(false);
         return FALSE;
     }
@@ -74,29 +88,18 @@ BOOL CMainServer::Initialize() {
     g_thrdTimer.Initial(std::thread([this] {this->TimerThreadProc(); }));
 
     ////////////////////////////////////////////////////////
-    StartServer();
-    return TRUE;
-}
-BOOL CMainServer::StartServer() {
     UwlTrace(_T("Server start up OK."));
     UwlLogFile(_T("Server start up OK."));
-
-    int nRobotPort = GetPrivateProfileInt(_T("listen"), _T("port"), PORT_ROBOT_SERVER, g_szIniFile);
-
-    SYSTEM_INFO SystemInfo;
-    ZeroMemory(&SystemInfo, sizeof(SystemInfo));
-    GetSystemInfo(&SystemInfo);
-    UwlTrace(_T("number of processors: %lu"), SystemInfo.dwNumberOfProcessors);
-    UwlLogFile(_T("number of processors: %lu"), SystemInfo.dwNumberOfProcessors);
-
-    return true;
+    return TRUE;
 }
+
 void CMainServer::Shutdown() {
     SetEvent(g_hExitServer);
 
     g_thrdTimer.Release();
 
     TheRobotMgr.Term();
+    GameInfoManager::Instance().Term();
 
 
     if (g_hExitServer) { CloseHandle(g_hExitServer); g_hExitServer = NULL; }
@@ -110,7 +113,7 @@ void CMainServer::TimerThreadProc() {
 
     while (TRUE) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, DEF_TIMER_INTERVAL);
-        if (WAIT_OBJECT_0 == dwRet) { // exit event
+        if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
         if (WAIT_TIMEOUT == dwRet) { // timeout
@@ -125,10 +128,4 @@ void CMainServer::TimerThreadProc() {
 }
 void CMainServer::OnThreadTimer(time_t nCurrTime) {
     TheRobotMgr.OnServerMainTimer(nCurrTime);
-
-#define MAIN_XXX_GAP_TIME (10*60) // 10·ÖÖÓ
-    static time_t	sLastXXXTime = 0;
-    if (nCurrTime - sLastXXXTime >= MAIN_XXX_GAP_TIME) {
-        sLastXXXTime = nCurrTime;
-    }
 }
