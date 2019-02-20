@@ -17,7 +17,7 @@ int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requesti
     REQUEST request(requestid, data.get(), val.ByteSize());
 
     BOOL timeout = false;
-    bool result = connection_->SendRequest(&context_head, &request, &response, timeout, REQ_TIMEOUT_INTERVAL);
+    BOOL result = connection_->SendRequest(&context_head, &request, &response, timeout, REQ_TIMEOUT_INTERVAL);
 
     if (!result)///if timeout or disconnect 
     {
@@ -36,4 +36,51 @@ int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requesti
         return kCommFaild;
     }
     return kCommSucc;
+}
+CString ExecHttpRequestPost(const CString& strUrl, const CString& strParams) {
+    CString		strResult, strServer, strObject;
+    CInternetSession* pSession = NULL;
+    CHttpConnection*   pHttpConn = NULL;
+    CHttpFile*   pHTTPFile = NULL;
+    INTERNET_PORT   nPort;
+    DWORD   dwServiceType;
+    DWORD  retcode = -1;
+    try {
+        pSession = new CInternetSession();
+        (void) pSession->SetOption(INTERNET_OPTION_CONNECT_TIMEOUT, HTTP_CONNECT_TIMEOUT);	//重试之间的等待延时
+        (void) pSession->SetOption(INTERNET_OPTION_CONNECT_RETRIES, 1);			//重试次数
+
+        (void) AfxParseURL((LPCTSTR) strUrl, dwServiceType, strServer, strObject, nPort);
+        pHttpConn = pSession->GetHttpConnection(strServer, nPort);
+        pHTTPFile = pHttpConn->OpenRequest(0, strObject, NULL, 1, NULL, "HTTP/1.1", INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_NO_AUTO_REDIRECT);
+        if (pHTTPFile) {
+            (void) pHTTPFile->AddRequestHeaders("Content-Type:   application/json");
+            (void) pHTTPFile->AddRequestHeaders("Accept:   */*");
+            (void) pHTTPFile->SendRequest(NULL, 0, (LPTSTR) (LPCTSTR) strParams, strParams.GetLength());
+            (void) pHTTPFile->QueryInfoStatusCode(retcode);
+
+            CString   text;
+            while (pHTTPFile->ReadString(text)) {
+                strResult += text;
+            }
+        }
+    } catch (...) {
+        UwlTrace(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), strUrl, retcode, GetLastError());
+        UwlLogFile(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), strUrl, retcode, GetLastError());
+        assert(false);
+    };
+
+    if (pHTTPFile) { pHTTPFile->Close(); delete  pHTTPFile;  pHTTPFile = NULL; }
+    if (pHttpConn) { pHttpConn->Close(); delete  pHttpConn;  pHttpConn = NULL; }
+    if (pSession) { pSession->Close();  delete   pSession;   pSession = NULL; }
+
+    if (strResult == "") {
+        UwlTrace(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), strUrl, retcode, GetLastError());
+        UwlLogFile(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), strUrl, retcode, GetLastError());
+        assert(false);
+
+    } else {
+        UwlLogFile(_T("ExecHttpRequestPost strResult:%s "), strResult);
+    }
+    return strResult;
 }
