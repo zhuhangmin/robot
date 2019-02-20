@@ -22,7 +22,7 @@ TCHAR				g_szIniFile[MAX_PATH];//配置文件
 
 HANDLE				g_hExitServer = NULL;
 
-UThread				g_thrdTimer;
+
 
 // 唯一的应用程序对象
 CWinApp				theApp;

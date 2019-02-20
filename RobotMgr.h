@@ -82,8 +82,12 @@ private:
     void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
     void OnDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
 
+    virtual void TimerThreadProc();
+    virtual void OnThreadTimer(std::time_t nCurrTime);
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
+
+    UThread				g_thrdTimer;
 
     UThread			m_thrdHallNotify;
     UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];

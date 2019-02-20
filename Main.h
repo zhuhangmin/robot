@@ -19,7 +19,6 @@ extern TCHAR			g_szIniFile[MAX_PATH];
 
 extern HANDLE			g_hExitServer;
 
-extern UThread			g_thrdTimer;
 
 //////////////////
 extern DWORD	GetLocalIPByRemote(LPTSTR szIp, int nPort);

@@ -11,6 +11,8 @@
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 bool	CRobotMgr::Init() {
+    g_thrdTimer.Initial(std::thread([this] {this->TimerThreadProc(); }));
+
     if (!InitEnterGameThreads()) {
         UWL_ERR("InitEnterGameThreads() return false");
         assert(false);
@@ -40,6 +42,7 @@ void	CRobotMgr::Term() {
     for (auto&& it : m_thrdEnterGames)
         it.Release();
 
+    g_thrdTimer.Release();
     m_thrdHallNotify.Release();
 
 }
@@ -608,3 +611,24 @@ void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
 //}
 
 
+void CRobotMgr::TimerThreadProc() {
+    UwlTrace(_T("timer thread started. id = %d"), GetCurrentThreadId());
+
+    while (TRUE) {
+        DWORD dwRet = WaitForSingleObject(g_hExitServer, DEF_TIMER_INTERVAL);
+        if (WAIT_OBJECT_0 == dwRet) {
+            break;
+        }
+        if (WAIT_TIMEOUT == dwRet) { // timeout
+            //UWL_DBG(_T("[interval] ---------------------- timer thread triggered. do something. interval = %ld ms."), DEF_TIMER_INTERVAL);
+            //UWL_DBG("[interval] TimerThreadProc = %I32u", time(nullptr));
+            OnThreadTimer(time(nullptr));
+        }
+    }
+
+    UwlLogFile(_T("timer thread exiting. id = %d"), GetCurrentThreadId());
+    return;
+}
+void CRobotMgr::OnThreadTimer(time_t nCurrTime) {
+    OnServerMainTimer(nCurrTime);
+}

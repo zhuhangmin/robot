@@ -85,7 +85,7 @@ BOOL CMainServer::Initialize() {
         return FALSE;
     }
 
-    g_thrdTimer.Initial(std::thread([this] {this->TimerThreadProc(); }));
+
 
     ////////////////////////////////////////////////////////
     UwlTrace(_T("Server start up OK."));
@@ -96,7 +96,7 @@ BOOL CMainServer::Initialize() {
 void CMainServer::Shutdown() {
     SetEvent(g_hExitServer);
 
-    g_thrdTimer.Release();
+
 
     TheRobotMgr.Term();
     GameInfoManager::Instance().Term();
@@ -108,24 +108,3 @@ void CMainServer::Shutdown() {
     UwlLogFile(_T("server exited."));
 }
 
-void CMainServer::TimerThreadProc() {
-    UwlTrace(_T("timer thread started. id = %d"), GetCurrentThreadId());
-
-    while (TRUE) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, DEF_TIMER_INTERVAL);
-        if (WAIT_OBJECT_0 == dwRet) {
-            break;
-        }
-        if (WAIT_TIMEOUT == dwRet) { // timeout
-            //UWL_DBG(_T("[interval] ---------------------- timer thread triggered. do something. interval = %ld ms."), DEF_TIMER_INTERVAL);
-            //UWL_DBG("[interval] TimerThreadProc = %I32u", time(nullptr));
-            OnThreadTimer(time(nullptr));
-        }
-    }
-
-    UwlLogFile(_T("timer thread exiting. id = %d"), GetCurrentThreadId());
-    return;
-}
-void CMainServer::OnThreadTimer(time_t nCurrTime) {
-    TheRobotMgr.OnServerMainTimer(nCurrTime);
-}
