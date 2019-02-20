@@ -11,16 +11,18 @@
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 bool	CRobotMgr::Init() {
-    g_thrdTimer.Initial(std::thread([this] {this->TimerThreadProc(); }));
+    main_timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
 
-    if (!InitNotifyThreads()) {
-        UWL_ERR("InitNotifyThreads() return false");
-        assert(false);
-        return false;
-    }
+    hall_notify_thread_.Initial(std::thread([this] {this->ThreadHallNotify(); }));
+
+    heart_timer_thread_.Initial(std::thread([this] {this->ThreadSendPluse(); }));
+
+    deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
+
+
     UWL_INF("InitNotifyThreads Sucessed");
 
-    if (!InitConnectHall()) {
+    if (!ConnectHall()) {
         UWL_ERR("ConnectHall() return false");
         assert(false);
         return false;
@@ -32,20 +34,14 @@ bool	CRobotMgr::Init() {
     return true;
 }
 void	CRobotMgr::Term() {
-
-
-    g_thrdTimer.Release();
-    m_thrdHallNotify.Release();
+    main_timer_thread_.Release();
+    hall_notify_thread_.Release();
+    heart_timer_thread_.Release();
+    deposit_timer_thread_.Release();
 
 }
 
-
-bool	CRobotMgr::InitNotifyThreads() {
-    m_thrdHallNotify.Initial(std::thread([this] {this->ThreadRunHallNotify(); }));
-
-    return true;
-}
-bool	CRobotMgr::InitConnectHall(bool bReconn) {
+bool	CRobotMgr::ConnectHall(bool bReconn) {
     TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
     GetPrivateProfileString(_T("HallServer"), _T("IP"), _T(""), szHallSvrIP, sizeof(szHallSvrIP), g_szIniFile);
     auto nHallSvrPort = GetPrivateProfileInt(_T("HallServer"), _T("Port"), 0, g_szIniFile);
@@ -54,7 +50,7 @@ bool	CRobotMgr::InitConnectHall(bool bReconn) {
         std::lock_guard<std::mutex> lock(hall_connection_mutex_);
         hall_connection_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
 
-        if (!hall_connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, m_thrdHallNotify.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
+        if (!hall_connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, hall_notify_thread_.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
             UWL_ERR("[ROUTE] ConnectHall Faild! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
             assert(false);
             return false;
@@ -65,56 +61,57 @@ bool	CRobotMgr::InitConnectHall(bool bReconn) {
 }
 
 
-TTueRet CRobotMgr::SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
-    if (!hall_connection_) {
-        UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", nReqId);
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    }
+int CRobotMgr::SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
+    //if (!hall_connection_) {
+    //    UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", nReqId);
+    //    assert(false);
+    //    return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
+    //}
 
-    if (!hall_connection_->IsConnected()) {
-        UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", nReqId);
-        assert(false);
-        return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    }
+    //if (!hall_connection_->IsConnected()) {
+    //    UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", nReqId);
+    //    assert(false);
+    //    return std::make_tuple(false, ERR_CONNECT_DISABLE);
+    //}
 
-    CONTEXT_HEAD	Context = {};
-    REQUEST			Request = {};
-    REQUEST			Response = {};
-    Context.hSocket = hall_connection_->GetSocket();
-    Context.lSession = 0;
-    Context.bNeedEcho = bNeedEcho;
-    Request.head.nRepeated = 0;
-    Request.head.nRequest = nReqId;
-    Request.nDataLen = nDataLen;
-    Request.pDataPtr = pData;//////////////
+    //CONTEXT_HEAD	Context = {};
+    //REQUEST			Request = {};
+    //REQUEST			Response = {};
+    //Context.hSocket = hall_connection_->GetSocket();
+    //Context.lSession = 0;
+    //Context.bNeedEcho = bNeedEcho;
+    //Request.head.nRepeated = 0;
+    //Request.head.nRequest = nReqId;
+    //Request.nDataLen = nDataLen;
+    //Request.pDataPtr = pData;//////////////
 
-    BOOL bTimeOut = FALSE, bResult = TRUE;
-    {
-        std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-        bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
-    }
+    //BOOL bTimeOut = FALSE, bResult = TRUE;
+    //{
+    //    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    //    bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
+    //}
 
-    if (!bResult)///if timeout or disconnect 
-    {
-        UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", bTimeOut, nReqId);
-        assert(false);
-        return std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
-    }
+    //if (!bResult)///if timeout or disconnect 
+    //{
+    //    UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", bTimeOut, nReqId);
+    //    assert(false);
+    //    return std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
+    //}
 
-    nDataLen = Response.nDataLen;
-    nRespId = Response.head.nRequest;
-    pRetData.reset(Response.pDataPtr);
+    //nDataLen = Response.nDataLen;
+    //nRespId = Response.head.nRequest;
+    //pRetData.reset(Response.pDataPtr);
 
-    if (nRespId == GR_ERROR_INFOMATION) {
-        CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData);
-        nDataLen = 0;
-        UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail nRespId GR_ERROR_INFOMATION nReqId = %d", nReqId);
-        assert(false);
-        return std::make_tuple(false, info);
-    }
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
+    //if (nRespId == GR_ERROR_INFOMATION) {
+    //    CHAR info[512] = {};
+    //    sprintf_s(info, "%s", pRetData);
+    //    nDataLen = 0;
+    //    UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail nRespId GR_ERROR_INFOMATION nReqId = %d", nReqId);
+    //    assert(false);
+    //    return std::make_tuple(false, info);
+    //}
+    //return std::make_tuple(true, ERR_OPERATE_SUCESS);
+    return true;
 }
 
 
@@ -127,7 +124,7 @@ RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
     return it != robot_map_.end() ? it->second : nullptr;
 }
 
-void	CRobotMgr::ThreadRunHallNotify() {
+void	CRobotMgr::ThreadHallNotify() {
     UWL_INF(_T("HallNotify thread started. id = %d"), GetCurrentThreadId());
 
     MSG msg = {};
@@ -153,6 +150,57 @@ void	CRobotMgr::ThreadRunHallNotify() {
     return;
 }
 
+void	CRobotMgr::ThreadSendPluse() {
+    UWL_INF(_T("Hall KeepAlive thread started. id = %d"), GetCurrentThreadId());
+
+    MSG msg = {};
+    while (GetMessage(&msg, 0, 0, 0)) {
+        if (UM_DATA_RECEIVED == msg.message) {
+
+            LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
+            LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
+
+            TokenID		nTokenID = pContext->lTokenID;
+            RequestID		nReqstID = pRequest->head.nRequest;
+
+            //TODO SEND PLUSE
+
+            SAFE_DELETE(pContext);
+            UwlClearRequest(pRequest);
+            SAFE_DELETE(pRequest);
+        } else {
+            DispatchMessage(&msg);
+        }
+    }
+    UWL_INF(_T("Hall KeepAlive thread exiting. id = %d"), GetCurrentThreadId());
+    return;
+}
+
+void	CRobotMgr::ThreadDeposit() {
+    UWL_INF(_T("Hall Deposit thread started. id = %d"), GetCurrentThreadId());
+
+    MSG msg = {};
+    while (GetMessage(&msg, 0, 0, 0)) {
+        if (UM_DATA_RECEIVED == msg.message) {
+
+            LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
+            LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
+
+            TokenID		nTokenID = pContext->lTokenID;
+            RequestID		nReqstID = pRequest->head.nRequest;
+
+            //TODO SEND Deposit
+
+            SAFE_DELETE(pContext);
+            UwlClearRequest(pRequest);
+            SAFE_DELETE(pRequest);
+        } else {
+            DispatchMessage(&msg);
+        }
+    }
+    UWL_INF(_T("Hall Deposit thread exiting. id = %d"), GetCurrentThreadId());
+    return;
+}
 
 void CRobotMgr::OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     switch (nReqId) {
@@ -174,7 +222,7 @@ void CRobotMgr::OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t 
     }
 }
 
-TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
+int CRobotMgr::RobotLogonHall(const int32_t& account /*= 0*/) {
 
     //AccountSettingMap::iterator itRobot = account_setting_map_.end();
 
@@ -256,62 +304,64 @@ TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
     //SetRobotClient(client);
 
     //UWL_INF("account:%d userid:%d logon hall ok.", client->GetUserID(), client->GetUserID());
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
+    //return std::make_tuple(true, ERR_OPERATE_SUCESS);
+    return true;
 }
 
 
-TTueRet CRobotMgr::RobotGainDeposit(RobotPtr client) {
-    static TCHAR szHttpUrl[128];
-    static int nResult = GetPrivateProfileString(_T("RobotReward"), _T("HttpUrl_G"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
-    if (0 == strcmp(szHttpUrl, "null"))
-        return std::make_tuple(false, "RobotReward HttpUrl_G ini read faild");
+int CRobotMgr::RobotGainDeposit(RobotPtr client) {
+    //static TCHAR szHttpUrl[128];
+    //static int nResult = GetPrivateProfileString(_T("RobotReward"), _T("HttpUrl_G"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
+    //if (0 == strcmp(szHttpUrl, "null"))
+    //    return std::make_tuple(false, "RobotReward HttpUrl_G ini read faild");
 
-    TCHAR szField[128] = {};
-    sprintf_s(szField, "ActiveID_Game%d", g_gameID);
-    TCHAR szValue[128] = {};
-    GetPrivateProfileString(_T("RobotReward"), szField, _T("null"), szValue, sizeof(szValue), g_szIniFile);
-    if (0 == strcmp(szValue, "null"))
-        return std::make_tuple(false, "RobotGainDeposit ActiveId ini read faild");
+    //TCHAR szField[128] = {};
+    //sprintf_s(szField, "ActiveID_Game%d", g_gameID);
+    //TCHAR szValue[128] = {};
+    //GetPrivateProfileString(_T("RobotReward"), szField, _T("null"), szValue, sizeof(szValue), g_szIniFile);
+    //if (0 == strcmp(szValue, "null"))
+    //    return std::make_tuple(false, "RobotGainDeposit ActiveId ini read faild");
 
-    Json::Value root;
-    Json::FastWriter fast_writer;
-    root["GameId"] = Json::Value(g_gameID);
-    root["ActId"] = Json::Value(szValue);
-    root["UserId"] = Json::Value(client->GetUserID());
-    root["UserNickName"] = Json::Value("Robot");
-    root["Num"] = Json::Value(client->m_nGainAmount);
-    root["Operation"] = Json::Value(1);
-    root["Device"] = Json::Value(xyConvertIntToStr(g_gameID) + "+" + xyConvertIntToStr(client->GetUserID()));
-    root["Time"] = Json::Value((LONGLONG) time(NULL) * 1000);
-    root["Sign"] = Json::Value(MD5String((root["ActId"].asString() + "|" + root["UserId"].asString() + "|" + root["Time"].asString() + "|" + ROBOT_APPLY_DEPOSIT_KEY).c_str()));
+    //Json::Value root;
+    //Json::FastWriter fast_writer;
+    //root["GameId"] = Json::Value(g_gameID);
+    //root["ActId"] = Json::Value(szValue);
+    //root["UserId"] = Json::Value(client->GetUserID());
+    //root["UserNickName"] = Json::Value("Robot");
+    //root["Num"] = Json::Value(client->m_nGainAmount);
+    //root["Operation"] = Json::Value(1);
+    //root["Device"] = Json::Value(xyConvertIntToStr(g_gameID) + "+" + xyConvertIntToStr(client->GetUserID()));
+    //root["Time"] = Json::Value((LONGLONG) time(NULL) * 1000);
+    //root["Sign"] = Json::Value(MD5String((root["ActId"].asString() + "|" + root["UserId"].asString() + "|" + root["Time"].asString() + "|" + ROBOT_APPLY_DEPOSIT_KEY).c_str()));
 
-    CString strParam = fast_writer.write(root).c_str();
-    CString strResult = RobotUitls::ExecHttpRequestPost(szHttpUrl, strParam);
-    Json::Reader reader;
-    Json::Value _root;
-    if (!reader.parse((LPCTSTR) strResult, _root))
-        return std::make_tuple(false, "RobotGainDeposit Http result parse faild");
-    if (_root["Code"].asInt() != 0) {
-        UWL_ERR("m_Account = %d gain deposit fail, code = %d, strResult = %s", client->GetUserID(), _root["Code"].asInt(), strResult);
-        //assert(false);
-        return std::make_tuple(false, "RobotGainDeposit Http result Status false");
-    }
+    //CString strParam = fast_writer.write(root).c_str();
+    //CString strResult = RobotUitls::ExecHttpRequestPost(szHttpUrl, strParam);
+    //Json::Reader reader;
+    //Json::Value _root;
+    //if (!reader.parse((LPCTSTR) strResult, _root))
+    //    return std::make_tuple(false, "RobotGainDeposit Http result parse faild");
+    //if (_root["Code"].asInt() != 0) {
+    //    UWL_ERR("m_Account = %d gain deposit fail, code = %d, strResult = %s", client->GetUserID(), _root["Code"].asInt(), strResult);
+    //    //assert(false);
+    //    return std::make_tuple(false, "RobotGainDeposit Http result Status false");
+    //}
 
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
+    //return std::make_tuple(true, ERR_OPERATE_SUCESS);
+    return true;
 }
 
-TTueRet CRobotMgr::RobotBackDeposit(RobotPtr client) {
-    static TCHAR szHttpUrl[128];
+int CRobotMgr::RobotBackDeposit(RobotPtr client) {
+    /*static TCHAR szHttpUrl[128];
     static int nResult = GetPrivateProfileString(_T("RobotReward"), _T("HttpUrl_C"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
     if (0 == strcmp(szHttpUrl, "null"))
-        return std::make_tuple(false, "RobotReward HttpUrl_C ini read faild");
+    return std::make_tuple(false, "RobotReward HttpUrl_C ini read faild");
 
     TCHAR szField[128] = {};
     sprintf_s(szField, "ActiveID_Game%d", g_gameID);
     TCHAR szValue[128] = {};
     GetPrivateProfileString(_T("RobotReward"), szField, _T("null"), szValue, sizeof(szValue), g_szIniFile);
     if (0 == strcmp(szValue, "null"))
-        return std::make_tuple(false, "RobotBackDeposit ActiveId ini read faild");
+    return std::make_tuple(false, "RobotBackDeposit ActiveId ini read faild");
 
     Json::Value root;
     Json::FastWriter fast_writer;
@@ -330,10 +380,11 @@ TTueRet CRobotMgr::RobotBackDeposit(RobotPtr client) {
     Json::Reader reader;
     Json::Value _root;
     if (!reader.parse((LPCTSTR) strResult, _root))
-        return std::make_tuple(false, "RobotBackDeposit Http result parse faild");
+    return std::make_tuple(false, "RobotBackDeposit Http result parse faild");
     if (!_root["Status"].asBool())
-        return std::make_tuple(false, "RobotBackDeposit Http result Status false");
-    return std::make_tuple(true, ERR_OPERATE_SUCESS);
+    return std::make_tuple(false, "RobotBackDeposit Http result Status false");
+    return std::make_tuple(true, ERR_OPERATE_SUCESS);*/
+    return true;
 }
 
 bool CRobotMgr::IsLogon(UserID userid) {
@@ -466,58 +517,58 @@ bool	CRobotMgr::OnTimerLogonHall(time_t nCurrTime) {
 //}
 
 void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
-    if (!hall_connection_) {
-        UWL_ERR("SendHallRequest OnTimerCtrlRoomActiv nil ERR_CONNECT_NOT_EXIST nReqId");
-        assert(false);
-        return;
-    }
-
-
-    if (!hall_connection_->IsConnected()) {
-        UWL_ERR("SendHallRequest OnTimerUpdateDeposit not connect ERR_CONNECT_DISABLE");
-        assert(false);
-        return;
-    }
-
-#define UPDATE_CLIENTNUM_PRE_ONCE	(15)
-#define MAIN_ROOM_UPDATE_DEPOSIT_GAP_TIME (15) // 15s
-    static time_t	sLastRoomUpdateDepositGapTime = 0;
-    if (nCurrTime - sLastRoomUpdateDepositGapTime >= MAIN_ROOM_UPDATE_DEPOSIT_GAP_TIME)
-        sLastRoomUpdateDepositGapTime = nCurrTime;
-    else return;
-
-    int nCount = 0;
-    {
-        std::lock_guard<std::mutex> lock(robot_map_mutex_);
-        for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
-            if (!it->second->IsLogon())	continue;
-
-            //if (it->second->GetRoomID() != 0)	continue;
-
-            //if (it->second->IsGaming())		continue;
-
-            if (it->second->m_bGainDeposit) {
-                it->second->m_bGainDeposit = false;
-                auto&& tRet = RobotGainDeposit(it->second);
-                if (!TUPLE_ELE(tRet, 0)) {
-                    UWL_WRN("Account:%d GainDeposit Err:%s", it->second->GetUserID(), TUPLE_ELE_C(tRet, 1));
-                    continue;
-                }
-                nCount++;
-            }
-            if (it->second->m_bBackDeposit) {
-                it->second->m_bBackDeposit = false;
-                auto&& tRet = RobotBackDeposit(it->second);
-                if (!TUPLE_ELE(tRet, 0)) {
-                    UWL_WRN("Account:%d BackDeposit Err:%s", it->second->GetUserID(), TUPLE_ELE_C(tRet, 1));
-                    continue;
-                }
-                nCount++;
-            }
-            if (nCount >= UPDATE_CLIENTNUM_PRE_ONCE)
-                break;
-        }
-    }
+    //    if (!hall_connection_) {
+    //        UWL_ERR("SendHallRequest OnTimerCtrlRoomActiv nil ERR_CONNECT_NOT_EXIST nReqId");
+    //        assert(false);
+    //        return;
+    //    }
+    //
+    //
+    //    if (!hall_connection_->IsConnected()) {
+    //        UWL_ERR("SendHallRequest OnTimerUpdateDeposit not connect ERR_CONNECT_DISABLE");
+    //        assert(false);
+    //        return;
+    //    }
+    //
+    //#define UPDATE_CLIENTNUM_PRE_ONCE	(15)
+    //#define MAIN_ROOM_UPDATE_DEPOSIT_GAP_TIME (15) // 15s
+    //    static time_t	sLastRoomUpdateDepositGapTime = 0;
+    //    if (nCurrTime - sLastRoomUpdateDepositGapTime >= MAIN_ROOM_UPDATE_DEPOSIT_GAP_TIME)
+    //        sLastRoomUpdateDepositGapTime = nCurrTime;
+    //    else return;
+    //
+    //    int nCount = 0;
+    //    {
+    //        std::lock_guard<std::mutex> lock(robot_map_mutex_);
+    //        for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
+    //            if (!it->second->IsLogon())	continue;
+    //
+    //            //if (it->second->GetRoomID() != 0)	continue;
+    //
+    //            //if (it->second->IsGaming())		continue;
+    //
+    //            if (it->second->m_bGainDeposit) {
+    //                it->second->m_bGainDeposit = false;
+    //                auto&& tRet = RobotGainDeposit(it->second);
+    //                if (!TUPLE_ELE(tRet, 0)) {
+    //                    UWL_WRN("Account:%d GainDeposit Err:%s", it->second->GetUserID(), TUPLE_ELE_C(tRet, 1));
+    //                    continue;
+    //                }
+    //                nCount++;
+    //            }
+    //            if (it->second->m_bBackDeposit) {
+    //                it->second->m_bBackDeposit = false;
+    //                auto&& tRet = RobotBackDeposit(it->second);
+    //                if (!TUPLE_ELE(tRet, 0)) {
+    //                    UWL_WRN("Account:%d BackDeposit Err:%s", it->second->GetUserID(), TUPLE_ELE_C(tRet, 1));
+    //                    continue;
+    //                }
+    //                nCount++;
+    //            }
+    //            if (nCount >= UPDATE_CLIENTNUM_PRE_ONCE)
+    //                break;
+    //        }
+    //    }
 }
 //void    CRobotMgr::OnThrndDelyEnterGame(time_t nCurrTime) {
 //    do {
@@ -559,7 +610,7 @@ void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
 //}
 
 
-void CRobotMgr::TimerThreadProc() {
+void CRobotMgr::ThreadMainProc() {
     UwlTrace(_T("timer thread started. id = %d"), GetCurrentThreadId());
 
     while (TRUE) {
@@ -570,19 +621,16 @@ void CRobotMgr::TimerThreadProc() {
         if (WAIT_TIMEOUT == dwRet) { // timeout
             //UWL_DBG(_T("[interval] ---------------------- timer thread triggered. do something. interval = %ld ms."), DEF_TIMER_INTERVAL);
             //UWL_DBG("[interval] TimerThreadProc = %I32u", time(nullptr));
-            OnThreadTimer(time(nullptr));
+            //logon 
+
+            //enter game
+            //OnTimerLogonHall(nCurrTime);
+            /*   OnTimerSendHallPluse(nCurrTime);
+            OnTimerSendGamePluse(nCurrTime);*/
+            //OnTimerUpdateDeposit(nCurrTime);
         }
     }
 
     UwlLogFile(_T("timer thread exiting. id = %d"), GetCurrentThreadId());
     return;
-}
-void CRobotMgr::OnThreadTimer(time_t nCurrTime) {
-    //logon 
-
-    //enter game
-    OnTimerLogonHall(nCurrTime);
-    /*   OnTimerSendHallPluse(nCurrTime);
-    OnTimerSendGamePluse(nCurrTime);*/
-    //OnTimerUpdateDeposit(nCurrTime);
 }

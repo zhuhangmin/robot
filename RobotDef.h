@@ -54,12 +54,6 @@ using TClientTokenMap = std::unordered_map<int, LONG>;
 
 using       TInt32Vec = std::vector<int32_t>;
 
-using        TTueRet = std::tuple<bool, std::string>;
-
-#define TUPLE_NUM(_t_) std::tuple_size<decltype(_t_)>::value
-#define TUPLE_ELE(_t_,_index_) std::get<_index_>(_t_)
-#define TUPLE_ELE_C(_t_,_index_) std::get<_index_>(_t_).c_str()
-
 #define ERR_CONNECT_NOT_EXIST   "与服务器连接不存在"
 //#define ERR_CONNECT_DISABLE     "与服务器连接已经断开"
 #define ERR_CONNECT_DISABLE     "ROOM_SOCKET_ERROR"

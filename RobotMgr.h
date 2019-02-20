@@ -5,53 +5,62 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
-    //robot
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
 
 public:
-    // 开始|结束
     bool Init();
+
     void Term();
 
-
-
 protected:
+    SINGLETION_CONSTRUCTOR(CRobotMgr);
+
+private:
+    // 大厅建立连接
+    bool ConnectHall(bool bReconn = false);
+
+    // 大厅接收消息
+    void ThreadHallNotify();
+
     // 大厅服务请求发送
-    TTueRet SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    int SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
 
-    void TimerThreadProc();
-
-    // 主定时器
-
-    void OnThreadTimer(std::time_t nCurrTime);
-
-    bool	InitConnectHall(bool bReconn = false);
-
-    bool	InitNotifyThreads();
-
-    RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
-
-    // 通知消息线程方法
-    void	ThreadRunHallNotify();
-
-    // 通知消息处理回调
+    // 大厅消息处理
     void OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    // 定时器回调方法
-    bool	OnTimerLogonHall(time_t nCurrTime);
-    /*   void    OnTimerSendHallPluse(time_t nCurrTime);
-       void    OnTimerSendGamePluse(time_t nCurrTime);*/
+    // 大厅断开链接
+    void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    //@zhuhangmin 20190218 仅补银线程可见 beg
-    void    OnTimerUpdateDeposit(time_t nCurrTime);
-    TTueRet RobotGainDeposit(RobotPtr client);
-    TTueRet RobotBackDeposit(RobotPtr client);
-    //@zhuhangmin 20190218 仅补银线程可见 end
+    // 定时器 大厅心跳
+    void ThreadSendPluse();
 
-    // 网络辅助请求
-    TTueRet	RobotLogonHall(const int32_t& account = 0);
+    // 定时器 主流程业务
+    void ThreadMainProc();
 
-    //@zhuhangmin
+    // 定时器 补银
+    void ThreadDeposit();
+
+private:
+    //具体业务
+
+    // 定时器 登陆大厅
+    bool OnTimerLogonHall(time_t nCurrTime);
+
+    // 大厅登陆网络辅助请求
+    int RobotLogonHall(const int32_t& account = 0);
+
+    //@zhuhangmin 20190218 仅心跳线程可见
+    void    OnTimerSendPluse(time_t nCurrTime);
+    void    SendHallPluse(time_t nCurrTime);
+    void    SendGamePluse(time_t nCurrTime);
+
+    //@zhuhangmin 20190218 仅补银线程可见
+    void OnTimerUpdateDeposit(time_t nCurrTime);
+    int RobotGainDeposit(RobotPtr client);
+    int RobotBackDeposit(RobotPtr client);
+
+    // 机器人
+    RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
     bool IsLogon(UserID userid);
     void SetLogon(UserID userid, bool status);
     RobotPtr GetRobotClient(UserID userid);
@@ -59,25 +68,25 @@ protected:
 
     void SetRoomID(UserID userid, RoomID roomid);
 
-    int GetRoomCurrentRobotSize(RoomID roomid); //当前在某个房间里的机器人数
+    int GetRoomCurrentRobotSize(RoomID roomid); //房间里的机器人数
+
 
 private:
-    void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
+    UThread	main_timer_thread_;
 
+    UThread	heart_timer_thread_;
 
-protected:
-    SINGLETION_CONSTRUCTOR(CRobotMgr);
+    UThread	deposit_timer_thread_;
 
-    UThread				g_thrdTimer;
+    UThread	hall_notify_thread_;
 
-    UThread			m_thrdHallNotify;
-
-    // mutable数据类 需加锁
-    std::mutex        robot_map_mutex_;
+    std::mutex robot_map_mutex_;
     RobotMap robot_map_; //管理所有robot动态信息
 
     std::mutex hall_connection_mutex_;
     CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};//大厅连接
+
+
 
 
 };
