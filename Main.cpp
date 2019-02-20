@@ -2,10 +2,9 @@
 //
 
 #include "stdafx.h"
-
-#include "RobotDef.h"
 #include "Main.h"
 #include "Server.h"
+#include "RobotDef.h"
 #pragma comment(lib,  "dbghelp.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW

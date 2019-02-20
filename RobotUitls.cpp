@@ -37,6 +37,7 @@ int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requesti
     }
     return kCommSucc;
 }
+
 CString RobotUitls::ExecHttpRequestPost(const CString& strUrl, const CString& strParams) {
     CString		strResult, strServer, strObject;
     CInternetSession* pSession = NULL;

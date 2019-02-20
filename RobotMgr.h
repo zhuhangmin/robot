@@ -5,54 +5,37 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
-
-
     //robot
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
-    using RoomCurUsersMap = std::unordered_map<RoomID, CurUserCount>;
 
 public:
     // 开始|结束
     bool Init();
     void Term();
 
+
+
+protected:
     // 大厅服务请求发送
     TTueRet SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
 
-
-
-
-    RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
-
+    void TimerThreadProc();
 
     // 主定时器
-    void	OnServerMainTimer(time_t nCurrTime);
 
-protected:
-
-    bool	InitNotifyThreads();
-
-    bool	InitEnterGameThreads();
+    void OnThreadTimer(std::time_t nCurrTime);
 
     bool	InitConnectHall(bool bReconn = false);
 
+    bool	InitNotifyThreads();
 
-
-public:
+    RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
 
     // 通知消息线程方法
     void	ThreadRunHallNotify();
 
-
-public:
-    void	ThreadRunEnterGame();
-
-protected:
     // 通知消息处理回调
     void OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize);
-    void OnGameNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
-
-    //TODO KEEPALIVE THREAD NOTIFY
 
     // 定时器回调方法
     bool	OnTimerLogonHall(time_t nCurrTime);
@@ -80,17 +63,14 @@ protected:
 
 private:
     void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
-    void OnDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    virtual void TimerThreadProc();
-    virtual void OnThreadTimer(std::time_t nCurrTime);
+
 protected:
     SINGLETION_CONSTRUCTOR(CRobotMgr);
 
     UThread				g_thrdTimer;
 
     UThread			m_thrdHallNotify;
-    UThread			m_thrdEnterGames[DEF_ENTER_GAME_THREAD_NUM];
 
     // mutable数据类 需加锁
     std::mutex        robot_map_mutex_;

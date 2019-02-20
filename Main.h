@@ -1,6 +1,5 @@
 #pragma once
 
-#include "RobotDef.h"
 #include "resource.h"
 #define APPLICATION_TITLE	 _T("RobotToolLudo")
 #define STR_SERVICE_NAME     _T("RobotToolLudo")
@@ -10,8 +9,6 @@
 extern int				g_nClientID;
 extern int				g_useLocal;
 extern int				g_gameID;
-//extern CRobotMgr		g_robotManager; //@zhuhangmin 20181129 为了解决收到的notify太快，丢包的问题
-
 extern std::string		g_curExePath;
 
 extern TCHAR			g_szLicFile[MAX_PATH];

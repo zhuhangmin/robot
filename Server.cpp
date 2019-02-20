@@ -41,7 +41,6 @@ BOOL CMainServer::InitBase() {
     sprintf_s(szPID, _T("%d"), GetCurrentProcessId());
     WritePrivateProfileString(_T("listen"), _T("pid"), szPID, g_szIniFile);
 
-
     g_nClientID = GetPrivateProfileInt(_T("listen"), _T("clientid"), 0, g_szIniFile);
     if (0 == g_nClientID) {
         UwlLogFile(_T("invalid client id!"));
@@ -84,8 +83,6 @@ BOOL CMainServer::Initialize() {
         assert(false);
         return FALSE;
     }
-
-
 
     ////////////////////////////////////////////////////////
     UwlTrace(_T("Server start up OK."));

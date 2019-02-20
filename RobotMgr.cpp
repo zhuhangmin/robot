@@ -13,13 +13,6 @@
 bool	CRobotMgr::Init() {
     g_thrdTimer.Initial(std::thread([this] {this->TimerThreadProc(); }));
 
-    if (!InitEnterGameThreads()) {
-        UWL_ERR("InitEnterGameThreads() return false");
-        assert(false);
-        return false;
-    }
-    UWL_INF("InitEnterGameThreads Sucessed");
-
     if (!InitNotifyThreads()) {
         UWL_ERR("InitNotifyThreads() return false");
         assert(false);
@@ -39,8 +32,7 @@ bool	CRobotMgr::Init() {
     return true;
 }
 void	CRobotMgr::Term() {
-    for (auto&& it : m_thrdEnterGames)
-        it.Release();
+
 
     g_thrdTimer.Release();
     m_thrdHallNotify.Release();
@@ -51,12 +43,6 @@ void	CRobotMgr::Term() {
 bool	CRobotMgr::InitNotifyThreads() {
     m_thrdHallNotify.Initial(std::thread([this] {this->ThreadRunHallNotify(); }));
 
-    return true;
-}
-bool	CRobotMgr::InitEnterGameThreads() {
-    for (size_t i = 0; i < DEF_ENTER_GAME_THREAD_NUM; i++) {
-        m_thrdEnterGames[i].Initial(std::thread([this] {this->ThreadRunEnterGame(); }));
-    }
     return true;
 }
 bool	CRobotMgr::InitConnectHall(bool bReconn) {
@@ -167,22 +153,6 @@ void	CRobotMgr::ThreadRunHallNotify() {
     return;
 }
 
-void    CRobotMgr::ThreadRunEnterGame() {
-    UWL_INF(_T("EnterGame thread started. id = %d"), GetCurrentThreadId());
-
-    while (TRUE) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, MIN_TIMER_INTERVAL);
-        if (WAIT_OBJECT_0 == dwRet) { // exit event
-            break;
-        }
-        if (WAIT_TIMEOUT == dwRet) { // timeout
-            //UWL_DBG("[interval] **** ThreadRunEnterGame beg interval = %d, time = %I32u", MIN_TIMER_INTERVAL, time(nullptr));
-            //OnThrndDelyEnterGame(time(nullptr));
-        }
-    }
-    UWL_INF(_T("EnterGame thread exiting. id = %d"), GetCurrentThreadId());
-    return;
-}
 
 void CRobotMgr::OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     switch (nReqId) {
@@ -193,16 +163,6 @@ void CRobotMgr::OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize) {
 
     }
 }
-void CRobotMgr::OnGameNotify(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
-    switch (nReqId) {
-        case UR_SOCKET_ERROR:
-        case UR_SOCKET_CLOSE:
-            OnDisconnGameWithLock(client, nReqId, pDataPtr, nSize);
-            break;
-
-    }
-}
-
 void CRobotMgr::OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     UWL_ERR(_T("与大厅服务断开连接"));
     assert(false);
@@ -213,12 +173,6 @@ void CRobotMgr::OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t 
         }
     }
 }
-
-void CRobotMgr::OnDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* pDataPtr, int32_t nSize) {
-    UWL_WRN("userid = %d disconnect game ", client->GetUserID());
-    client->OnDisconnGame();
-}
-
 
 TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
 
@@ -418,12 +372,6 @@ int CRobotMgr::GetRoomCurrentRobotSize(RoomID roomid) {
     return count;
 }
 
-void    CRobotMgr::OnServerMainTimer(time_t nCurrTime) {
-    OnTimerLogonHall(nCurrTime);
-    /*   OnTimerSendHallPluse(nCurrTime);
-       OnTimerSendGamePluse(nCurrTime);*/
-    OnTimerUpdateDeposit(nCurrTime);
-}
 bool	CRobotMgr::OnTimerLogonHall(time_t nCurrTime) {
     //    if (!hall_connection_) {
     //        UWL_ERR("SendHallRequest OnTimerReconnectHall nil ERR_CONNECT_NOT_EXIST");
@@ -630,5 +578,11 @@ void CRobotMgr::TimerThreadProc() {
     return;
 }
 void CRobotMgr::OnThreadTimer(time_t nCurrTime) {
-    OnServerMainTimer(nCurrTime);
+    //logon 
+
+    //enter game
+    OnTimerLogonHall(nCurrTime);
+    /*   OnTimerSendHallPluse(nCurrTime);
+    OnTimerSendGamePluse(nCurrTime);*/
+    //OnTimerUpdateDeposit(nCurrTime);
 }
