@@ -10,9 +10,14 @@
 #endif
 
 Robot::Robot(const RobotSetting& robot) {
-    userid_ = robot.account;
+    userid_ = robot.userid;
     password_ = robot.password;
 }
+
+Robot::Robot() {
+
+}
+
 Robot::~Robot() {}
 
 void Robot::OnDisconnGame() {
@@ -20,19 +25,19 @@ void Robot::OnDisconnGame() {
     game_connection_->DestroyEx();
 }
 
-bool Robot::ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
+int Robot::ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     //由于目前网络库不支持IPV6，所以添加配置项，可以选定本地地址
     std::string sIp = (g_useLocal) ? "127.0.0.1" : strIP;
     if (!game_connection_->Create(sIp.c_str(), nPort, 5, 0, nThrdId, 0, GetHelloData(), GetHelloLength())) {
         UWL_ERR("ConnectGame Faild! IP:%s Port:%d", sIp.c_str(), nPort);
         //assert(false);
-        return false;
+        return kCommFaild;
     }
 
     ////TODO FIXME DECOUPLE WITH MANAGER
     ////@zhuhangmin 20181129 立即加上token信息 以免丢包
-    return true;
+    return kCommFaild;
 }
 
 int Robot::SendRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {

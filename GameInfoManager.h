@@ -6,7 +6,7 @@ public:
     using UserMap = std::unordered_map<UserID, game::base::User>;
 public:
     // ¿ªÊ¼|½áÊø
-    bool Init();
+    int Init();
     void Term();
 
 

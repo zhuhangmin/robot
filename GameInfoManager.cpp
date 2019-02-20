@@ -5,14 +5,16 @@
 #include "RobotUitls.h"
 
 
-bool	GameInfoManager::Init() {
+int GameInfoManager::Init() {
     if (kCommFaild == InitConnectGame()) {
         UWL_ERR("InitConnectGame failed");
         assert(false);
-        return false;
+        return kCommFaild;
+
     }
     m_thrdGameInfoNotify.Initial(std::thread([this] {this->ThreadRunGameInfoNotify(); }));
-    return true;
+    return kCommSucc;
+
 }
 
 void	GameInfoManager::Term() {

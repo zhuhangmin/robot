@@ -5,6 +5,7 @@
 
 class Robot {
 public:
+    Robot();
     Robot(const RobotSetting& robot);
     virtual ~Robot();
 
@@ -28,7 +29,7 @@ public:
     DepositType GetGainType() const { return gain_type_; }
     void SetGainType(DepositType val) { gain_type_ = val; }
 private:
-    bool ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
+    int ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
     int SendRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
 
     DepositType gain_type_{DepositType::kDefault};

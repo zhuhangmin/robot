@@ -9,7 +9,7 @@ public:
     using DepositMap = std::unordered_map<UserID, DepositType>;
 
 public:
-    bool Init();
+    int Init();
 
     void Term();
 
@@ -18,7 +18,7 @@ protected:
 
 private:
     // 大厅建立连接
-    bool ConnectHall(bool bReconn = false);
+    int ConnectHall(bool bReconn = false);
 
     // 大厅服务请求发送
     int SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
@@ -44,11 +44,8 @@ private:
 private:
     //具体业务
 
-    // 定时器 登陆大厅
-    bool OnTimerLogonHall(time_t nCurrTime);
-
     // 大厅登陆网络辅助请求
-    int RobotLogonHall(const int32_t& account = 0);
+    int LogonHall();
 
     //@zhuhangmin 20190218 仅心跳线程可见
     void    OnTimerSendPluse(time_t nCurrTime);
@@ -56,7 +53,6 @@ private:
     void    SendGamePluse(time_t nCurrTime);
 
     //@zhuhangmin 20190218 仅补银线程可见
-    void OnTimerUpdateDeposit(time_t nCurrTime);
     int RobotGainDeposit(UserID userid, int32_t amount);
     int RobotBackDeposit(UserID userid, int32_t amount);
 
@@ -64,8 +60,8 @@ private:
     RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
     bool IsLogon(UserID userid);
     void SetLogon(UserID userid, bool status);
-    RobotPtr GetRobotClient(UserID userid);
-    void SetRobotClient(RobotPtr client);
+    RobotPtr GetRobot(UserID userid);
+    void SetRobot(RobotPtr client);
 
     void SetRoomID(UserID userid, RoomID roomid);
 

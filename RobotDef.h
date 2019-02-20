@@ -83,7 +83,7 @@ enum EConnType :uint32_t {
 //配置类 只读
 class RobotSetting {
 public:
-    int32_t		account;
+    int32_t		userid;
     std::string	password;
     std::string nickName;
     std::string portraitUrl;
@@ -174,6 +174,8 @@ const int DepositInterval = 15; // seconds
 
 const int GainAmount = 200000;
 const int BackAmount = 200000;
+
+const int MaxRandomTry = 10; //避免锁的时间过长
 enum class DepositType {
     kDefault,
     kGain,

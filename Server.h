@@ -3,14 +3,14 @@
 class CMainServer {
 public:
     CMainServer();
-    virtual ~CMainServer();
+    ~CMainServer();
 
 public:
-    virtual BOOL Initialize();
-    virtual void Shutdown();
+    int Initialize();
+    void Shutdown();
 
 protected:
-    BOOL InitBase();
+    int InitBase();
 
 
 };

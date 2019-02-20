@@ -27,7 +27,7 @@ CMainServer::CMainServer() {
 
 CMainServer::~CMainServer() {}
 
-BOOL CMainServer::InitBase() {
+int CMainServer::InitBase() {
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     TCHAR szFullName[MAX_PATH];
@@ -44,50 +44,51 @@ BOOL CMainServer::InitBase() {
     g_nClientID = GetPrivateProfileInt(_T("listen"), _T("clientid"), 0, g_szIniFile);
     if (0 == g_nClientID) {
         UwlLogFile(_T("invalid client id!"));
-        return FALSE;
+        return kCommFaild;
+
     } else {
         UwlLogFile(_T("client id=%d!"), g_nClientID);
     }
     g_useLocal = GetPrivateProfileInt(_T("LocalNet"), _T("Enable"), 0, g_szIniFile);
     UwlTrace(_T("local ip enable=%d!"), g_useLocal);
     UwlLogFile(_T("local ip enable=%d!"), g_useLocal);
-    return TRUE;
+    return kCommSucc;
 }
 
-BOOL CMainServer::Initialize() {
+int CMainServer::Initialize() {
     UwlLogFile(_T("server starting..."));
 
     if (S_FALSE == ::CoInitialize(NULL))
-        return FALSE;
+        return kCommFaild;;
 
     if (!InitBase()) {
-        UWL_ERR(_T("InitBase() return false"));
+        UWL_ERR(_T("InitBase() return failed"));
         assert(false);
-        return FALSE;
+        return kCommFaild;
     }
 
     if (!SettingManager::Instance().Init()) {
         UWL_ERR(_T("SettingManager Init Failed"));
         assert(false);
-        return FALSE;
+        return kCommFaild;
     }
 
     if (!GameInfoManager::Instance().Init()) {
         UWL_ERR(_T("GameInfoManager Init Failed"));
         assert(false);
-        return FALSE;
+        return kCommFaild;
     }
 
     if (!TheRobotMgr.Init()) {
         UWL_ERR(_T("TheRobotMgr Init Failed"));
         assert(false);
-        return FALSE;
+        return kCommFaild;
     }
 
     ////////////////////////////////////////////////////////
     UwlTrace(_T("Server start up OK."));
     UwlLogFile(_T("Server start up OK."));
-    return TRUE;
+    return kCommSucc;
 }
 
 void CMainServer::Shutdown() {

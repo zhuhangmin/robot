@@ -19,6 +19,7 @@
 #include <ctime>
 #include <hash_map>
 #include <array>
+#include <random>
 
 #include <json.h>
 #include <xysoap.h>

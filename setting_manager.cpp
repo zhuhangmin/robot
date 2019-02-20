@@ -1,16 +1,17 @@
 #include "stdafx.h"
 #include "setting_manager.h"
 #include "Main.h"
+#include "RobotUitls.h"
 
-bool	SettingManager::Init() {
+int SettingManager::Init() {
     if (!InitSetting()) {
-        UWL_ERR("InitSetting() return false");
+        UWL_ERR("InitSetting() failed");
         assert(false);
-        return false;
+        return kCommFaild;
     }
-    UWL_INF("InitSetting Account Count = %d", account_setting_map_.size());
+    UWL_INF("InitSetting Account Count = %d", GetAccountSettingMap().size());
 
-    return true;
+    return kCommSucc;
 }
 
 bool SettingManager::InitSetting() {
@@ -52,22 +53,38 @@ bool SettingManager::InitSetting() {
         std::string sPortrait = robot["Portrait"].asString();
 
         RobotSetting unit;
-        unit.account = nAccount;
+        unit.userid = nAccount;
         unit.password = sPassword;
         unit.nickName = sNickName;
         unit.portraitUrl = sPortrait;
-        account_setting_map_[nAccount] = unit;
+        GetAccountSettingMap()[nAccount] = unit;
     }
     return closeRet(true);
 }
 
-bool SettingManager::GetRobotSetting(int account, RobotSetting& unit) {
-    if (account == 0)	return false;
+int SettingManager::GetRobotSetting(int account, RobotSetting& robot_setting_) {
+    if (account == 0)
+        return kCommFaild;
 
-    auto it = account_setting_map_.find(account);
-    if (it == account_setting_map_.end()) return false;
+    auto it = GetAccountSettingMap().find(account);
+    if (it == GetAccountSettingMap().end())
+        return kCommFaild;
 
-    unit = it->second;
+    robot_setting_ = it->second;
 
-    return true;
+    return kCommSucc;
+}
+
+int SettingManager::GetRandomRobotSetting(RobotSetting& robot_setting_) {
+    auto random_pos = 0;
+    if (kCommFaild == RobotUitls::GenRandInRange(0, account_setting_map_.size(), random_pos)) {
+        return kCommFaild;
+    }
+    auto random_it = std::next(std::begin(account_setting_map_), random_pos);
+    robot_setting_ = random_it->second;
+    return kCommSucc;
+}
+
+SettingManager::AccountSettingMap& SettingManager::GetAccountSettingMap() {
+    return account_setting_map_;
 }

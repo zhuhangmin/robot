@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RobotUitls.h"
 
+
 int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
     CONTEXT_HEAD	context_head = {};
     context_head.hSocket = connection_->GetSocket();
@@ -84,4 +85,16 @@ CString RobotUitls::ExecHttpRequestPost(const CString& strUrl, const CString& st
         UwlLogFile(_T("ExecHttpRequestPost strResult:%s "), strResult);
     }
     return strResult;
+}
+
+int RobotUitls::GenRandInRange(int min_value, int max_value, int& res) {
+    if (max_value < min_value) {
+        UWL_ERR("MAX VALUE %d smaller than SMALL VALUE %d", max_value, min_value);
+        assert(0);
+        return kCommFaild;
+    }
+    static std::default_random_engine defEngine(std::time(nullptr));
+    auto rnd = defEngine();
+    res = rnd % (max_value - min_value + 1) + min_value;
+    return kCommSucc;
 }
