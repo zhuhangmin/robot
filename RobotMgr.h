@@ -6,6 +6,7 @@
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
+    using DepositMap = std::unordered_map<UserID, DepositType>;
 
 public:
     bool Init();
@@ -19,11 +20,11 @@ private:
     // 大厅建立连接
     bool ConnectHall(bool bReconn = false);
 
-    // 大厅接收消息
-    void ThreadHallNotify();
-
     // 大厅服务请求发送
     int SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+
+    // 大厅接收消息
+    void ThreadHallNotify();
 
     // 大厅消息处理
     void OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize);
@@ -32,7 +33,7 @@ private:
     void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
     // 定时器 大厅心跳
-    void ThreadSendPluse();
+    void ThreadSendHallPluse();
 
     // 定时器 主流程业务
     void ThreadMainProc();
@@ -56,8 +57,8 @@ private:
 
     //@zhuhangmin 20190218 仅补银线程可见
     void OnTimerUpdateDeposit(time_t nCurrTime);
-    int RobotGainDeposit(RobotPtr client);
-    int RobotBackDeposit(RobotPtr client);
+    int RobotGainDeposit(UserID userid, int32_t amount);
+    int RobotBackDeposit(UserID userid, int32_t amount);
 
     // 机器人
     RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
@@ -70,23 +71,30 @@ private:
 
     int GetRoomCurrentRobotSize(RoomID roomid); //房间里的机器人数
 
-
 private:
+    //主流程 定时器线程
     UThread	main_timer_thread_;
 
+    //心跳 定时器线程
     UThread	heart_timer_thread_;
 
+    //补银 定时器线程
     UThread	deposit_timer_thread_;
 
+    //大厅 接收消息线程
     UThread	hall_notify_thread_;
 
+    //所有机器人动态信息
     std::mutex robot_map_mutex_;
-    RobotMap robot_map_; //管理所有robot动态信息
+    RobotMap robot_map_;
 
+    //大厅连接
     std::mutex hall_connection_mutex_;
-    CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};//大厅连接
+    CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};
 
-
+    //补银队列
+    std::mutex deposit_map_mutex_;
+    DepositMap deposit_map_;
 
 
 };

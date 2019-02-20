@@ -25,10 +25,13 @@ public:
     int SendGamePulse();
 
     void SetPlayerRoomStatus(int status);
+    DepositType GetGainType() const { return gain_type_; }
+    void SetGainType(DepositType val) { gain_type_ = val; }
 private:
     bool ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
     int SendRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
 
+    DepositType gain_type_{DepositType::kDefault};
 
 protected:
     int32_t			userid_{0};
@@ -51,6 +54,7 @@ public:
     int32_t			m_nBackAmount{};
 
     bool		logon_{false}; // ÊÇ·ñµÇÈë´óÌü
+
 
 };
 

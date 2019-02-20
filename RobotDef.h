@@ -168,3 +168,14 @@ std::shared_ptr<T> make_shared_array(std::size_t size) {
 }
 
 using CDefSocketClientPtr = std::shared_ptr <CDefSocketClient>;
+
+const int PluseInterval = 60; // seconds
+const int DepositInterval = 15; // seconds
+
+const int GainAmount = 200000;
+const int BackAmount = 200000;
+enum class DepositType {
+    kDefault,
+    kGain,
+    kBack,
+};
