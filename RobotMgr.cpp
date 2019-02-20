@@ -11,13 +11,6 @@
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 bool	CRobotMgr::Init() {
-    if (!InitSetting()) {
-        UWL_ERR("InitSetting() return false");
-        assert(false);
-        return false;
-    }
-    UWL_INF("InitSetting Account Count = %d", account_setting_map_.size());
-
     if (!InitEnterGameThreads()) {
         UWL_ERR("InitEnterGameThreads() return false");
         assert(false);
@@ -39,11 +32,7 @@ bool	CRobotMgr::Init() {
     }
     UWL_INF("InitConnectHall Sucessed.");
 
-    if (kCommFaild == InitConnectGame()) {
-        UWL_ERR("InitConnectGame failed");
-        assert(false);
-        return false;
-    }
+
 
     return true;
 }
@@ -52,61 +41,13 @@ void	CRobotMgr::Term() {
         it.Release();
 
     m_thrdHallNotify.Release();
-    m_thrdGameNotify.Release();
-    m_thrdGameInfoNotify.Release();
+
 }
 
-bool CRobotMgr::InitSetting() {
-    std::string filename = g_curExePath + ROBOT_SETTING_FILE_NAME;
-    Json::Value root;
-    Json::Reader reader;
-    std::ifstream ifile;
-    ifile.open(filename, std::ifstream::in);
 
-    auto closeRet = [&ifile] (bool ret) {ifile.close(); return ret; };
-
-    if (!reader.parse(ifile, root, FALSE))		return closeRet(false);
-
-    if (!root.isMember("GameId"))               return closeRet(false);
-
-    if (!root["RoomIds"].isArray())				return closeRet(false);
-
-    if (!root["robots"].isArray())				return closeRet(false);
-
-    g_gameID = root["GameId"].asInt();
-
-    auto rooms = root["RoomIds"];
-    int size = rooms.size();
-
-    for (int n = 0; n < size; ++n) {
-        int32_t nRoomId = rooms[n]["RoomId"].asInt();
-        int32_t nCtrlMode = rooms[n]["CtrlMode"].asInt();
-        int32_t nCtrlValue = rooms[n]["Value"].asInt();
-        room_setting_map_[nRoomId] = RoomSetiing{nRoomId, nCtrlMode, nCtrlValue};
-    }
-
-    auto robots = root["robots"];
-    size = robots.size();
-    for (int i = 0; i < size; ++i) {
-        auto robot = robots[i];
-        int32_t		nAccount = robot["Account"].asInt();
-        std::string sPassword = robot["Password"].asString();
-        std::string sNickName = robot["NickName"].asString();
-        std::string sPortrait = robot["Portrait"].asString();
-
-        RobotSetting unit;
-        unit.account = nAccount;
-        unit.password = sPassword;
-        unit.nickName = sNickName;
-        unit.portraitUrl = sPortrait;
-        account_setting_map_[nAccount] = unit;
-    }
-    return closeRet(true);
-}
 bool	CRobotMgr::InitNotifyThreads() {
     m_thrdHallNotify.Initial(std::thread([this] {this->ThreadRunHallNotify(); }));
-    m_thrdGameNotify.Initial(std::thread([this] {this->ThreadRunGameNotify(); }));
-    m_thrdGameInfoNotify.Initial(std::thread([this] {this->ThreadRunGameNotify(); }));
+
     return true;
 }
 bool	CRobotMgr::InitEnterGameThreads() {
@@ -134,111 +75,6 @@ bool	CRobotMgr::InitConnectHall(bool bReconn) {
     return true;
 }
 
-int CRobotMgr::InitConnectGame() {
-    TCHAR szGameSvrIP[MAX_SERVERIP_LEN] = {};
-    GetPrivateProfileString(_T("GameServer"), _T("IP"), _T(""), szGameSvrIP, sizeof(szGameSvrIP), g_szIniFile);
-    auto nGameSvrPort = GetPrivateProfileInt(_T("GameServer"), _T("Port"), 0, g_szIniFile);
-
-    {
-        std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-        game_info_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
-
-        if (!game_info_connection_->Create(szGameSvrIP, nGameSvrPort, 5, 0, m_thrdGameInfoNotify.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
-            UWL_ERR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
-            assert(false);
-            return kCommFaild;
-        }
-        UWL_INF("ConnectGame OK! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
-
-        auto ret = SendValidateReq();
-
-        if (ret == kCommFaild) return ret;
-
-        UWL_INF("SendValidateReq OK!");
-
-        ret = SendGetGameInfo();
-
-        if (ret == kCommFaild) return ret;
-
-        UWL_INF("SendGetGameInfo OK!");
-
-    }
-
-
-    return kCommSucc;
-}
-
-
-int CRobotMgr::SendValidateReq() {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-
-    game::base::RobotSvrValidateReq req;
-    req.set_client_id(g_nClientID);
-    REQUEST response = {};
-    auto result = RobotUitls::SendRequest(game_info_connection_, GR_VALID_ROBOTSVR, req, response);
-
-    if (kCommSucc != result) {
-        UWL_ERR("SendValidateReq failed");
-        return kCommFaild;
-    }
-
-    game::base::RobotSvrValidateResp resp;
-    int ret = ParseFromRequest(response, resp);
-    if (kCommSucc != ret) {
-        UWL_ERR("ParseFromRequest faild.");
-        return kCommFaild;
-    }
-
-    if (kCommSucc != resp.code()) {
-        UWL_ERR("SendValidateReq faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(req).c_str());
-        return kCommFaild;
-    }
-
-    return kCommSucc;
-}
-
-// 机器人服务获取游戏内所有玩家信息(room、table、user)
-int CRobotMgr::SendGetGameInfo(RoomID roomid /*= 0*/) {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-
-    game::base::GetGameUsersReq req;
-    req.set_clientid(g_nClientID);
-    req.set_roomid(roomid);
-    REQUEST response = {};
-    auto result = RobotUitls::SendRequest(game_info_connection_, GR_GET_GAMEUSERS, req, response);
-
-    if (kCommSucc != result) {
-        UWL_ERR("SendGetGameInfo failed");
-        return kCommFaild;
-    }
-
-    game::base::GetGameUsersResp resp;
-    int ret = ParseFromRequest(response, resp);
-    if (kCommSucc != ret) {
-        UWL_ERR("ParseFromRequest faild.");
-        return kCommFaild;
-    }
-
-    if (kCommSucc != resp.code()) {
-        UWL_ERR("SendGetGameInfo faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(req).c_str());
-        return kCommFaild;
-    }
-
-    room_map_.clear();
-    for (int index = 0; index < resp.rooms_size(); index++) {
-        game::base::Room room = resp.rooms(index);
-        RoomID roomid = room.room_data().roomid();
-        room_map_.insert(std::make_pair(roomid, room));
-    }
-
-    user_map_.clear();
-    for (int index = 0; index < resp.users_size(); index++) {
-        game::base::User user = resp.users(index);
-        UserID userid = user.userid();
-        user_map_.insert(std::make_pair(userid, user));
-    }
-    return kCommSucc;
-}
 
 TTueRet CRobotMgr::SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
     if (!hall_connection_) {
@@ -292,16 +128,6 @@ TTueRet CRobotMgr::SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *p
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
-bool CRobotMgr::GetRobotSetting(int account, RobotSetting& unit) {
-    if (account == 0)	return false;
-
-    auto it = account_setting_map_.find(account);
-    if (it == account_setting_map_.end()) return false;
-
-    unit = it->second;
-
-    return true;
-}
 
 RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
@@ -336,99 +162,6 @@ void	CRobotMgr::ThreadRunHallNotify() {
     }
     UWL_INF(_T("HallNotify thread exiting. id = %d"), GetCurrentThreadId());
     return;
-}
-
-void	CRobotMgr::ThreadRunGameNotify() {
-    UWL_INF(_T("GameNotify thread started. id = %d"), GetCurrentThreadId());
-
-    MSG msg = {};
-    while (GetMessage(&msg, 0, 0, 0)) {
-        if (UM_DATA_RECEIVED == msg.message) {
-
-            LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
-            LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
-
-            TokenID		nTokenID = pContext->lTokenID;
-            RequestID		nReqstID = pRequest->head.nRequest;
-
-            auto client = GetRobotByToken(ECT_GAME, nTokenID);
-            if (client == nullptr) {
-                UWL_WRN(_T("GameNotify client not found. nTokenID = %d reqId:%d"), nTokenID, nReqstID);
-                continue;
-            }
-
-            OnGameNotify(client, nReqstID, pRequest->pDataPtr, pRequest->nDataLen);
-
-            SAFE_DELETE(pContext);
-            UwlClearRequest(pRequest);
-            SAFE_DELETE(pRequest);
-        } else {
-            DispatchMessage(&msg);
-        }
-    }
-    UWL_INF(_T("GameNotify thread exiting. id = %d"), GetCurrentThreadId());
-    return;
-}
-
-void	CRobotMgr::ThreadRunGameInfoNotify() {
-    UWL_INF(_T("GameNotify thread started. id = %d"), GetCurrentThreadId());
-
-    MSG msg = {};
-    while (GetMessage(&msg, 0, 0, 0)) {
-        if (UM_DATA_RECEIVED == msg.message) {
-
-            LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
-            LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
-
-            RequestID		nReqstID = pRequest->head.nRequest;
-
-            OnGameInfoNotify(nReqstID, *pRequest);
-
-            SAFE_DELETE(pContext);
-            UwlClearRequest(pRequest);
-            SAFE_DELETE(pRequest);
-        } else {
-            DispatchMessage(&msg);
-        }
-    }
-    UWL_INF(_T("GameNotify thread exiting. id = %d"), GetCurrentThreadId());
-    return;
-}
-
-void CRobotMgr::OnGameInfoNotify(RequestID nReqstID, const REQUEST &request) {
-    switch (nReqstID) {
-        case UR_SOCKET_ERROR:
-        case UR_SOCKET_CLOSE:
-            OnDisconnGameInfo();
-            break;
-
-        case GN_USER_STATUS_TO_ROBOTSVR:
-        {
-            OnRecvGameInfo(request);
-        }
-        break;
-    }
-
-}
-
-void CRobotMgr::OnRecvGameInfo(const REQUEST &request) {
-    game::base::Status2RobotSvrNotify user_status_ntf;
-    int parse_ret = ParseFromRequest(request, user_status_ntf);
-    if (kCommSucc != parse_ret) {
-        UWL_WRN("ParseFromRequest failed.");
-        return;
-    }
-
-    UserID userid = user_status_ntf.userid();
-    if (user_map_.find(userid) == user_map_.end()) return;
-
-    auto user = user_map_[userid];
-    user.set_userid(user_status_ntf.userid());
-    user.set_roomid(user_status_ntf.roomid());
-    user.set_tableno(user_status_ntf.tableno());
-    user.set_chairno(user_status_ntf.chairno());
-    user.set_user_type(user_status_ntf.user_type());
-
 }
 
 void    CRobotMgr::ThreadRunEnterGame() {
@@ -483,92 +216,89 @@ void CRobotMgr::OnDisconnGameWithLock(RobotPtr client, RequestID nReqId, void* p
     client->OnDisconnGame();
 }
 
-void CRobotMgr::OnDisconnGameInfo() {
-    game_info_connection_->DestroyEx();
-}
 
 TTueRet CRobotMgr::RobotLogonHall(const int32_t& account) {
 
-    AccountSettingMap::iterator itRobot = account_setting_map_.end();
+    //AccountSettingMap::iterator itRobot = account_setting_map_.end();
 
-    //配置账号是否存在
-    // 指定账号 否则随机
-    if (account != 0) {
-        auto&& it = account_setting_map_.find(account); // robot setting
-        if (it == account_setting_map_.end())
-            return std::make_tuple(false, "使用无效的机器人账号");
+    ////配置账号是否存在
+    //// 指定账号 否则随机
+    //if (account != 0) {
+    //    auto&& it = account_setting_map_.find(account); // robot setting
+    //    if (it == account_setting_map_.end())
+    //        return std::make_tuple(false, "使用无效的机器人账号");
 
-        if (IsLogon(account))
-            return std::make_tuple(true, "不可重复登录");
+    //    if (IsLogon(account))
+    //        return std::make_tuple(true, "不可重复登录");
 
-        itRobot = it;
-    } else {
-        //random
-        for (int i = 0; i < 10; i++) {
-            auto it = account_setting_map_.begin();
-            auto randnum = rand();
-            auto mapSize = account_setting_map_.size();
-            auto num = randnum % mapSize;
-            std::advance(it, num);
-            if (IsLogon(it->first)) continue;
-            itRobot = it; break;
-        }
+    //    itRobot = it;
+    //} else {
+    //    //random
+    //    for (int i = 0; i < 10; i++) {
+    //        auto it = account_setting_map_.begin();
+    //        auto randnum = rand();
+    //        auto mapSize = account_setting_map_.size();
+    //        auto num = randnum % mapSize;
+    //        std::advance(it, num);
+    //        if (IsLogon(it->first)) continue;
+    //        itRobot = it; break;
+    //    }
 
-    }
+    //}
 
-    if (itRobot == account_setting_map_.end()) {
+    //if (itRobot == account_setting_map_.end()) {
 
-        if (account == 0) {
-            //UWL_DBG("没有剩余机器人账号数据可用于登陆大厅");
-        } else {
-            UWL_ERR("没有找到机器人账号数据 account = %d", account);
-            assert(false);
-        }
-        return std::make_tuple(true, "没有找到机器人账号数据可用于登陆大厅");
-    }
+    //    if (account == 0) {
+    //        //UWL_DBG("没有剩余机器人账号数据可用于登陆大厅");
+    //    } else {
+    //        UWL_ERR("没有找到机器人账号数据 account = %d", account);
+    //        assert(false);
+    //    }
+    //    return std::make_tuple(true, "没有找到机器人账号数据可用于登陆大厅");
+    //}
 
-    //账号对应client是否已经生成, 是否已经登入大厅
-    auto client = GetRobotClient(itRobot->first);
-    if (!client)
-        client = std::make_shared<Robot>(itRobot->second);
+    ////账号对应client是否已经生成, 是否已经登入大厅
+    //auto client = GetRobotClient(itRobot->first);
+    //if (!client)
+    //    client = std::make_shared<Robot>(itRobot->second);
 
-    if (client->IsLogon())
-        return std::make_tuple(false, "已经登录");
+    //if (client->IsLogon())
+    //    return std::make_tuple(false, "已经登录");
 
-    LOGON_USER_V2  logonUser = {};
-    logonUser.nUserID = client->GetUserID();
-    xyGetHardID(logonUser.szHardID);  // 硬件ID
-    xyGetVolumeID(logonUser.szVolumeID);
-    xyGetMachineID(logonUser.szMachineID);
-    UwlGetSystemVersion(logonUser.dwSysVer);
-    logonUser.nAgentGroupID = ROBOT_AGENT_GROUP_ID; // 使用888作为组号
-    logonUser.dwLogonFlags |= (FLAG_LOGON_INTER | FLAG_LOGON_ROBOT_TOOL);
-    logonUser.nLogonSvrID = 0;
-    logonUser.nHallBuildNO = 20160414;
-    logonUser.nHallNetDelay = 1;
-    logonUser.nHallRunCount = 1;
-    strcpy_s(logonUser.szPassword, client->Password().c_str());
+    //LOGON_USER_V2  logonUser = {};
+    //logonUser.nUserID = client->GetUserID();
+    //xyGetHardID(logonUser.szHardID);  // 硬件ID
+    //xyGetVolumeID(logonUser.szVolumeID);
+    //xyGetMachineID(logonUser.szMachineID);
+    //UwlGetSystemVersion(logonUser.dwSysVer);
+    //logonUser.nAgentGroupID = ROBOT_AGENT_GROUP_ID; // 使用888作为组号
+    //logonUser.dwLogonFlags |= (FLAG_LOGON_INTER | FLAG_LOGON_ROBOT_TOOL);
+    //logonUser.nLogonSvrID = 0;
+    //logonUser.nHallBuildNO = 20160414;
+    //logonUser.nHallNetDelay = 1;
+    //logonUser.nHallRunCount = 1;
+    //strcpy_s(logonUser.szPassword, client->Password().c_str());
 
-    RequestID nResponse;
-    //LPVOID	 pRetData = NULL;
-    std::shared_ptr<void> pRetData;
-    uint32_t nDataLen = sizeof(logonUser);
-    auto it = SendHallRequest(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData);
-    if (!TUPLE_ELE(it, 0)) {
-        UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", client->GetUserID());
-        return it;
-    }
+    //RequestID nResponse;
+    ////LPVOID	 pRetData = NULL;
+    //std::shared_ptr<void> pRetData;
+    //uint32_t nDataLen = sizeof(logonUser);
+    //auto it = SendHallRequest(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData);
+    //if (!TUPLE_ELE(it, 0)) {
+    //    UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", client->GetUserID());
+    //    return it;
+    //}
 
-    if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
-        UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", client->GetUserID());
-        return std::make_tuple(false, std::to_string(nResponse));
-    }
+    //if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
+    //    UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", client->GetUserID());
+    //    return std::make_tuple(false, std::to_string(nResponse));
+    //}
 
-    client->SetLogon(true);
-    client->SetLogonData((LPLOGON_SUCCEED_V2) pRetData.get());
-    SetRobotClient(client);
+    //client->SetLogon(true);
+    //client->SetLogonData((LPLOGON_SUCCEED_V2) pRetData.get());
+    //SetRobotClient(client);
 
-    UWL_INF("account:%d userid:%d logon hall ok.", client->GetUserID(), client->GetUserID());
+    //UWL_INF("account:%d userid:%d logon hall ok.", client->GetUserID(), client->GetUserID());
     return std::make_tuple(true, ERR_OPERATE_SUCESS);
 }
 
@@ -685,52 +415,6 @@ int CRobotMgr::GetRoomCurrentRobotSize(RoomID roomid) {
     return count;
 }
 
-
-int CRobotMgr::GetUserStatus(UserID userid, UserStatus& user_status) {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-
-    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-    auto user = user_map_[userid];
-    auto chairno = user.chairno();
-
-    // 玩家信息中token为0则说明玩家离线； kUserOffline = 0x10000000		// 断线
-    // TODO
-
-    // 玩家信息中椅子号为0则说明在旁观；
-    if (chairno == 0) {
-        user_status = kUserLooking;
-        return kCommSucc;
-    }
-
-    // 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
-    game::base::Table table;
-    if (kCommFaild == FindTable(userid, table)) return kCommFaild;
-    auto table_status = table.table_status();
-    if (table_status == kTableWaiting) {
-        user_status = kUserWaiting;
-        return kCommSucc;
-    }
-
-    // 桌子playing && 椅子playing -> 玩家playing
-    game::base::ChairInfo chair;
-    if (kCommFaild == FindChair(userid, chair)) return kCommFaild;
-    auto chair_status = chair.chair_status();
-    if (table_status != kTablePlaying) return kCommFaild;
-
-    if (chair_status == kChairPlaying) {
-        user_status = kUserPlaying;
-        return kCommSucc;
-    }
-
-    // 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）//TODO 原空闲玩家?
-    if (chair_status == kChairWaiting) {
-        user_status = kUserWaiting;
-        return kCommSucc;
-    }
-
-    return kCommFaild;
-}
-
 void    CRobotMgr::OnServerMainTimer(time_t nCurrTime) {
     OnTimerLogonHall(nCurrTime);
     /*   OnTimerSendHallPluse(nCurrTime);
@@ -738,47 +422,47 @@ void    CRobotMgr::OnServerMainTimer(time_t nCurrTime) {
     OnTimerUpdateDeposit(nCurrTime);
 }
 bool	CRobotMgr::OnTimerLogonHall(time_t nCurrTime) {
-    if (!hall_connection_) {
-        UWL_ERR("SendHallRequest OnTimerReconnectHall nil ERR_CONNECT_NOT_EXIST");
-        assert(false);
-        return false;
-    }
-
-
-    if (hall_connection_->IsConnected()) return true;
-
-    //@zhuhangmin 10s重连代码，200+机器人 100s 重连 2000多次, 回导致短时间大厅登陆压力过大
-#define MAIN_RECONNECT_HALL_GAP_TIME (60) // 60s
-    static time_t	sLastReconnectHallGapTime = nCurrTime;
-    if (nCurrTime - sLastReconnectHallGapTime >= MAIN_RECONNECT_HALL_GAP_TIME)
-        sLastReconnectHallGapTime = nCurrTime;
-    else return false;
-
-    if (!InitConnectHall()) {
-        UWL_ERR("InitConnectHall");
-        assert(false);
-        return false;
-    }
-
-    int32_t nCount = 0;
-    std::vector<int32_t> vecAccounts;
-    {
-        for (auto&& it = account_setting_map_.begin(); it != account_setting_map_.end(); it++) {
-            if (!IsLogon(it->first)) continue;
-
-            if (++nCount >= 5)		 break;
-
-            vecAccounts.push_back(it->second.account);
-        }
-    }
-    for (auto&& it : vecAccounts) {
-        //UWL_INF("OnTimerReconnectHall CALL RobotLogonHall");
-        auto&& tRet = RobotLogonHall(it);
-        if (!TUPLE_ELE(tRet, 0)) {
-            assert(false);
-            UWL_WRN("OnTimerReconnectHall Account:%d logon Err:%s", it, TUPLE_ELE_C(tRet, 1));
-        }
-    }
+    //    if (!hall_connection_) {
+    //        UWL_ERR("SendHallRequest OnTimerReconnectHall nil ERR_CONNECT_NOT_EXIST");
+    //        assert(false);
+    //        return false;
+    //    }
+    //
+    //
+    //    if (hall_connection_->IsConnected()) return true;
+    //
+    //    //@zhuhangmin 10s重连代码，200+机器人 100s 重连 2000多次, 回导致短时间大厅登陆压力过大
+    //#define MAIN_RECONNECT_HALL_GAP_TIME (60) // 60s
+    //    static time_t	sLastReconnectHallGapTime = nCurrTime;
+    //    if (nCurrTime - sLastReconnectHallGapTime >= MAIN_RECONNECT_HALL_GAP_TIME)
+    //        sLastReconnectHallGapTime = nCurrTime;
+    //    else return false;
+    //
+    //    if (!InitConnectHall()) {
+    //        UWL_ERR("InitConnectHall");
+    //        assert(false);
+    //        return false;
+    //    }
+    //
+    //    int32_t nCount = 0;
+    //    std::vector<int32_t> vecAccounts;
+    //    {
+    //        for (auto&& it = account_setting_map_.begin(); it != account_setting_map_.end(); it++) {
+    //            if (!IsLogon(it->first)) continue;
+    //
+    //            if (++nCount >= 5)		 break;
+    //
+    //            vecAccounts.push_back(it->second.account);
+    //        }
+    //    }
+    //    for (auto&& it : vecAccounts) {
+    //        //UWL_INF("OnTimerReconnectHall CALL RobotLogonHall");
+    //        auto&& tRet = RobotLogonHall(it);
+    //        if (!TUPLE_ELE(tRet, 0)) {
+    //            assert(false);
+    //            UWL_WRN("OnTimerReconnectHall Account:%d logon Err:%s", it, TUPLE_ELE_C(tRet, 1));
+    //        }
+    //    }
     return true;
 }
 //void    CRobotMgr::OnTimerSendHallPluse(time_t nCurrTime) {
@@ -924,42 +608,3 @@ void    CRobotMgr::OnTimerUpdateDeposit(time_t nCurrTime) {
 //}
 
 
-int CRobotMgr::FindTable(UserID userid, game::base::Table& table) {
-    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-    auto user = user_map_[userid];
-    auto tableno = user.tableno();
-
-    auto roomid = user.roomid();
-    if (room_map_.find(roomid) == room_map_.end()) return kCommFaild;
-
-    auto tables = room_map_[roomid].tables();
-
-    for (auto& table : tables) {
-        if (table.tableno() == tableno) {
-            table = tables[tableno];
-            return kCommSucc;
-        }
-    }
-    return kCommFaild;
-}
-
-
-int CRobotMgr::FindChair(UserID userid, game::base::ChairInfo& chair) {
-    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-    auto user = user_map_[userid];
-    auto chairno = user.chairno();
-
-    game::base::Table table;
-    if (kCommFaild == FindTable(userid, table)) return kCommFaild;
-
-    auto chairs = table.chairs();
-
-    for (auto& chair : chairs) {
-        if (chair.chairno() == chairno) {
-            chair = chairs[chairno];
-            return kCommSucc;
-        }
-    }
-
-    return kCommFaild;
-}

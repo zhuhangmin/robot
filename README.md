@@ -76,6 +76,7 @@ enum UserStatus {
 * 根据模板服务器发送事件前数据的改变 来改变机器人服务器相应的状态变化
 * COPY 模板的user ，table ，room ，manager 类做映射
 * 独单的game info socket 管理类
+* 独单的setting 管理类
 * 上层机器人管理类：
 
 
