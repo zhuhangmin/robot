@@ -21,14 +21,29 @@
   整桌结算
   单人结算
   换桌成功
-  换桌失败
   离开游戏
   旁观to参赛
   参赛to旁观
-  玩家弃牌
   开始游戏
-  结束游戏
-  上桌通知
+  整桌结算
+
+  //========= 机器服相关消息 ==========
+  GR_VALID_ROBOTSVR = GR_REQUEST_BASE + 4001,      // 机器人服务验证消息
+  GR_GET_GAMEUSERS = GR_REQUEST_BASE + 4002,      // 机器人服务获取游戏内所有玩家信息(room、table、user)
+
+  //GN_USER_STATUS_TO_ROBOTSVR = GR_REQUEST_BASE + 4501,// 用户状态变化通知（到机器人服务）
+
+  GN_PLAER_ENTERGAME = GR_REQUEST_BASE + 4501,    // 玩家进入游戏  BindPlayer
+  GN_LOOKER_ENTERGAME = GR_REQUEST_BASE + 4502,    // 旁观者进入游戏  BindLooker
+
+  GN_LOOER2PLAYER = GR_REQUEST_BASE + 4503,      // 旁观转玩家  BindPlayer
+  GN_PLAYER2LOOKER = GR_REQUEST_BASE + 4504,      // 玩家转旁观  UnbindPlayer
+
+  GN_GAME_START = GR_REQUEST_BASE + 4505,        // 开始游戏  StartGame(携带椅子号？)
+  GN_USER_LEAVEGAME = GR_REQUEST_BASE + 4508,      // 用户离开游戏  UnbindUser  
+  GN_USER_REFRESH_RESULT = GR_REQUEST_BASE + 4506,  // 用户单人结算  RefreshGameResult(int userid)
+  GN_REFRESH_RESULT = GR_REQUEST_BASE + 4507,      // 整桌结算  RefreshGameResult
+  GN_SWITCH_TABLE = GR_REQUEST_BASE + 4501,      // 用户换桌  UnbindUser+BindPlayer
 
 4 心跳 （带服务器身份信息 启动时间戳）
 ==============================================

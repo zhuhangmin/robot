@@ -1,7 +1,6 @@
 #pragma once
 
 #include "RobotDef.h"
-
 #include "resource.h"
 #define APPLICATION_TITLE	 _T("RobotToolLudo")
 #define STR_SERVICE_NAME     _T("RobotToolLudo")
@@ -26,3 +25,4 @@ extern UThread			g_thrdTimer;
 extern DWORD	GetLocalIPByRemote(LPTSTR szIp, int nPort);
 
 extern CString  ExecHttpRequestPost(const CString& strUrl, const CString& strParams);
+

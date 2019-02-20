@@ -1,11 +1,9 @@
 #pragma once
 #include "user.h"
+#include "RobotDef.h"
 
-class UserMgr {
+class UserMgr : public ISingletion<UserMgr> {
 public:
-    UserMgr();
-    virtual ~UserMgr();
-
     // 新建一个用户
     std::shared_ptr<User> NewUser();
     // 获取用户的shared_ptr
@@ -26,7 +24,8 @@ public:
     void AddToken(int token, int userid);
 
     bool IsValidUserID(int userid);
-
+protected:
+    SINGLETION_CONSTRUCTOR(UserMgr);
 private:
     std::mutex users_mutex;
     std::hash_map<int, std::shared_ptr<User>> users_;

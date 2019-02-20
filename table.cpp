@@ -100,10 +100,6 @@ int Table::GetFreeChairCount() {
     return 0;
 }
 
-bool Table::IsStartGameEnable() {
-    return GetPlayerCount() >= get_min_player_count();
-}
-
 bool Table::IsTablePlayer(int userid) {
     int chairno = GetUserChair(userid);
     return IsValidChairno(chairno);
@@ -164,6 +160,7 @@ bool Table::IsValidDeposit(INT64 deposit) {
 
     return (deposit >= get_min_deposit() && deposit < get_max_deposit());
 }
+
 
 bool Table::IfContinueWhenOneUserLeave() {
     return GetPlayerCount() - 1 >= get_min_player_count();

@@ -184,9 +184,6 @@ public:
     // 获取桌子上的空座位数量
     virtual int GetFreeChairCount();
 
-    // 能否开始游戏
-    virtual bool IsStartGameEnable();
-
     // 是否为玩家
     virtual bool IsTablePlayer(int userid);
     // 是否为旁观者

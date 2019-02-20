@@ -12,7 +12,6 @@
 #endif
 
 using namespace std;
-
 int					g_nClientID = 0;
 int					g_useLocal = 0;//是否使用本地地址127.0.0.1
 int g_gameID = 0;

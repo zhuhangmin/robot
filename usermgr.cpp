@@ -1,21 +1,6 @@
 #include "stdafx.h"
 #include "UserMgr.h"
 
-
-UserMgr::UserMgr() {}
-
-
-UserMgr::~UserMgr() {}
-
-//std::shared_ptr<User> UserMgr::NewUser(const User &user)
-//{
-//	const User *pp = &user;
-//	const GameUser *ppp = (GameUser *)pp;
-//
-//	std::shared_ptr<User> user_p = std::make_shared<GameUser>(*ppp);
-//	return user_p;
-//}
-
 std::shared_ptr<User> UserMgr::NewUser() {
     return std::make_shared<User>();
 }
