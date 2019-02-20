@@ -20,8 +20,3 @@ extern TCHAR			g_szIniFile[MAX_PATH];
 extern HANDLE			g_hExitServer;
 
 
-//////////////////
-extern DWORD	GetLocalIPByRemote(LPTSTR szIp, int nPort);
-
-extern CString  ExecHttpRequestPost(const CString& strUrl, const CString& strParams);
-

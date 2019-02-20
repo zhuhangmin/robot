@@ -51,18 +51,7 @@ LONG WINAPI ExpFilter(struct _EXCEPTION_POINTERS *pExp) {
     WriteMiniDMP(pExp);
     return EXCEPTION_EXECUTE_HANDLER;
 }
-////////////////////////////////////////////////////////////////
-DWORD GetLocalIPByRemote(LPTSTR szIp, int nPort) {
-    UWL_ADDR stRemoteIP = {};
-    UwlNameToAddr(szIp, stRemoteIP);
-    DWORD dwRemotePort = nPort;
-    if (dwRemotePort == 0)
-        dwRemotePort = PORT_ROOM_SERVER;
-    return xydyGetLocalIPByRemote(stRemoteIP.v4_addr.sin_addr.s_addr, dwRemotePort);
-}
 
-
-////////////////////////////////////////////////////////////////
 int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     int nRetCode = 0;
     ::SetUnhandledExceptionFilter(ExpFilter);

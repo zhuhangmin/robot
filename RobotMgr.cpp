@@ -332,7 +332,7 @@ TTueRet CRobotMgr::RobotGainDeposit(RobotPtr client) {
     root["Sign"] = Json::Value(MD5String((root["ActId"].asString() + "|" + root["UserId"].asString() + "|" + root["Time"].asString() + "|" + ROBOT_APPLY_DEPOSIT_KEY).c_str()));
 
     CString strParam = fast_writer.write(root).c_str();
-    CString strResult = ExecHttpRequestPost(szHttpUrl, strParam);
+    CString strResult = RobotUitls::ExecHttpRequestPost(szHttpUrl, strParam);
     Json::Reader reader;
     Json::Value _root;
     if (!reader.parse((LPCTSTR) strResult, _root))
@@ -372,7 +372,7 @@ TTueRet CRobotMgr::RobotBackDeposit(RobotPtr client) {
     root["Sign"] = Json::Value(MD5String((root["ActId"].asString() + "|" + root["UserId"].asString() + "|" + root["Time"].asString() + "|" + ROBOT_APPLY_DEPOSIT_KEY).c_str()));
 
     CString strParam = fast_writer.write(root).c_str();
-    CString strResult = ExecHttpRequestPost(szHttpUrl, strParam);
+    CString strResult = RobotUitls::ExecHttpRequestPost(szHttpUrl, strParam);
     Json::Reader reader;
     Json::Value _root;
     if (!reader.parse((LPCTSTR) strResult, _root))
