@@ -47,7 +47,29 @@ private:
     // 玩家进入游戏	BindPlayer
     void OnPlayerEnterGame(const REQUEST &request);
 
+    // 旁观者进入游戏	BindLooker
     void OnLookerEnterGame(const REQUEST &request);
+
+    // 旁观转玩家	BindPlayer
+    void OnLooker2Player(const REQUEST &request);
+
+    // 玩家转旁观	UnbindPlayer
+    void OnPlayer2Looker(const REQUEST &request);
+
+    // 开始游戏	StartGame
+    void OnStartGame(const REQUEST &request);
+
+    // 用户单人结算	RefreshGameResult(int userid)
+    void OnUserFreshResult(const REQUEST &request);
+
+    // 整桌结算	RefreshGameResult
+    void OnFreshResult(const REQUEST &request);
+
+    // 用户离开游戏	UnbindUser
+    void OnLeaveGame(const REQUEST &request);
+
+    // 用户换桌	UnbindUser+BindPlaye
+    void OnSwitchGame(const REQUEST &request);
 
 private:
     int GetUserStatus(UserID userid, UserStatus& user_status);

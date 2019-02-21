@@ -87,23 +87,14 @@ int BaseRoom::UserGiveUp(int userid, int tableno) {
     return kCommSucc;
 }
 
-// TODO:确认response的code是通过返回值返回还是getlasterror返回
 int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
-    if (!IsValidDeposit(user->get_deposit())) {
-        UWL_WRN("user[%d] deposit[%I64d] invalid.", user->get_user_id(), user->get_deposit());
-        return kCommFaild;
-    }
-
     auto table = GetTable(user->get_table_no());
     if (!IsValidTable(table->get_table_no())) {
         UWL_WRN("Get table[%d] faild", user->get_table_no());
         return kCommFaild;
     }
 
-    // 分配桌椅锁
     std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
-
-    // 桌子锁
 
     if (!table->IsTableUser(user->get_user_id())) {
         UWL_WRN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
@@ -112,19 +103,16 @@ int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
 
     if (table->IsTablePlayer(user->get_user_id())) {
         UWL_WRN("Looker2Player succ. but user[%d] is player.", user->get_user_id());
-        // 如果是玩家则直接返回成功
         user->set_chair_no(table->GetUserChair(user->get_user_id()));
         return kCommSucc;
     }
 
-    int chairno = 0;
     int ret = table->BindPlayer(user);
     if (ret != kCommSucc) {
         UWL_WRN("user[%d] BindPlayer faild. ret=%d", user->get_user_id(), ret);
         return kCommFaild;
     }
 
-    user->set_chair_no(chairno);
     return kCommSucc;
 }
 
@@ -135,18 +123,12 @@ int BaseRoom::Player2Looker(std::shared_ptr<User> &user) {
         return kCommFaild;
     }
 
-    // 分配桌椅锁(极端情况也不会导致其他玩家上桌失败，所以无需加锁)
-    //std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
-
-
     if (!table->IsTableUser(user->get_user_id())) {
         UWL_WRN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
         return kCommFaild;
     }
 
     table->UnbindPlayer(user->get_user_id());
-
-    // TODO:修改玩家椅子号为0
 
     return kCommSucc;
 }

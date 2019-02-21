@@ -52,7 +52,7 @@ enum GameRequestEnum {
     GN_RS_USER_REFRESH_RESULT = GR_REQUEST_BASE + 4506,	// 用户单人结算	RefreshGameResult(int userid)
     GN_RS_REFRESH_RESULT = GR_REQUEST_BASE + 4507,		// 整桌结算	RefreshGameResult
     GN_RS_USER_LEAVEGAME = GR_REQUEST_BASE + 4508,		// 用户离开游戏	UnbindUser
-    GN_RS_SWITCH_TABLE = GR_REQUEST_BASE + 4501,		// 用户换桌	UnbindUser+BindPlayer
+    GN_RS_SWITCH_TABLE = GR_REQUEST_BASE + 4509,		// 用户换桌	UnbindUser+BindPlayer
 
 };
 

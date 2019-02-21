@@ -41,14 +41,10 @@ void Table::UnbindUser(int userid) {
 }
 
 void Table::UnbindPlayer(int userid) {
-    for (int i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
-        if (chairs_.at(i).get_userid() == userid) {
-            chairs_.at(i).set_userid(0);
-            chairs_.at(i).set_chair_status(kChairWaiting);
-            //chairs_.at(i).set_bind_timestamp(0);
-            break;
-        }
-    }
+    int chairno = GetUserChair(userid);
+    assert(chairno >= 1);
+    chairs_[chairno - 1].set_userid(0);
+    chairs_[chairno - 1].set_chair_status(kChairWaiting);
 }
 
 void Table::UnbindLooker(int userid) {

@@ -104,19 +104,26 @@ void GameInfoManager::OnGameInfoNotify(RequestID nReqstID, const REQUEST &reques
             OnLookerEnterGame(request);
             break;
         case GN_RS_LOOER2PLAYER:
+            OnLooker2Player(request);
             break;
         case GN_RS_PLAYER2LOOKER:
+            OnPlayer2Looker(request);
             break;
         case GN_RS_GAME_START:
+            OnStartGame(request);
             break;
         case GN_RS_USER_REFRESH_RESULT:
+            OnUserFreshResult(request);
             break;
         case GN_RS_REFRESH_RESULT:
+            OnFreshResult(request);
             break;
         case GN_RS_USER_LEAVEGAME:
+            OnLeaveGame(request);
             break;
-            /*case GN_RS_SWITCH_TABLE:
-                break;*/
+        case GN_RS_SWITCH_TABLE:
+            OnSwitchGame(request);
+            break;
         default:
             break;
 
@@ -291,10 +298,10 @@ void GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
 
     std::shared_ptr<User> user;
     user->set_user_id(ntf.userid());
+    user->set_room_id(roomid);
     user->set_table_no(ntf.tableno());
     user->set_chair_no(ntf.chairno());
     user->set_user_type(ntf.user_type());
-    user->set_room_id(roomid);
 
     auto base_room = RoomMgr::Instance().GetRoom(roomid);
     if (!base_room) {
@@ -308,6 +315,96 @@ void GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
         UWL_WRN("PlayerEnterGame failed.");
         return;
     }
+}
+
+void GameInfoManager::OnLooker2Player(const REQUEST &request) {
+    game::base::RS_SwitchLookerPlayerNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
+
+    auto userid = ntf.userid();
+    auto roomid = ntf.roomid();
+    auto tableno = ntf.tableno();
+    auto chairno = ntf.chairno();
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+
+    auto user = UserMgr::Instance().GetUser(userid);
+    user->set_room_id(roomid);
+    user->set_table_no(tableno);
+    user->set_chair_no(chairno);
+
+    int ret = base_room->Looker2Player(user);
+    if (ret != kCommSucc) {
+        assert(false);
+        UWL_WRN("Looker2Player failed");
+        return;
+    }
+
+}
+
+void GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
+    game::base::RS_SwitchLookerPlayerNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
+
+    auto userid = ntf.userid();
+    auto roomid = ntf.roomid();
+    auto tableno = ntf.tableno();
+    auto chairno = ntf.chairno();
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+
+    auto user = UserMgr::Instance().GetUser(userid);
+    user->set_room_id(roomid);
+    user->set_table_no(tableno);
+    user->set_chair_no(chairno);
+
+    int ret = base_room->Player2Looker(user);
+    if (ret != kCommSucc) {
+        assert(false);
+        UWL_WRN("Player2Looker failed");
+        return;
+    }
+
+}
+
+void GameInfoManager::OnStartGame(const REQUEST &request) {
+
+}
+
+void GameInfoManager::OnUserFreshResult(const REQUEST &request) {
+
+}
+
+void GameInfoManager::OnFreshResult(const REQUEST &request) {
+
+}
+
+void GameInfoManager::OnLeaveGame(const REQUEST &request) {
+
+}
+
+void GameInfoManager::OnSwitchGame(const REQUEST &request) {
+
 }
 
 int GameInfoManager::GetUserStatus(UserID userid, UserStatus& user_status) {
