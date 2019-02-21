@@ -155,3 +155,37 @@ void Table::AddChair(ChairNO chairno, ChairInfo info) {
 void Table::AddTableUserInfo(UserID userid, TableUserInfo table_user_info) {
     table_users_[userid] = table_user_info;
 }
+
+int Table::GiveUp(int userid) {
+    if (!IS_BIT_SET(get_table_status(), kTablePlaying)) {
+        UWL_WRN("user[%d] giveup, but not playing.", userid);
+        return kCommFaild;
+    }
+
+    // ½áËã
+    if (IfContinueWhenOneUserLeave()) {
+        return RefreshGameResult(userid);
+    } else {
+        return RefreshGameResult();
+    }
+}
+
+int Table::RefreshGameResult() {
+    // ÐÞ¸Ä×ÀÒÎ×´Ì¬
+    set_table_status(kTableWaiting);
+    for (auto &chair_info : chairs_) {
+        chair_info.set_chair_status(kChairWaiting);
+    }
+
+    return kCommSucc;
+}
+
+int Table::RefreshGameResult(int userid) {
+    int chairno = GetUserChair(userid);
+    if (!IsValidChairno(chairno)) {
+        UWL_WRN("user[%d] is not player.", userid);
+        return kCommFaild;
+    }
+
+    return kCommSucc;
+}

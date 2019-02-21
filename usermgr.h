@@ -8,8 +8,6 @@ public:
     std::shared_ptr<User> NewUser();
     // 获取用户的shared_ptr
     std::shared_ptr<User> GetUser(int userid);
-    // 获取用户副本的shared_ptr
-    std::shared_ptr<User> GetUserCopy(int userid);
     // 获取所有的用户
     std::hash_map<int, std::shared_ptr<User>> GetAllUsers();
     // 删除用户

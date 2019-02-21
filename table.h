@@ -175,6 +175,14 @@ public:
     virtual void UnbindPlayer(int userid);
     // 解除旁观者和桌子的绑定关系
     virtual void UnbindLooker(int userid);
+
+    // (游戏中)弃牌
+    virtual int GiveUp(int userid);
+    // 整桌结算
+    virtual int RefreshGameResult();
+    // 单人结算
+    virtual int RefreshGameResult(int userid);
+
 public:
 
     // 获取玩家数量

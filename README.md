@@ -45,6 +45,7 @@
 
 * 1 game notify recv (visiable to all client)
 
+同步 svn  305
 # DESIGN
 * 一些关键信息的变化会触发CheckCondition，进一步触发Robot的行为，注意全局锁
 * 单独补银线程，因为补银为http请求阻塞较慢，不适合放在Robot中
@@ -55,24 +56,8 @@
 * 用validate消息来区分获取游戏服务器状态的链接
 * 状态需要通过桌椅判断，没有（walking,seat,waitting,playing）
 // 玩家状态推导：
-// 玩家信息中椅子号为0则说明在旁观；
-// 玩家信息中token为0则说明玩家离线；
-// 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
-// 桌子playing && 椅子playing -> 玩家playing
-// 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）
-enum UserStatus {
-    kUserWaiting = 0x00000001,		// 等待游戏开始
-    kUserPlaying = 0x00000002,		// 游戏中
-    kUserLooking = 0x00000004,		// 旁观
-    kUserLeaved = 0x00000008,		// 离开游戏
-    kUserOffline = 0x10000000		// 断线
-};
-
 * 是否需要补充或消耗银子通过得到的银子数 和房间配置的上下限来触发
-* looker (ChairInfo 0) (TableUserInfo 1) isLooker method
-* 	repeated ChairInfo chairs	= 9;	// 椅子信息
-	repeated TableUserInfo table_users = 10；
-* 底层基础数据类：  同步 svn  305
+* 底层基础数据类：  
 * 根据模板服务器发送事件前数据的改变 来改变机器人服务器相应的状态变化
 * COPY 模板的user ，table ，room ，manager 类做映射
 * 独单的game info socket 管理类

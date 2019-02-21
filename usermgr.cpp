@@ -16,17 +16,6 @@ std::shared_ptr<User> UserMgr::GetUser(int userid) {
     return itr->second;
 }
 
-std::shared_ptr<User> UserMgr::GetUserCopy(int userid) {
-    static std::shared_ptr<User> null_user = std::make_shared<User>();
-
-    std::lock_guard<std::mutex> users_lock(users_mutex);
-    auto itr = users_.find(userid);
-    if (itr == users_.end()) {
-        return null_user;
-    }
-    return std::make_shared<User>(*(itr->second.get()));
-}
-
 std::hash_map<int, std::shared_ptr<User>> UserMgr::GetAllUsers() {
     std::lock_guard<std::mutex> users_lock(users_mutex);
     return users_;

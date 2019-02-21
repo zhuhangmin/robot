@@ -50,10 +50,6 @@ protected:
     // 获取符合要求的桌子号范围（用于缩小遍历桌子的范围）
     virtual int GetEligibleTable(const std::shared_ptr<User> &user, int &min_tableno, int &max_tableno);
 
-
-    // 设置玩家桌子相关属性
-    virtual int SetUserTableInfo(int userid, int tableno, int chairno);
-
 private:
     std::array<std::shared_ptr<Table>, kMaxTableCountPerRoom> tables_;
 
@@ -69,7 +65,6 @@ private:
 
     INT64 min_deposit_ = 0;				// 进入房间的最小银子数
     INT64 max_deposit_ = 0;				// 进入房间的最大银子数
-    INT64 base_deposit_ = 0;			// 基础银
 
 
 public:
@@ -150,11 +145,5 @@ public:
         min_playercount_per_table_ = val;
     }
 
-    INT64 get_base_deposit() const {
-        return base_deposit_;
-    }
-    void set_base_deposit(const INT64 &val) {
-        base_deposit_ = val;
-    }
 };
 
