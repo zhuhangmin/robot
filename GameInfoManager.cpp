@@ -388,6 +388,42 @@ void GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
 }
 
 void GameInfoManager::OnStartGame(const REQUEST &request) {
+    //GAME SVR TODO StartGame
+
+    game::base::RS_StartGameNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
+
+    auto roomid = ntf.roomid();
+    auto tableno = ntf.tableno();
+
+    std::unordered_map<ChairNO, game::base::ChairInfo> chairs_pb_map;
+    for (auto index = 0; index < ntf.chairs_size(); index++) {
+        auto chair_pb = ntf.chairs(index);
+        chairs_pb_map[chair_pb.chairno()] = chair_pb;
+    }
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+
+    auto table = base_room->GetTable(tableno);
+    auto chairs = table->GetChairs();
+    for (auto& kv : chairs_pb_map) {
+        auto chair_pb = kv.second;
+        ChairNO chairno = chair_pb.chairno();
+        chairs[chairno].set_chair_status((ChairStatus) chair_pb.chair_status());
+        chairs[chairno].set_userid(chair_pb.userid());
+    }
+
+    //TODO START GAME
 
 }
 

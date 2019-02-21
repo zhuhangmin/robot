@@ -41,10 +41,11 @@ public:
 
 public:
     void AddTable(TableNO tableno, std::shared_ptr<Table> table);
-protected:
-
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
     virtual std::shared_ptr<Table> GetTable(int tableno);
+protected:
+
+
 
     // 获取符合要求的桌子号范围（用于缩小遍历桌子的范围）
     virtual int GetEligibleTable(const std::shared_ptr<User> &user, int &min_tableno, int &max_tableno);

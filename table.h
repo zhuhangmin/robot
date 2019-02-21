@@ -206,6 +206,7 @@ public:
 public:
     void AddChair(ChairNO chairno, ChairInfo info);
     void AddTableUserInfo(UserID userid, TableUserInfo table_user_info);
+    std::array<ChairInfo, kMaxChairCountPerTable>& GetChairs() { return chairs_; }
 private:
 
     int table_no_ = 0;
