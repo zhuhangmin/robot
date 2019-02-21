@@ -341,7 +341,7 @@ int CRobotMgr::LogonHall() {
         auto userid = robot_setting_.userid;
         auto robot = GetRobot(userid);
         if (!robot) {
-            robot = std::make_shared<Robot>(robot_setting_);
+            robot = std::make_shared<Robot>(userid);
             SetRobot(robot);
         }
 
@@ -355,9 +355,17 @@ int CRobotMgr::LogonHall() {
         return kCommFaild;
     }
 
+    auto userid = random_robot->GetUserID();
+
+    RobotSetting setting;
+    if (kCommFaild == SettingManager::Instance().GetRobotSetting(userid, setting)) {
+        return kCommFaild;
+    }
+    std::string password = setting.password;
+
     //账号对应client是否已经生成, 是否已经登入大厅
     LOGON_USER_V2  logonUser = {};
-    logonUser.nUserID = random_robot->GetUserID();
+    logonUser.nUserID = userid;
     xyGetHardID(logonUser.szHardID);  // 硬件ID
     xyGetVolumeID(logonUser.szVolumeID);
     xyGetMachineID(logonUser.szMachineID);
@@ -368,7 +376,7 @@ int CRobotMgr::LogonHall() {
     logonUser.nHallBuildNO = 20160414;
     logonUser.nHallNetDelay = 1;
     logonUser.nHallRunCount = 1;
-    strcpy_s(logonUser.szPassword, random_robot->Password().c_str());
+    strcpy_s(logonUser.szPassword, password.c_str());
 
     RequestID nResponse;
     std::shared_ptr<void> pRetData;
@@ -429,7 +437,7 @@ int CRobotMgr::GetRoomCurrentRobotSize(RoomID roomid) {
 RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& it) {
-        return it.second->GameToken() == id;
+        return it.second->GetTokenID() == id;
     });
 
     return it != robot_map_.end() ? it->second : nullptr;

@@ -6,56 +6,61 @@
 class Robot {
 public:
     Robot();
-    Robot(const RobotSetting& robot);
-    virtual ~Robot();
+    Robot(UserID userid);
 
 public:
-    int32_t		GetUserID() { return userid_; }
-    std::string	Password() { return password_; }
-    TokenID	GameToken() { return game_connection_->GetTokenID(); }
+    // 游戏 连接
+    int ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
 
-    //HALL
-    void		SetLogonData(LPLOGON_SUCCEED_V2 logonOk) { m_LogonData = *logonOk; }
-    bool        IsLogon() { return logon_; }
-    void        SetLogon(bool status) { logon_ = status; }
+    // 游戏 断开
+    void OnDisconnect();
 
-    void		OnDisconnGame();
+public:
+    // 具体业务
 
-    // for Send
+    // 进入游戏
     int SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo);
+
+    // 发送心跳
     int SendGamePulse();
 
-    void SetPlayerRoomStatus(int status);
-    DepositType GetGainType() const { return gain_type_; }
-    void SetGainType(DepositType val) { gain_type_ = val; }
-private:
-    int ConnectGameWithLock(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
-    int SendRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
+public:
+    // 属性接口
+    int32_t	GetUserID();
 
+    TokenID	GetTokenID();
+
+    DepositType GetGainType() const;
+
+    void SetGainType(DepositType val);
+
+    // 大厅 登陆数据
+    void SetLogonData(LPLOGON_SUCCEED_V2 logonOk);
+
+    bool IsLogon();
+
+    void SetLogon(bool status);
+
+private:
+
+    int SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
+
+private:
+    // 配置机器人ID
+    UserID userid_{0};
+
+    // 是否登入大厅
+    bool logon_{false};
+
+    // 登陆数据
+    LOGON_SUCCEED_V2   m_LogonData{};
+
+    // 补银类型
     DepositType gain_type_{DepositType::kDefault};
 
-protected:
-    int32_t			userid_{0};
-    std::string		password_;
-    LOGON_SUCCEED_V2   m_LogonData{};
+    // 游戏连接
+    std::mutex mutex_;
     CDefSocketClientPtr game_connection_{std::make_shared<CDefSocketClient>()};
-
-public:
-    //zhuhangmin 20181019  mutex_ 一把锁管理机器人的所有状态,目前没有需要细化数据颗粒锁的必要
-    std::mutex		mutex_;
-
-    int32_t			m_nWantRoomId{};
-
-    // 是否要取银
-    bool			m_bGainDeposit{false};
-    int64_t			m_nGainAmount{};
-
-    // 是否要存银
-    bool			m_bBackDeposit{false};
-    int32_t			m_nBackAmount{};
-
-    bool		logon_{false}; // 是否登入大厅
-
 
 };
 
