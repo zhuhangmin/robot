@@ -22,7 +22,7 @@ public:
     int SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo);
 
     // 发送心跳
-    int SendGamePulse();
+    void SendGamePulse();
 
 public:
     // 属性接口

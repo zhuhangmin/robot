@@ -32,8 +32,8 @@ private:
     // 大厅 断开链接
     void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    // 大厅 定时心跳
-    void ThreadSendHallPluse();
+    // 定时心跳
+    void ThreadSendPluse();
 
     // 定时 业务流程
     void ThreadMainProc();
@@ -49,8 +49,8 @@ private:
 
     //@zhuhangmin 20190218 仅心跳线程可见
     void    OnTimerSendPluse(time_t nCurrTime);
-    void    SendHallPluse(time_t nCurrTime);
-    void    SendGamePluse(time_t nCurrTime);
+    void    SendHallPluse();
+    void    SendGamePluse();
 
     //@zhuhangmin 20190218 仅补银线程可见
     int RobotGainDeposit(UserID userid, int32_t amount);

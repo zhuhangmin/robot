@@ -38,6 +38,20 @@ void Robot::OnDisconnect() {
 
 int Robot::SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
     std::lock_guard<std::mutex> lock(mutex_);
+
+    if (!game_connection_) {
+        UWL_ERR("m_ConnGame is nil");
+        assert(false);
+        return kCommFaild;
+    }
+
+
+    if (!game_connection_->IsConnected()) {
+        UWL_ERR("m_ConnGame not connected");
+        assert(false);
+        return kCommFaild;
+    }
+
     int result = RobotUitls::SendRequest(game_connection_, requestid, val, response, bNeedEcho);
     if (result != kCommSucc) {
         UWL_ERR("game send quest fail");
@@ -48,34 +62,33 @@ int Robot::SendGameRequest(RequestID requestid, const google::protobuf::Message 
 
 // 具体业务
 int Robot::SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
-    RequestID nResponse;
-    auto pSendData = std::make_unique<BYTE>();
-    std::shared_ptr<void> pRetData;
-    uint32_t nDataLen = 0;
-    TCHAR hard_id[MAX_HARDID_LEN_EX];			// 硬件标识
+
+    TCHAR hard_id[MAX_HARDID_LEN_EX];
     xyGetHardID(hard_id);
 
-    game::base::EnterNormalGameReq enter_req;
-    enter_req.set_userid(userid_);
-    enter_req.set_roomid(roomid);
-    enter_req.set_flag(kEnterDefault);
-    enter_req.set_hardid(hard_id);
+    game::base::EnterNormalGameReq val;
+    val.set_userid(userid_);
+    val.set_roomid(roomid);
+    val.set_flag(kEnterDefault);
+    val.set_hardid(hard_id);
+
     REQUEST response = {};
-    auto result = SendGameRequest(GR_ENTER_NORMAL_GAME, enter_req, response);
+
+    auto result = SendGameRequest(GR_ENTER_NORMAL_GAME, val, response);
     if (kCommSucc != result) {
         UWL_ERR("ParseFromRequest faild.");
         return kCommFaild;
     }
 
-    game::base::EnterNormalGameResp enter_resp;
-    int ret = ParseFromRequest(response, enter_resp);
+    game::base::EnterNormalGameResp resp;
+    int ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
         UWL_ERR("ParseFromRequest faild.");
         return kCommFaild;
     }
 
-    if (kCommSucc != enter_resp.code()) {
-        UWL_ERR("enter game faild. check return[%d]. req = %s", enter_resp.code(), GetStringFromPb(enter_req).c_str());
+    if (kCommSucc != resp.code()) {
+        UWL_ERR("enter game faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(val).c_str());
         return kCommFaild;
     }
 
@@ -84,32 +97,11 @@ int Robot::SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick
     return kCommSucc;
 }
 
-int Robot::SendGamePulse() {
-    /*std::lock_guard<std::mutex> lock(mutex_);
-    if (!game_connection_) {
-    UWL_ERR("m_ConnGame is nil");
-    assert(false);
-    return std::make_tuple(false, ERR_CONNECT_NOT_EXIST);
-    }
-
-
-    if (!game_connection_->IsConnected()) {
-    UWL_ERR("m_ConnGame not connected");
-    assert(false);
-    return std::make_tuple(false, ERR_CONNECT_DISABLE);
-    }
-
-
-    GAME_PULSE gp = {};
-    gp.nUserID = GetUserID();
-    gp.dwAveDelay = 11;
-    gp.dwMaxDelay = 22;
-
-    RequestID nResponse;
-    std::shared_ptr<void> pRetData;
-    uint32_t nDataLen = sizeof(GAME_PULSE);
-    return SendRequestWithLock(GR_GAME_PULSE, nDataLen, &gp, nResponse, pRetData, false);*/
-    return 0;
+void Robot::SendGamePulse() {
+    game::base::PulseReq val;
+    val.set_id(userid_);
+    REQUEST response = {};
+    SendGameRequest(GR_GAME_PLUSE, val, response, false);
 }
 
 // 属性接口

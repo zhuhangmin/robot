@@ -17,7 +17,7 @@ int CRobotMgr::Init() {
 
     hall_notify_thread_.Initial(std::thread([this] {this->ThreadHallNotify(); }));
 
-    heart_timer_thread_.Initial(std::thread([this] {this->ThreadSendHallPluse(); }));
+    heart_timer_thread_.Initial(std::thread([this] {this->ThreadSendPluse(); }));
 
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
 
@@ -162,7 +162,7 @@ void CRobotMgr::OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t 
     }
 }
 
-void CRobotMgr::ThreadSendHallPluse() {
+void CRobotMgr::ThreadSendPluse() {
     UWL_INF(_T("Hall KeepAlive thread started. id = %d"), GetCurrentThreadId());
     while (TRUE) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
@@ -172,17 +172,9 @@ void CRobotMgr::ThreadSendHallPluse() {
 
         if (WAIT_TIMEOUT == dwRet) {
 
-            HALLUSER_PULSE hp = {};
-            hp.nUserID = 0;
-            hp.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
+            SendHallPluse();
 
-            RequestID nRespID = 0;
-            std::shared_ptr<void> pRetData;
-            uint32_t nDataLen = sizeof(HALLUSER_PULSE);
-            auto result = SendHallRequest(GR_HALLUSER_PULSE, nDataLen, &hp, nRespID, pRetData, false);
-            if (result == kCommFaild) {
-                UWL_ERR("Send hall pluse failed");
-            }
+            SendGamePluse();
 
         }
     }
@@ -397,7 +389,27 @@ int CRobotMgr::LogonHall() {
     return kCommSucc;
 }
 
+void CRobotMgr::SendHallPluse() {
+    HALLUSER_PULSE hp = {};
+    hp.nUserID = 0;
+    hp.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
 
+    RequestID nRespID = 0;
+    std::shared_ptr<void> pRetData;
+    uint32_t nDataLen = sizeof(HALLUSER_PULSE);
+    auto result = SendHallRequest(GR_HALLUSER_PULSE, nDataLen, &hp, nRespID, pRetData, false);
+    if (result == kCommFaild) {
+        UWL_ERR("Send hall pluse failed");
+    }
+
+}
+
+void CRobotMgr::SendGamePluse() {
+    for (auto& kv : robot_map_) {
+        auto robot = kv.second;
+        robot->SendGamePulse();
+    }
+}
 
 bool CRobotMgr::IsLogon(UserID userid) {
     if (robot_map_.find(userid) != robot_map_.end()) {
