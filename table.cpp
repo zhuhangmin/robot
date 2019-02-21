@@ -22,7 +22,7 @@ int Table::BindPlayer(const std::shared_ptr<User> &user, int &chairno) {
         if (chairs_.at(i).get_userid() <= 0) {
             chairs_.at(i).set_userid(userid);
             chairs_.at(i).set_chair_status(kChairWaiting);
-            chairs_.at(i).set_bind_timestamp(time(0));
+            //chairs_.at(i).set_bind_timestamp(time(0));
             chairno = i + 1;
             break;
         }
@@ -61,7 +61,7 @@ void Table::UnbindPlayer(int userid) {
         if (chairs_.at(i).get_userid() == userid) {
             chairs_.at(i).set_userid(0);
             chairs_.at(i).set_chair_status(kChairWaiting);
-            chairs_.at(i).set_bind_timestamp(0);
+            //chairs_.at(i).set_bind_timestamp(0);
             break;
         }
     }
@@ -164,4 +164,14 @@ bool Table::IsValidDeposit(INT64 deposit) {
 
 bool Table::IfContinueWhenOneUserLeave() {
     return GetPlayerCount() - 1 >= get_min_player_count();
+}
+
+
+void Table::AddChair(ChairNO chairno, ChairInfo info) {
+    assert(chairno >= 1);
+    chairs_[chairno - 1] = info;
+}
+
+void Table::AddTableUserInfo(UserID userid, TableUserInfo table_user_info) {
+    table_users_[userid] = table_user_info;
 }

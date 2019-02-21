@@ -1,6 +1,7 @@
 #pragma once
 #include "user.h"
 #include "table.h"
+#include "RobotDef.h"
 enum RoomOptional {
     kUnkonwRoom = 0x00000000,	// 不存在的房间属性
     kClassicsRoom = 0x00000001,	// 经典房
@@ -38,7 +39,8 @@ public:
     // 判断银子数是否合法
     virtual bool IsValidDeposit(INT64 deposit);
 
-
+public:
+    void AddTable(TableNO tableno, std::shared_ptr<Table> table);
 protected:
 
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
@@ -70,7 +72,6 @@ private:
     INT64 max_deposit_ = 0;				// 进入房间的最大银子数
     INT64 base_deposit_ = 0;			// 基础银
 
-    int countdown_time_s_ = 5;			// 游戏开始倒计时时间（默认5秒）
 
 public:
     //////////////////////////////////////////////////////////////////////////
@@ -141,13 +142,6 @@ public:
     }
     void set_max_deposit(const INT64 &val) {
         max_deposit_ = val;
-    }
-
-    int get_countdown_time_s() const {
-        return countdown_time_s_;
-    }
-    void set_countdown_time_s(const int &val) {
-        countdown_time_s_ = val;
     }
 
     int get_min_playercount_per_table() const {

@@ -2,11 +2,6 @@
 #include "RoomMgr.h"
 
 
-RoomMgr::RoomMgr() {}
-
-
-RoomMgr::~RoomMgr() {}
-
 std::shared_ptr<BaseRoom> RoomMgr::NewRoom(int roomid/* = 0*/) {
     return std::make_shared<BaseRoom>(roomid);
 }

@@ -1,10 +1,10 @@
 #pragma once
 #include "base_room.h"
-class RoomMgr {
+#include "RobotDef.h"
+class RoomMgr : public ISingletion<RoomMgr> {
+protected:
+    SINGLETION_CONSTRUCTOR(RoomMgr);
 public:
-    RoomMgr();
-    virtual ~RoomMgr();
-
     virtual std::shared_ptr<BaseRoom> NewRoom(int roomid = 0);
     virtual std::shared_ptr<BaseRoom> GetRoom(int roomid);
     virtual std::hash_map<int, std::shared_ptr<BaseRoom>> GetAllRooms();

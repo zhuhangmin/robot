@@ -17,27 +17,43 @@ enum HallRequestEnum {
 
     HN_ENTER_GAME_OK = HR_REQUEST_BASE + 1001
 };
+
 enum GameRequestEnum {
     GR_REQUEST_BASE = 10020000,
 
-    GR_ENTER_NORMAL_GAME = GR_REQUEST_BASE + 1,           // 进普通房
-    GR_ENTER_PRIVATE_GAME = GR_REQUEST_BASE + 2,      // 进私人房
-    GR_ENTER_MATCH_GAME = GR_REQUEST_BASE + 3,            // 进比赛房
-    GR_LEAVE_GAME = GR_REQUEST_BASE + 21,             // 离开游戏
-    GR_GIVE_UP = GR_REQUEST_BASE + 31,                    // 弃牌
-    //GR_START_GAME = GR_REQUEST_BASE + 32,             // 开始游戏（服务内部定时器触发）
-    GR_GAME_PLUSE = GR_REQUEST_BASE + 33,             // 心跳
-    GR_SWITCH_TABLE = GR_REQUEST_BASE + 34,               // 换桌请求
-    GR_TABLE_CHAT = GR_REQUEST_BASE + 35,             // 同桌聊天
+    GR_ENTER_NORMAL_GAME = GR_REQUEST_BASE + 1,			// 进普通房
+    GR_ENTER_PRIVATE_GAME = GR_REQUEST_BASE + 2,		// 进私人房
+    GR_ENTER_MATCH_GAME = GR_REQUEST_BASE + 3,			// 进比赛房
+    GR_LEAVE_GAME = GR_REQUEST_BASE + 21,				// 离开游戏
+    GR_GIVE_UP = GR_REQUEST_BASE + 31,					// 弃牌
+    //GR_START_GAME = GR_REQUEST_BASE + 32,				// 开始游戏（服务内部定时器触发）
+    GR_GAME_PLUSE = GR_REQUEST_BASE + 33,				// 心跳
+    GR_SWITCH_TABLE = GR_REQUEST_BASE + 34,				// 换桌请求
+    GR_TABLE_CHAT = GR_REQUEST_BASE + 35,				// 同桌聊天
 
-    GN_USER_STATUS_CHANGE = GR_REQUEST_BASE + 1001,       // 用户状态变化通知
-    GN_TABLE_CHAT = GR_REQUEST_BASE + 1002,               // 聊天消息通知
+    GN_USER_STATUS_CHANGE = GR_REQUEST_BASE + 1001,		// 用户状态变化通知
+    GN_TABLE_CHAT = GR_REQUEST_BASE + 1002,				// 聊天消息通知
+    GN_COUNTDOWN_START = GR_REQUEST_BASE + 1003,		// 倒计时开始通知
+    GN_COUNTDOWN_STOP = GR_REQUEST_BASE + 1004,			// 倒计时停止通知
+    GN_GAME_START = GR_REQUEST_BASE + 1005,				// 游戏开始通知
+    GN_GAME_RESULT = GR_REQUEST_BASE + 1006,			// 游戏结果通知
+    GN_PLAYER_GIVEUP = GR_REQUEST_BASE + 1007,			// 玩家弃牌通知
 
     //========= 机器服相关消息 ==========
-    GR_VALID_ROBOTSVR = GR_REQUEST_BASE + 4001,           // 机器人服务验证消息
-    //GR_GET_GAMEUSERS = GR_REQUEST_BASE + 4002,            // 机器人服务获取游戏内所有玩家信息(room、table、user)
+    GR_VALID_ROBOTSVR = GR_REQUEST_BASE + 4001,			// 机器人服务验证消息
+    //GR_GET_GAMEUSERS = GR_REQUEST_BASE + 4002,			// 机器人服务获取游戏内所有玩家信息(room、table、user)
 
-    GN_USER_STATUS_TO_ROBOTSVR = GR_REQUEST_BASE + 4501   // 用户状态变化通知（到机器人服务）
+    //RS表示RobotSvr
+    GN_RS_PLAER_ENTERGAME = GR_REQUEST_BASE + 4501,		// 玩家进入游戏	BindPlayer
+    GN_RS_LOOKER_ENTERGAME = GR_REQUEST_BASE + 4502,	// 旁观者进入游戏	BindLooker
+    GN_RS_LOOER2PLAYER = GR_REQUEST_BASE + 4503,		// 旁观转玩家	BindPlayer
+    GN_RS_PLAYER2LOOKER = GR_REQUEST_BASE + 4504,		// 玩家转旁观	UnbindPlayer
+    GN_RS_GAME_START = GR_REQUEST_BASE + 4505,			// 开始游戏	StartGame(携带椅子号？)
+    GN_RS_USER_REFRESH_RESULT = GR_REQUEST_BASE + 4506,	// 用户单人结算	RefreshGameResult(int userid)
+    GN_RS_REFRESH_RESULT = GR_REQUEST_BASE + 4507,		// 整桌结算	RefreshGameResult
+    GN_RS_USER_LEAVEGAME = GR_REQUEST_BASE + 4508,		// 用户离开游戏	UnbindUser
+    GN_RS_SWITCH_TABLE = GR_REQUEST_BASE + 4501,		// 用户换桌	UnbindUser+BindPlayer
+
 };
 
 // 0~-100为通用错误码
@@ -109,9 +125,10 @@ enum UserStatus {
 };
 
 enum UserType {
-    kUserNormal = 0x00000001,		// 普通用户
-    kUserAdmin = 0x00000002,		// 管理员
-    kUserRobot = 0x00000003			// 机器人
+    kUserNormal = 0x00000000,		// 普通用户
+    kUserAdmin = 0x00001000,		// 管理员
+    kUserSuperAdmin = 0x00002000,	// 超级管理员
+    kUserRobot = 0x40000000			// 机器人
 };
 
 enum Enable {

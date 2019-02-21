@@ -338,6 +338,10 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   <ItemGroup>
     <ResourceCompile Include="RobotToolLudo.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\SEA\NEW_GAME\pb\game_base.proto" />
+    <None Include="..\SEA\NEW_GAME\pb\hall_base.proto" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

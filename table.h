@@ -1,5 +1,6 @@
 #pragma once
 #include "user.h"
+#include "RobotDef.h"
 class TableUserInfo {
 public:
     TableUserInfo() {}
@@ -25,11 +26,10 @@ public:
     void set_user_type(const int &val) {
         user_type_ = val;
     }
+
 private:
     int userid_ = 0;
     int user_type_ = kUserNormal;	// 用户类型
-    //int offline_count_ = 0;		// 掉线次数
-    //int bout_count_ = 0;			// 玩过的游戏局数
     INT64 bind_timestamp_ = 0;		// 用户上桌的时间戳
 };
 
@@ -52,15 +52,15 @@ public:
         chair_status_ = val;
     }
 
-    int get_bind_timestamp() const {
+    /*int get_bind_timestamp() const {
         return bind_timestamp_;
-    }
-    void set_bind_timestamp(const int &val) {
+        }
+        void set_bind_timestamp(const int &val) {
         bind_timestamp_ = val;
-    }
+        }*/
 private:
     int userid_ = 0;
-    int bind_timestamp_ = 0;		// 玩家和椅子绑定的时间戳（秒）
+    //int bind_timestamp_ = 0;		// 玩家和椅子绑定的时间戳（秒）
     ChairStatus chair_status_ = kChairWaiting;	// 椅子状态
 };
 
@@ -202,6 +202,10 @@ public:
 
     // 当减少一个用户的时候游戏是否能够继续  TODO:修改函数名
     virtual bool IfContinueWhenOneUserLeave();
+
+public:
+    void AddChair(ChairNO chairno, ChairInfo info);
+    void AddTableUserInfo(UserID userid, TableUserInfo table_user_info);
 private:
 
     int table_no_ = 0;
@@ -211,9 +215,7 @@ private:
     int min_player_count_ = 0;		// 开局的最小玩家数量
 
     std::array<ChairInfo, kMaxChairCountPerTable> chairs_{};		// 椅子信息，下标为椅子号-1
-    std::array<UserResult, kMaxChairCountPerTable> user_results_{};	// 桌上玩家结果信息，下标为椅子号-1
-    std::vector<UserResult> commited_results_ = {};					// 已提交的结果信息（用户弃牌，自行结算后吧结算数据保存，等全桌结算的时候需要用到此信息）
-    std::hash_map<int, TableUserInfo> table_users_;					// 桌子上所有用户 包括旁观者
+    std::hash_map<UserID, TableUserInfo> table_users_;					// 桌子上所有用户 包括旁观者
 
     INT64 min_deposit_ = 0;			// 最小银子数
     INT64 max_deposit_ = 0;			// 最大银子数
@@ -226,7 +228,7 @@ private:
 
 public:
     int get_table_no() const {
-        return table_no_;
+        return table_no_; //start from 1 
     }
     void set_table_no(const int &val) {
         table_no_ = val;

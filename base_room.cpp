@@ -246,6 +246,11 @@ bool BaseRoom::IsValidDeposit(INT64 deposit) {
     return false;
 }
 
+void BaseRoom::AddTable(TableNO tableno, std::shared_ptr<Table> table) {
+    assert(tableno >= 1);
+    tables_[tableno - 1] = table;
+}
+
 std::shared_ptr<Table> BaseRoom::GetTable(int tableno) {
     static std::shared_ptr<Table> null_table = std::make_shared<Table>();
 

@@ -3,6 +3,10 @@
 #include "common_func.h"
 #include "GameInfoManager.h"
 #include "RobotUitls.h"
+#include "base_room.h"
+#include "user.h"
+#include "roommgr.h"
+#include "usermgr.h"
 
 
 int GameInfoManager::Init() {
@@ -94,11 +98,11 @@ void GameInfoManager::OnGameInfoNotify(RequestID nReqstID, const REQUEST &reques
             OnDisconnGameInfo();
             break;
 
-        case GN_USER_STATUS_TO_ROBOTSVR:
-        {
-            OnRecvGameStatus(request);
-        }
-        break;
+            /*   case GN_USER_STATUS_TO_ROBOTSVR:
+               {
+               OnRecvGameStatus(request);
+               }
+               break;*/
     }
 }
 
@@ -186,28 +190,90 @@ int GameInfoManager::SendGetGameInfo(RoomID roomid /*= 0*/) {
         return kCommFaild;
     }
 
-    room_map_.clear();
-    for (int index = 0; index < resp.rooms_size(); index++) {
-        game::base::Room room = resp.rooms(index);
-        RoomID roomid = room.room_data().roomid();
-        room_map_.insert(std::make_pair(roomid, room));
+    room_map_.clear(); //TODO reset
+    // ROOM
+    for (int room_index = 0; room_index < resp.rooms_size(); room_index++) {
+        game::base::Room room_pb = resp.rooms(room_index);
+        game::base::RoomData room_data_pb = room_pb.room_data();
+        RoomID roomid = room_data_pb.roomid();
+
+        auto base_room = std::make_shared<BaseRoom>();
+        base_room->set_room_id(room_data_pb.roomid());
+        base_room->set_options(room_data_pb.options());
+        base_room->set_configs(room_data_pb.configs());
+        base_room->set_manages(room_data_pb.manages());
+        base_room->set_max_table_cout(room_data_pb.max_table_cout());
+        base_room->set_chaircount_per_table(room_data_pb.chaircount_per_table());
+        base_room->set_min_deposit(room_data_pb.min_deposit());
+        base_room->set_max_deposit(room_data_pb.max_deposit());
+
+        // TABLE
+        for (int table_index = 0; table_index < room_pb.tables_size(); table_index++) {
+            game::base::Table table_pb = room_pb.tables(table_index);
+            TableNO tableno = table_pb.tableno();
+            auto table = std::make_shared<Table>();
+            table->set_table_no(table_pb.tableno()); // tableno start from 1
+            table->set_room_id(table_pb.roomid());
+            table->set_chair_count(table_pb.chair_count());
+            table->set_banker_chair(table_pb.banker_chair());
+            table->set_min_deposit(table_pb.min_deposit());
+            table->set_max_deposit(table_pb.max_deposit());
+            table->set_base_deposit(table_pb.base_deposit());
+            table->set_table_status(table_pb.table_status());
+
+            // CHAIR
+            for (int chair_index = 0; chair_index < table_pb.chairs_size(); chair_index++) {
+                game::base::ChairInfo chair_pb = table_pb.chairs(chair_index);
+                ChairNO chairno = chair_pb.chairno(); // chairno start from 1
+                ChairInfo chair_info;
+                chair_info.set_userid(chair_pb.userid());
+                chair_info.set_chair_status((ChairStatus) chair_pb.chair_status());
+                table->AddChair(chairno, chair_info);
+            }
+
+            //TABLE USER INFO
+            for (int table_user_index = 0; table_user_index < table_pb.table_users_size(); table_user_index++) {
+                game::base::TableUserInfo table_user_pb = table_pb.table_users(table_user_index);
+                UserID userid = table_user_pb.userid();
+                TableUserInfo table_user_info;
+                table_user_info.set_userid(table_user_pb.userid());
+                table_user_info.set_bind_timestamp(table_user_pb.bind_timestamp());
+                table->AddTableUserInfo(userid, table_user_info);
+            }
+
+            base_room->AddTable(tableno, table);
+        }
+
+
+        RoomMgr::Instance().AddRoom(roomid, base_room);
     }
 
-    user_map_.clear();
-    for (int index = 0; index < resp.users_size(); index++) {
-        game::base::User user = resp.users(index);
-        UserID userid = user.userid();
-        user_map_.insert(std::make_pair(userid, user));
+    user_map_.clear();//TODO reset
+    for (int user_index = 0; user_index < resp.users_size(); user_index++) {
+        game::base::User user_pb = resp.users(user_index);
+        UserID userid = user_pb.userid();
+
+        auto user = std::make_shared<User>();
+        user->set_user_id(user_pb.userid());
+        user->set_room_id(user_pb.roomid());
+        user->set_table_no(user_pb.tableno());
+        user->set_chair_no(user_pb.chairno());
+        user->set_user_type(user_pb.user_type());
+        user->set_deposit(user_pb.deposit());
+        user->set_total_bout(user_pb.total_bout());
+        user->set_offline_count(user_pb.offline_count());
+        user->set_enter_timestamp(user_pb.enter_timestamp());
+        UserMgr::Instance().AddUser(userid, user);
     }
     return kCommSucc;
 }
 
 void GameInfoManager::OnRecvGameStatus(const REQUEST &request) {
-    game::base::Status2RobotSvrNotify user_status_ntf;
+    /*game::base::Status2RobotSvrNotify user_status_ntf;
     int parse_ret = ParseFromRequest(request, user_status_ntf);
     if (kCommSucc != parse_ret) {
-        UWL_WRN("ParseFromRequest failed.");
-        return;
+    UWL_WRN("ParseFromRequest failed.");
+    return;
     }
 
     UserID userid = user_status_ntf.userid();
@@ -219,7 +285,7 @@ void GameInfoManager::OnRecvGameStatus(const REQUEST &request) {
     user.set_tableno(user_status_ntf.tableno());
     user.set_chairno(user_status_ntf.chairno());
     user.set_user_type(user_status_ntf.user_type());
-
+    */
 }
 
 
