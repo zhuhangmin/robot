@@ -181,7 +181,6 @@ int Table::RefreshGameResult() {
 }
 
 int Table::RefreshGameResult(int userid) {
-    // ĞŞ¸Ä×ÀÒÎ×´Ì¬ ??
     int chairno = GetUserChair(userid);
     if (!IsValidChairno(chairno)) {
         UWL_WRN("user[%d] is not player.", userid);

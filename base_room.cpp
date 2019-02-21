@@ -37,8 +37,6 @@ int BaseRoom::PlayerEnterGame(const std::shared_ptr<User> &user) {
         return kCommFaild;
     }
 
-    UserMgr::Instance().AddUser(user->get_user_id(), user);
-
     return kCommSucc;
 }
 
@@ -119,13 +117,13 @@ int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
         return kInvalidDeposit;
     }
 
+    std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
+
     auto table = GetTable(user->get_table_no());
     if (!IsValidTable(table->get_table_no())) {
         UWL_WRN("Get table[%d] faild", user->get_table_no());
         return kCommFaild;
     }
-
-    std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
 
     if (!table->IsTableUser(user->get_user_id())) {
         UWL_WRN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
@@ -230,7 +228,6 @@ int BaseRoom::LookerEnterGame(const std::shared_ptr<User> &user) {
     std::shared_ptr<Table> table = GetTable(tableno);
     table->BindLooker(user);
 
-    UserMgr::Instance().AddUser(user->get_user_id(), user);
     return kCommSucc;
 }
 

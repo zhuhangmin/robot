@@ -39,10 +39,7 @@ private:
     int SendGetGameInfo(RoomID roomid = 0);
 
 private:
-    // 接收业务消息
-
-    // 接收游戏服务器 状态通知
-    void OnRecvGameStatus(const REQUEST &request);
+    // 接收业务消息 一般需要先更新user数据，在触发table上的用户数据变化
 
     // 玩家进入游戏	BindPlayer
     void OnPlayerEnterGame(const REQUEST &request);

@@ -230,27 +230,6 @@ int GameInfoManager::SendGetGameInfo(RoomID roomid /*= 0*/) {
     return kCommSucc;
 }
 
-void GameInfoManager::OnRecvGameStatus(const REQUEST &request) {
-    /*game::base::Status2RobotSvrNotify user_status_ntf;
-    int parse_ret = ParseFromRequest(request, user_status_ntf);
-    if (kCommSucc != parse_ret) {
-    UWL_WRN("ParseFromRequest failed.");
-    return;
-    }
-
-    UserID userid = user_status_ntf.userid();
-    if (user_map_.find(userid) == user_map_.end()) return;
-
-    auto user = user_map_[userid];
-    user.set_userid(user_status_ntf.userid());
-    user.set_roomid(user_status_ntf.roomid());
-    user.set_tableno(user_status_ntf.tableno());
-    user.set_chairno(user_status_ntf.chairno());
-    user.set_user_type(user_status_ntf.user_type());
-    */
-}
-
-
 void GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
     game::base::RS_UserEnterGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
@@ -276,12 +255,15 @@ void GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
         UWL_WRN("GetRoom failed room");
         return;
     }
+
     int ret = base_room->PlayerEnterGame(user); //Add User Manager
     if (ret != kCommSucc) {
         assert(false);
         UWL_WRN("PlayerEnterGame failed.");
         return;
     }
+
+    UserMgr::Instance().AddUser(user->get_user_id(), user);
 }
 
 void GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
@@ -315,6 +297,8 @@ void GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
         UWL_WRN("PlayerEnterGame failed.");
         return;
     }
+
+    UserMgr::Instance().AddUser(user->get_user_id(), user);
 }
 
 void GameInfoManager::OnLooker2Player(const REQUEST &request) {
@@ -388,8 +372,6 @@ void GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
 }
 
 void GameInfoManager::OnStartGame(const REQUEST &request) {
-    //GAME SVR TODO StartGame
-
     game::base::RS_StartGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -419,12 +401,10 @@ void GameInfoManager::OnStartGame(const REQUEST &request) {
     for (auto& kv : chairs_pb_map) {
         auto chair_pb = kv.second;
         ChairNO chairno = chair_pb.chairno();
-        chairs[chairno].set_chair_status((ChairStatus) chair_pb.chair_status());
         chairs[chairno].set_userid(chair_pb.userid());
+        chairs[chairno].set_chair_status((ChairStatus) chair_pb.chair_status());
     }
 
-    //TODO START GAME
-    // TODO WHAT KIND OF DATA SHOULD BE SYNC?
 }
 
 void GameInfoManager::OnUserFreshResult(const REQUEST &request) {
@@ -494,8 +474,9 @@ void GameInfoManager::OnLeaveGame(const REQUEST &request) {
         return;
     }
 
-    UserMgr::Instance().DelUser(userid);
     base_room->UserLeaveGame(userid, tableno);
+
+    UserMgr::Instance().DelUser(userid);
 }
 
 void GameInfoManager::OnSwitchGame(const REQUEST &request) {
