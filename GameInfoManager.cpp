@@ -428,15 +428,73 @@ void GameInfoManager::OnStartGame(const REQUEST &request) {
 }
 
 void GameInfoManager::OnUserFreshResult(const REQUEST &request) {
+    game::base::RS_UserRefreshResultNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
 
+    auto userid = ntf.userid();
+    auto roomid = ntf.roomid();
+    auto tableno = ntf.tableno();
+    auto chairno = ntf.chairno();
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+
+    // TODO WHAT KIND OF DATA SHOULD BE SYNC?
 }
 
 void GameInfoManager::OnFreshResult(const REQUEST &request) {
+    game::base::RS_RefreshResultNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
 
+    auto roomid = ntf.roomid();
+    auto tableno = ntf.tableno();
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+
+    // TODO WHAT KIND OF DATA SHOULD BE SYNC?
 }
 
 void GameInfoManager::OnLeaveGame(const REQUEST &request) {
+    game::base::RS_UserLeaveGameNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
 
+    auto userid = ntf.userid();
+    auto roomid = ntf.roomid();
+    auto tableno = ntf.tableno();
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+
+    UserMgr::Instance().DelUser(userid);
+    base_room->UserLeaveGame(userid, tableno);
 }
 
 void GameInfoManager::OnSwitchGame(const REQUEST &request) {
