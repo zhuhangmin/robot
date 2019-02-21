@@ -42,6 +42,19 @@ int BaseRoom::PlayerEnterGame(const std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
+int BaseRoom::BindPlayer(const std::shared_ptr<User> &user) {
+    std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
+
+    auto tableno = user->get_table_no();
+    std::shared_ptr<Table> table = GetTable(tableno);
+    int ret = table->BindPlayer(user);
+    if (ret != kCommSucc) {
+        UWL_WRN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        return kCommFaild;
+    }
+    return kCommSucc;
+}
+
 int BaseRoom::ContinueGame(const std::shared_ptr<User> &user) {
     auto table = GetTable(user->get_table_no());
     if (!IsValidTable(table->get_table_no())) {
@@ -65,6 +78,19 @@ int BaseRoom::ContinueGame(const std::shared_ptr<User> &user) {
 }
 
 int BaseRoom::UserLeaveGame(int userid, int tableno) {
+    auto table = GetTable(tableno);
+    if (!IsValidTable(table->get_table_no())) {
+        UWL_WRN("Get table[%d] faild", tableno);
+        return kCommFaild;
+    }
+
+    {
+        table->UnbindUser(userid);
+    }
+    return kCommSucc;
+}
+
+int BaseRoom::UnbindUser(int userid, int tableno) {
     auto table = GetTable(tableno);
     if (!IsValidTable(table->get_table_no())) {
         UWL_WRN("Get table[%d] faild", tableno);

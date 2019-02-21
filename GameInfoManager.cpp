@@ -424,7 +424,7 @@ void GameInfoManager::OnStartGame(const REQUEST &request) {
     }
 
     //TODO START GAME
-
+    // TODO WHAT KIND OF DATA SHOULD BE SYNC?
 }
 
 void GameInfoManager::OnUserFreshResult(const REQUEST &request) {
@@ -447,8 +447,8 @@ void GameInfoManager::OnUserFreshResult(const REQUEST &request) {
         UWL_WRN("GetRoom failed room");
         return;
     }
-
-    // TODO WHAT KIND OF DATA SHOULD BE SYNC?
+    auto table = base_room->GetTable(tableno);
+    table->RefreshGameResult(userid);
 }
 
 void GameInfoManager::OnFreshResult(const REQUEST &request) {
@@ -470,7 +470,8 @@ void GameInfoManager::OnFreshResult(const REQUEST &request) {
         return;
     }
 
-    // TODO WHAT KIND OF DATA SHOULD BE SYNC?
+    auto table = base_room->GetTable(tableno);
+    table->RefreshGameResult();
 }
 
 void GameInfoManager::OnLeaveGame(const REQUEST &request) {
@@ -498,6 +499,34 @@ void GameInfoManager::OnLeaveGame(const REQUEST &request) {
 }
 
 void GameInfoManager::OnSwitchGame(const REQUEST &request) {
+    game::base::RS_SwitchTableNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
+
+    auto userid = ntf.userid();
+    auto roomid = ntf.roomid();
+    auto old_tableno = ntf.old_tableno();
+    auto new_tableno = ntf.new_tableno();
+    auto new_chairno = ntf.new_chairno();
+
+    auto user = UserMgr::Instance().GetUser(userid);
+    user->set_room_id(roomid);
+    user->set_table_no(new_tableno);
+    user->set_chair_no(new_chairno);
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+
+    base_room->UnbindUser(userid, old_tableno);
+    base_room->BindPlayer(user);
 
 }
 

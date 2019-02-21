@@ -19,12 +19,14 @@ public:
 
     // 玩家进入房间
     virtual int PlayerEnterGame(const std::shared_ptr<User> &user);
+    int BindPlayer(const std::shared_ptr<User> &user);
     // 旁观者进入房间
     virtual int LookerEnterGame(const std::shared_ptr<User> &user);
     // 玩家回房间 断线续玩
     virtual int ContinueGame(const std::shared_ptr<User> &user);
     // 玩家离开游戏
     virtual int UserLeaveGame(int userid, int tableno);
+    int UnbindUser(int userid, int tableno);
     // 玩家弃牌
     virtual int UserGiveUp(int userid, int tableno);
     // 旁观者转玩家
