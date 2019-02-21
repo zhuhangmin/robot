@@ -10,6 +10,9 @@ public:
     virtual std::hash_map<int, std::shared_ptr<BaseRoom>> GetAllRooms();
     virtual void AddRoom(int roomid, const std::shared_ptr<BaseRoom> &room);
 
+public:
+    void Reset();
+
 private:
     std::mutex rooms_mutex_;
     std::hash_map<int, std::shared_ptr<BaseRoom>> rooms_;

@@ -47,35 +47,10 @@ void UserMgr::AddUser(int userid, const std::shared_ptr<User> &user) {
     users_[userid] = user;
 }
 
-std::shared_ptr<User> UserMgr::GetUserByToken(int token) {
-    int userid = GetUseridByToken(token);
-    return GetUser(userid);
-}
-
-int UserMgr::GetUseridByToken(int token) {
-    std::lock_guard<std::mutex> token_lock(tokens_mutex);
-    auto itr = tokens_.find(token);
-    if (itr == tokens_.end()) {
-        return 0;
-    }
-
-    return itr->second;
-}
-
-void UserMgr::DeleteToken(int token) {
-    std::lock_guard<std::mutex> token_lock(tokens_mutex);
-    tokens_.erase(token);
-}
-
-void UserMgr::AddToken(int token, int userid) {
-    if (userid <= 0) {
-        return;
-    }
-
-    std::lock_guard<std::mutex> token_lock(tokens_mutex);
-    tokens_[token] = userid;
-}
-
 bool UserMgr::IsValidUserID(int userid) {
     return userid > 0;
+}
+
+void UserMgr::Reset() {
+    users_.clear();
 }

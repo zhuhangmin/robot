@@ -53,6 +53,10 @@ private:
     int GetUserStatus(UserID userid, UserStatus& user_status);
     int FindTable(UserID userid, game::base::Table& table);
     int FindChair(UserID userid, game::base::ChairInfo& chair);
+
+    int AddRoom(game::base::Room room_pb);
+
+    int AddUser(game::base::User user_pb);
 private:
     //接收 游戏服务器消息 线程
     UThread	game_info_notify_thread_;

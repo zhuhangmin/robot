@@ -54,7 +54,6 @@ int BaseRoom::PlayerEnterGame(const std::shared_ptr<User> &user) {
 
 
     UserMgr::Instance().AddUser(user->get_user_id(), user);
-    UserMgr::Instance().AddToken(user->get_token(), user->get_user_id());
 
     return kCommSucc;
 }
@@ -78,7 +77,6 @@ int BaseRoom::ContinueGame(const std::shared_ptr<User> &user) {
 
     // 更新玩家信息
     UserMgr::Instance().AddUser(user->get_user_id(), user);
-    UserMgr::Instance().AddToken(user->get_token(), user->get_user_id());
     return kCommSucc;
 }
 
@@ -228,7 +226,6 @@ int BaseRoom::LookerEnterGame(const std::shared_ptr<User> &user, int target_tabl
     user->set_enter_timestamp(time(0));
 
     UserMgr::Instance().AddUser(user->get_user_id(), user);
-    UserMgr::Instance().AddToken(user->get_token(), user->get_user_id());
     return kCommSucc;
 }
 

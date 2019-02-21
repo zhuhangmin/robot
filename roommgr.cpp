@@ -22,6 +22,10 @@ void RoomMgr::AddRoom(int roomid, const std::shared_ptr<BaseRoom> &room) {
     rooms_[roomid] = room;
 }
 
+void RoomMgr::Reset() {
+    rooms_.clear();
+}
+
 std::hash_map<int, std::shared_ptr<BaseRoom>> RoomMgr::GetAllRooms() {
     std::lock_guard<std::mutex> lock_g(rooms_mutex_);
     return rooms_;

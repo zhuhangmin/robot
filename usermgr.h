@@ -17,20 +17,13 @@ public:
     // ÃÌº””√ªß
     void AddUser(int userid, const std::shared_ptr<User> &user);
 
-
-    std::shared_ptr<User> GetUserByToken(int token);
-    int GetUseridByToken(int token);
-    void DeleteToken(int token);
-    void AddToken(int token, int userid);
-
     bool IsValidUserID(int userid);
+public:
+    void Reset();
 protected:
     SINGLETION_CONSTRUCTOR(UserMgr);
 private:
     std::mutex users_mutex;
     std::hash_map<int, std::shared_ptr<User>> users_;
-
-    std::mutex tokens_mutex;
-    std::hash_map<int, int> tokens_;
 };
 
