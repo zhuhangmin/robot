@@ -14,30 +14,15 @@ Table::Table(int tableno, int roomid, int chair_count, int min_player_count, INT
 
 Table::~Table() {}
 
-int Table::BindPlayer(const std::shared_ptr<User> &user, int &chairno) {
-    //TODO:: 抽象出isvalidPlayer、Chair等函数
+int Table::BindPlayer(const std::shared_ptr<User> &user) {
     int userid = user->get_user_id();
-    chairno = 0;
-    for (int i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
-        if (chairs_.at(i).get_userid() <= 0) {
-            chairs_.at(i).set_userid(userid);
-            chairs_.at(i).set_chair_status(kChairWaiting);
-            //chairs_.at(i).set_bind_timestamp(time(0));
-            chairno = i + 1;
-            break;
-        }
-    }
+    int chairno = user->get_chair_no();
+    chairs_[chairno].set_userid(userid);
+    chairs_[chairno].set_chair_status(kChairWaiting);
 
-    if (0 == chairno) {
-        UWL_WRN("BindPlayer[%d] can not get free chair.", userid);
-        return kCommFaild;
-    }
-
-    // 保存TableUserInfo
     TableUserInfo userinfo;
     userinfo.set_userid(userid);
     userinfo.set_user_type(user->get_user_type());
-    userinfo.set_bind_timestamp(time(0));
     table_users_[userid] = userinfo;
 
     return kCommSucc;
@@ -47,7 +32,6 @@ void Table::BindLooker(const std::shared_ptr<User> &user) {
     TableUserInfo userinfo;
     userinfo.set_userid(user->get_user_id());
     userinfo.set_user_type(user->get_user_type());
-    userinfo.set_bind_timestamp(time(0));
     table_users_[user->get_user_id()] = userinfo;
 }
 

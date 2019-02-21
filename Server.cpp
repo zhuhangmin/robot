@@ -61,25 +61,25 @@ int CMainServer::Initialize() {
     if (S_FALSE == ::CoInitialize(NULL))
         return kCommFaild;;
 
-    if (!InitBase()) {
+    if (kCommFaild == InitBase()) {
         UWL_ERR(_T("InitBase() return failed"));
         assert(false);
         return kCommFaild;
     }
 
-    if (!SettingManager::Instance().Init()) {
+    if (kCommFaild == SettingManager::Instance().Init()) {
         UWL_ERR(_T("SettingManager Init Failed"));
         assert(false);
         return kCommFaild;
     }
 
-    if (!GameInfoManager::Instance().Init()) {
+    if (kCommFaild == GameInfoManager::Instance().Init()) {
         UWL_ERR(_T("GameInfoManager Init Failed"));
         assert(false);
         return kCommFaild;
     }
 
-    if (!TheRobotMgr.Init()) {
+    if (kCommFaild == TheRobotMgr.Init()) {
         UWL_ERR(_T("TheRobotMgr Init Failed"));
         assert(false);
         return kCommFaild;

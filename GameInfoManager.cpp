@@ -97,12 +97,30 @@ void GameInfoManager::OnGameInfoNotify(RequestID nReqstID, const REQUEST &reques
         case UR_SOCKET_CLOSE:
             OnDisconnGameInfo();
             break;
+        case GN_RS_PLAER_ENTERGAME:
+            OnPlayerEnterGame(request);
+            break;
+        case GN_RS_LOOKER_ENTERGAME:
+            OnLookerEnterGame(request);
+            break;
+        case GN_RS_LOOER2PLAYER:
+            break;
+        case GN_RS_PLAYER2LOOKER:
+            break;
+        case GN_RS_GAME_START:
+            break;
+        case GN_RS_USER_REFRESH_RESULT:
+            break;
+        case GN_RS_REFRESH_RESULT:
+            break;
+        case GN_RS_USER_LEAVEGAME:
+            break;
+            /*case GN_RS_SWITCH_TABLE:
+                break;*/
+        default:
+            break;
 
-            /*   case GN_USER_STATUS_TO_ROBOTSVR:
-               {
-               OnRecvGameStatus(request);
-               }
-               break;*/
+
     }
 }
 
@@ -226,86 +244,152 @@ void GameInfoManager::OnRecvGameStatus(const REQUEST &request) {
 }
 
 
+void GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
+    game::base::RS_UserEnterGameNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
+
+    game::base::RoomData room_data = ntf.room_data();
+    auto roomid = room_data.roomid();
+
+    std::shared_ptr<User> user;
+    user->set_user_id(ntf.userid());
+    user->set_table_no(ntf.tableno());
+    user->set_chair_no(ntf.chairno());
+    user->set_user_type(ntf.user_type());
+    user->set_room_id(roomid);
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+    int ret = base_room->PlayerEnterGame(user); //Add User Manager
+    if (ret != kCommSucc) {
+        assert(false);
+        UWL_WRN("PlayerEnterGame failed.");
+        return;
+    }
+}
+
+void GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
+    game::base::RS_UserEnterGameNotify ntf;
+    int parse_ret = ParseFromRequest(request, ntf);
+    if (kCommSucc != parse_ret) {
+        assert(false);
+        UWL_WRN("ParseFromRequest failed.");
+        return;
+    }
+
+    game::base::RoomData room_data = ntf.room_data();
+    auto roomid = room_data.roomid();
+
+    std::shared_ptr<User> user;
+    user->set_user_id(ntf.userid());
+    user->set_table_no(ntf.tableno());
+    user->set_chair_no(ntf.chairno());
+    user->set_user_type(ntf.user_type());
+    user->set_room_id(roomid);
+
+    auto base_room = RoomMgr::Instance().GetRoom(roomid);
+    if (!base_room) {
+        assert(false);
+        UWL_WRN("GetRoom failed room");
+        return;
+    }
+
+    int ret = base_room->LookerEnterGame(user); //Add User To User Manager
+    if (ret != kCommSucc) {
+        UWL_WRN("PlayerEnterGame failed.");
+        return;
+    }
+}
+
 int GameInfoManager::GetUserStatus(UserID userid, UserStatus& user_status) {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+    //std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
 
-    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-    auto user = user_map_[userid];
-    auto chairno = user.chairno();
+    //if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
+    //auto user = user_map_[userid];
+    //auto chairno = user.chairno();
 
-    // 玩家信息中token为0则说明玩家离线； kUserOffline = 0x10000000		// 断线
-    // TODO
+    //// 玩家信息中token为0则说明玩家离线； kUserOffline = 0x10000000		// 断线
+    //// TODO
 
-    // 玩家信息中椅子号为0则说明在旁观；
-    if (chairno == 0) {
-        user_status = kUserLooking;
-        return kCommSucc;
-    }
+    //// 玩家信息中椅子号为0则说明在旁观；
+    //if (chairno == 0) {
+    //    user_status = kUserLooking;
+    //    return kCommSucc;
+    //}
 
-    // 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
-    game::base::Table table;
-    if (kCommFaild == FindTable(userid, table)) return kCommFaild;
-    auto table_status = table.table_status();
-    if (table_status == kTableWaiting) {
-        user_status = kUserWaiting;
-        return kCommSucc;
-    }
+    //// 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
+    //game::base::Table table;
+    //if (kCommFaild == FindTable(userid, table)) return kCommFaild;
+    //auto table_status = table.table_status();
+    //if (table_status == kTableWaiting) {
+    //    user_status = kUserWaiting;
+    //    return kCommSucc;
+    //}
 
-    // 桌子playing && 椅子playing -> 玩家playing
-    game::base::ChairInfo chair;
-    if (kCommFaild == FindChair(userid, chair)) return kCommFaild;
-    auto chair_status = chair.chair_status();
-    if (table_status != kTablePlaying) return kCommFaild;
+    //// 桌子playing && 椅子playing -> 玩家playing
+    //game::base::ChairInfo chair;
+    //if (kCommFaild == FindChair(userid, chair)) return kCommFaild;
+    //auto chair_status = chair.chair_status();
+    //if (table_status != kTablePlaying) return kCommFaild;
 
-    if (chair_status == kChairPlaying) {
-        user_status = kUserPlaying;
-        return kCommSucc;
-    }
+    //if (chair_status == kChairPlaying) {
+    //    user_status = kUserPlaying;
+    //    return kCommSucc;
+    //}
 
-    // 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）//TODO 原空闲玩家?
-    if (chair_status == kChairWaiting) {
-        user_status = kUserWaiting;
-        return kCommSucc;
-    }
+    //// 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）//TODO 原空闲玩家?
+    //if (chair_status == kChairWaiting) {
+    //    user_status = kUserWaiting;
+    //    return kCommSucc;
+    //}
 
     return kCommFaild;
 }
 
 int GameInfoManager::FindTable(UserID userid, game::base::Table& table) {
-    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-    auto user = user_map_[userid];
-    auto tableno = user.tableno();
+    /* if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
+     auto user = user_map_[userid];
+     auto tableno = user.tableno();
 
-    auto roomid = user.roomid();
-    if (room_map_.find(roomid) == room_map_.end()) return kCommFaild;
+     auto roomid = user.roomid();
+     if (room_map_.find(roomid) == room_map_.end()) return kCommFaild;
 
-    auto tables = room_map_[roomid].tables();
+     auto tables = room_map_[roomid].tables();
 
-    for (auto& table : tables) {
-        if (table.tableno() == tableno) {
-            table = tables[tableno];
-            return kCommSucc;
-        }
-    }
+     for (auto& table : tables) {
+     if (table.tableno() == tableno) {
+     table = tables[tableno];
+     return kCommSucc;
+     }
+     }*/
     return kCommFaild;
 }
 
 int GameInfoManager::FindChair(UserID userid, game::base::ChairInfo& chair) {
-    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-    auto user = user_map_[userid];
-    auto chairno = user.chairno();
+    /* if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
+     auto user = user_map_[userid];
+     auto chairno = user.chairno();
 
-    game::base::Table table;
-    if (kCommFaild == FindTable(userid, table)) return kCommFaild;
+     game::base::Table table;
+     if (kCommFaild == FindTable(userid, table)) return kCommFaild;
 
-    auto chairs = table.chairs();
+     auto chairs = table.chairs();
 
-    for (auto& chair : chairs) {
-        if (chair.chairno() == chairno) {
-            chair = chairs[chairno];
-            return kCommSucc;
-        }
-    }
+     for (auto& chair : chairs) {
+     if (chair.chairno() == chairno) {
+     chair = chairs[chairno];
+     return kCommSucc;
+     }
+     }*/
 
     return kCommFaild;
 }

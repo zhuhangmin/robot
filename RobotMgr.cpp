@@ -21,7 +21,7 @@ int CRobotMgr::Init() {
 
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
 
-    if (!ConnectHall()) {
+    if (kCommFaild == ConnectHall()) {
         UWL_ERR("ConnectHall() return failed");
         assert(false);
         return kCommFaild;

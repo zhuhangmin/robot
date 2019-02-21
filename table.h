@@ -166,7 +166,7 @@ public:
     Table(const Table&) = delete;
 
     // 玩家和桌子进行绑定
-    virtual int BindPlayer(const std::shared_ptr<User> &user, int &chairno);
+    virtual int BindPlayer(const std::shared_ptr<User> &user);
     // 旁观者和桌子进行绑定
     virtual void BindLooker(const std::shared_ptr<User> &user);
     // 解除用户（玩家\旁观者）和桌子的绑定关系

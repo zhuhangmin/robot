@@ -29,29 +29,13 @@ RoomOptional BaseRoom::GetRoomType() {
 int BaseRoom::PlayerEnterGame(const std::shared_ptr<User> &user) {
     std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
 
-    // 获取一个有效桌子
-    int tableno = GetAvailableTableno(user);
-
-    // 玩家上桌
+    auto tableno = user->get_table_no();
     std::shared_ptr<Table> table = GetTable(tableno);
-    if (!IsValidTable(table->get_table_no())) {
-        UWL_WRN("Get table[%d] faild", tableno);
-        return kCommFaild;
-    }
-
-    int chairno = 0;
-    int ret = table->BindPlayer(user, chairno);
+    int ret = table->BindPlayer(user);
     if (ret != kCommSucc) {
         UWL_WRN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
-
-
-    // 补全MakeUserInfo没有赋值的字段
-    user->set_table_no(tableno);
-    user->set_chair_no(chairno);
-    user->set_enter_timestamp(time(0));
-
 
     UserMgr::Instance().AddUser(user->get_user_id(), user);
 
@@ -134,7 +118,7 @@ int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
     }
 
     int chairno = 0;
-    int ret = table->BindPlayer(user, chairno);
+    int ret = table->BindPlayer(user);
     if (ret != kCommSucc) {
         UWL_WRN("user[%d] BindPlayer faild. ret=%d", user->get_user_id(), ret);
         return kCommFaild;
@@ -169,61 +153,59 @@ int BaseRoom::Player2Looker(std::shared_ptr<User> &user) {
 
 int BaseRoom::SwitchTable(std::shared_ptr<User> &user) {
     // 解除和原桌子的关系
-    {
-        auto table = GetTable(user->get_table_no());
-        if (!IsValidTable(table->get_table_no())) {
-            UWL_WRN("Get table[%d] faild", user->get_table_no());
-            return kCommFaild;
-        }
+    //{
+    //    auto table = GetTable(user->get_table_no());
+    //    if (!IsValidTable(table->get_table_no())) {
+    //        UWL_WRN("Get table[%d] faild", user->get_table_no());
+    //        return kCommFaild;
+    //    }
 
-        if (IS_BIT_SET(table->get_table_status(), kTablePlaying) && table->IsTablePlayer(user->get_user_id())) {
-            (void) UserGiveUp(user->get_user_id(), user->get_table_no());
-        }
-        table->UnbindUser(user->get_user_id());
-    }
+    //    if (IS_BIT_SET(table->get_table_status(), kTablePlaying) && table->IsTablePlayer(user->get_user_id())) {
+    //        (void) UserGiveUp(user->get_user_id(), user->get_table_no());
+    //    }
+    //    table->UnbindUser(user->get_user_id());
+    //}
 
-    // 绑定新桌子
-    {
-        std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
+    //// 绑定新桌子
+    //{
+    //    std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
 
-        // 获取一个有效桌子
-        int tableno = GetAvailableTableno(user, user->get_table_no());
+    //    // 获取一个有效桌子
+    //    int tableno = GetAvailableTableno(user, user->get_table_no());
 
-        // 玩家上桌
-        auto table = GetTable(tableno);
-        if (!IsValidTable(table->get_table_no())) {
-            UWL_WRN("Get table[%d] faild", tableno);
-            return kCommFaild;
-        }
+    //    // 玩家上桌
+    //    auto table = GetTable(tableno);
+    //    if (!IsValidTable(table->get_table_no())) {
+    //        UWL_WRN("Get table[%d] faild", tableno);
+    //        return kCommFaild;
+    //    }
 
-        int chairno = 0;
-        int ret = table->BindPlayer(user, chairno);
-        if (ret != kCommSucc) {
-            UWL_WRN("BindPlayer faild. user[%d], table[%d]", user->get_user_id(), tableno);
-            return kCommFaild;
-        }
+    //    int chairno = 0;
+    //    int ret = table->BindPlayer(user);
+    //    if (ret != kCommSucc) {
+    //        UWL_WRN("BindPlayer faild. user[%d], table[%d]", user->get_user_id(), tableno);
+    //        return kCommFaild;
+    //    }
 
-        // 填充新桌椅信息  TODO:要更新usermanager里面的user
-        user->set_table_no(tableno);
-        user->set_chair_no(chairno);
-        user->set_enter_timestamp(time(0));
-    }
+    //    // 填充新桌椅信息  TODO:要更新usermanager里面的user
+    //    user->set_table_no(tableno);
+    //    user->set_chair_no(chairno);
+    //    user->set_enter_timestamp(time(0));
+    //}
 
     return kCommSucc;
 }
 
-int BaseRoom::LookerEnterGame(const std::shared_ptr<User> &user, int target_tableno) {
-    std::shared_ptr<Table> table = GetTable(target_tableno);
-    if (false == IsValidTable(table->get_table_no())) {
+int BaseRoom::LookerEnterGame(const std::shared_ptr<User> &user) {
+    TableNO target_tableno = user->get_table_no();
+    if (false == IsValidTable(target_tableno)) {
         UWL_WRN("Get table[%d] faild", target_tableno);
         return kCommFaild;
     }
 
+    auto tableno = user->get_table_no();
+    std::shared_ptr<Table> table = GetTable(tableno);
     table->BindLooker(user);
-
-    // 补全MakeUserInfo没有赋值的字段
-    user->set_table_no(target_tableno);
-    user->set_enter_timestamp(time(0));
 
     UserMgr::Instance().AddUser(user->get_user_id(), user);
     return kCommSucc;
@@ -258,60 +240,6 @@ std::shared_ptr<Table> BaseRoom::GetTable(int tableno) {
 
     // 桌号从1开始，下标从0开始
     return tables_.at(tableno - 1);
-}
-
-int BaseRoom::GetAvailableTableno(const std::shared_ptr<User> &user, int shielding_tableno/* = 0*/) {
-    const int faild_tableno = 0;
-    int min_tableno = 0, max_tableno = 0;
-    int ret = GetEligibleTable(user, min_tableno, max_tableno);
-    if (ret != kCommSucc) {
-        UWL_WRN("GetEligibleTable faild.");
-        return faild_tableno;
-    }
-
-    // 下标为桌子的空座位数，value为桌子号
-    std::array<int, kMaxChairCountPerTable + 1> available_tables = {};
-
-    // 扫描范围内所有桌子，找出不同优先级的可用桌子号
-    for (int tableno = min_tableno; tableno < max_tableno; ++tableno) {
-        if (tableno == shielding_tableno) {
-            continue;
-        }
-
-        auto table = GetTable(tableno);
-        if (!IsValidTable(table->get_table_no())) {
-            continue;
-        }
-
-
-        if (!IsValidDeposit(user->get_deposit())) {
-            continue;
-        }
-
-        int free_chair_count = table->GetFreeChairCount();
-        if (free_chair_count <= 0 || free_chair_count > kMaxChairCountPerTable || free_chair_count > chaircount_per_table_) {
-            UWL_WRN("GetFreeChairCount return [%d]", free_chair_count);
-            continue;
-        }
-
-        available_tables.at(free_chair_count) = tableno;
-
-        // 找到只有一个空座位的桌子就不再找了，直接上桌
-        if (1 == free_chair_count) {
-            break;
-        }
-    }
-
-    // 选出最终分配给玩家的桌子
-    for (int i = 0; i < available_tables.size(); ++i) {
-        if (available_tables.at(i) <= 0) {
-            continue;
-        }
-
-        return available_tables.at(i);
-    }
-
-    return faild_tableno;
 }
 
 int BaseRoom::GetEligibleTable(const std::shared_ptr<User> &user, int &min_tableno, int &max_tableno) {

@@ -20,7 +20,7 @@ public:
     // 玩家进入房间
     virtual int PlayerEnterGame(const std::shared_ptr<User> &user);
     // 旁观者进入房间
-    virtual int LookerEnterGame(const std::shared_ptr<User> &user, int target_tableno);
+    virtual int LookerEnterGame(const std::shared_ptr<User> &user);
     // 玩家回房间 断线续玩
     virtual int ContinueGame(const std::shared_ptr<User> &user);
     // 玩家离开游戏
@@ -46,8 +46,6 @@ protected:
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
     virtual std::shared_ptr<Table> GetTable(int tableno);
 
-    // 获取可用桌子. 返回桌子号 shielding_tableno表示需要屏蔽的桌子号
-    virtual int GetAvailableTableno(const std::shared_ptr<User> &user, int shielding_tableno = 0);
     // 获取符合要求的桌子号范围（用于缩小遍历桌子的范围）
     virtual int GetEligibleTable(const std::shared_ptr<User> &user, int &min_tableno, int &max_tableno);
 

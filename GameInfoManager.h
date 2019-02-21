@@ -2,11 +2,6 @@
 #include "RobotDef.h"
 class GameInfoManager : public ISingletion<GameInfoManager> {
 public:
-    using RoomMap = std::unordered_map<RoomID, game::base::Room>;
-
-    using UserMap = std::unordered_map<UserID, game::base::User>;
-
-public:
     int Init();
 
     void Term();
@@ -49,6 +44,11 @@ private:
     // 接收游戏服务器 状态通知
     void OnRecvGameStatus(const REQUEST &request);
 
+    // 玩家进入游戏	BindPlayer
+    void OnPlayerEnterGame(const REQUEST &request);
+
+    void OnLookerEnterGame(const REQUEST &request);
+
 private:
     int GetUserStatus(UserID userid, UserStatus& user_status);
     int FindTable(UserID userid, game::base::Table& table);
@@ -68,11 +68,6 @@ private:
     std::mutex game_info_connection_mutex_;
     CDefSocketClientPtr game_info_connection_{std::make_shared<CDefSocketClient>()};
 
-    //所有房间数据
-    RoomMap room_map_;
-
-    //所有用户数据
-    UserMap user_map_;
 
 };
 
