@@ -15,7 +15,8 @@ enum HallRequestEnum {
     HR_REQUEST_BASE = 10010000,
     HR_ENTER_GAME = HR_REQUEST_BASE + 1,
 
-    HN_ENTER_GAME_OK = HR_REQUEST_BASE + 1001
+    HN_ENTER_GAME_OK = HR_REQUEST_BASE + 1001,
+    HN_LEAVE_GAME = HR_REQUEST_BASE + 1002
 };
 
 enum GameRequestEnum {
@@ -30,14 +31,17 @@ enum GameRequestEnum {
     GR_GAME_PLUSE = GR_REQUEST_BASE + 33,				// 心跳
     GR_SWITCH_TABLE = GR_REQUEST_BASE + 34,				// 换桌请求
     GR_TABLE_CHAT = GR_REQUEST_BASE + 35,				// 同桌聊天
+    GR_PLAYER2LOOKER = GR_REQUEST_BASE + 36,			// 玩家转旁观者
+    GR_LOOKER2PLAYER = GR_REQUEST_BASE + 37,			// 旁观者转玩家
 
-    GN_USER_STATUS_CHANGE = GR_REQUEST_BASE + 1001,		// 用户状态变化通知
+    GN_PLAYER_ENTERGAME = GR_REQUEST_BASE + 1001,		// 玩家进游戏通知
     GN_TABLE_CHAT = GR_REQUEST_BASE + 1002,				// 聊天消息通知
     GN_COUNTDOWN_START = GR_REQUEST_BASE + 1003,		// 倒计时开始通知
     GN_COUNTDOWN_STOP = GR_REQUEST_BASE + 1004,			// 倒计时停止通知
     GN_GAME_START = GR_REQUEST_BASE + 1005,				// 游戏开始通知
     GN_GAME_RESULT = GR_REQUEST_BASE + 1006,			// 游戏结果通知
-    GN_PLAYER_GIVEUP = GR_REQUEST_BASE + 1007,			// 玩家弃牌通知
+    //GN_PLAYER_GIVEUP = GR_REQUEST_BASE + 1007,		// 玩家弃牌通知
+    GN_USER_STATUS_CHANGE = GR_REQUEST_BASE + 1008,		// 用户状态变化通知
 
     //========= 机器服相关消息 ==========
     GR_VALID_ROBOTSVR = GR_REQUEST_BASE + 4001,			// 机器人服务验证消息
@@ -65,17 +69,20 @@ enum ErrorCode {
     kInvalidParam = -2,
     kInternalErr = -3,
 
+    // 错误码分配原则：客户端需要处理的才分配错误码
     kInvalidUser = -1000,			// 用户不合法（token和entergame时保存的token不一致）
     kInvalidRoomID = -1001,			// 房间不存在
     kAllocTableFaild = -1002,		// 分配桌子失败
-    kTargetUserNotFound = -1003,	// 目标用户不存在
-    kTargetTableNotFound = -1004,	// 目标桌子不存在
-    kDepositInvalid = -1005			// 银子数不符合条件（TODO：确认站起再坐下失败，是否符合产品需求？）
+    kUserNotFound = -1003,			// 用户不存在
+    kTableNotFound = -1004,			// 桌子不存在
+    kInvalidDeposit = -1005			// 银子数不符合条件（TODO：确认站起再坐下失败，是否符合产品需求？）
 };
 
 enum EnterGameFlag {
     kEnterDefault = 0x00000000,
-    kLookerEnterGame = 0x00000001
+    kLookerEnterGame = 0x00000001,		// 以旁观者身份加入游戏
+    kEnterWithTargetUser = 0x00000100,	// 跟随玩家上桌
+    kEnterWithTargetTable = 0x00000200,	// 上指定桌子
 };
 
 enum EnterGameRespFlag {
@@ -116,12 +123,12 @@ enum ChairStatus {
 // 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
 // 桌子playing && 椅子playing -> 玩家playing
 // 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）
-enum UserStatus {
-    kUserWaiting = 0x00000001,		// 等待游戏开始
-    kUserPlaying = 0x00000002,		// 游戏中
-    kUserLooking = 0x00000004,		// 旁观
-    kUserLeaved = 0x00000008,		// 离开游戏
-    kUserOffline = 0x10000000		// 断线
+
+enum UserAction {
+    kUser_SitDown = 0x00000001,			// 坐下
+    kUser_StandUp = 0x00000002,			// 站起
+    kUser_Leave = 0x00000004,			// 弃牌
+    kUser_GiveUp = 0x00000008,			// 离开游戏
 };
 
 enum UserType {

@@ -19,7 +19,7 @@ public:
     // 具体业务
 
     // 进入游戏
-    int SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo);
+    int SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo);
 
     // 发送心跳
     int SendGamePulse();

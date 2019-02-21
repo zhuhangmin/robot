@@ -114,6 +114,11 @@ int BaseRoom::UserGiveUp(int userid, int tableno) {
 }
 
 int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
+    if (!IsValidDeposit(user->get_deposit())) {
+        UWL_WRN("user[%d] deposit[%I64d] invalid.", user->get_user_id(), user->get_deposit());
+        return kInvalidDeposit;
+    }
+
     auto table = GetTable(user->get_table_no());
     if (!IsValidTable(table->get_table_no())) {
         UWL_WRN("Get table[%d] faild", user->get_table_no());
@@ -149,10 +154,15 @@ int BaseRoom::Player2Looker(std::shared_ptr<User> &user) {
         return kCommFaild;
     }
 
-    if (!table->IsTableUser(user->get_user_id())) {
+    if (!table->IsTablePlayer(user->get_user_id())) {
         UWL_WRN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
         return kCommFaild;
     }
+
+    if (IS_BIT_SET(table->get_table_status(), kTablePlaying)) {
+        (void) UserGiveUp(user->get_user_id(), user->get_table_no());
+    }
+
 
     table->UnbindPlayer(user->get_user_id());
 

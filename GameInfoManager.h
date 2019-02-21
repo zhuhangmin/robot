@@ -72,7 +72,7 @@ private:
     void OnSwitchGame(const REQUEST &request);
 
 private:
-    int GetUserStatus(UserID userid, UserStatus& user_status);
+    //int GetUserStatus(UserID userid, UserStatus& user_status);
     int FindTable(UserID userid, game::base::Table& table);
     int FindChair(UserID userid, game::base::ChairInfo& chair);
 

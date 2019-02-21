@@ -529,52 +529,52 @@ void GameInfoManager::OnSwitchGame(const REQUEST &request) {
     base_room->BindPlayer(user);
 
 }
-
-int GameInfoManager::GetUserStatus(UserID userid, UserStatus& user_status) {
-    //std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-
-    //if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-    //auto user = user_map_[userid];
-    //auto chairno = user.chairno();
-
-    //// 玩家信息中token为0则说明玩家离线； kUserOffline = 0x10000000		// 断线
-    //// TODO
-
-    //// 玩家信息中椅子号为0则说明在旁观；
-    //if (chairno == 0) {
-    //    user_status = kUserLooking;
-    //    return kCommSucc;
-    //}
-
-    //// 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
-    //game::base::Table table;
-    //if (kCommFaild == FindTable(userid, table)) return kCommFaild;
-    //auto table_status = table.table_status();
-    //if (table_status == kTableWaiting) {
-    //    user_status = kUserWaiting;
-    //    return kCommSucc;
-    //}
-
-    //// 桌子playing && 椅子playing -> 玩家playing
-    //game::base::ChairInfo chair;
-    //if (kCommFaild == FindChair(userid, chair)) return kCommFaild;
-    //auto chair_status = chair.chair_status();
-    //if (table_status != kTablePlaying) return kCommFaild;
-
-    //if (chair_status == kChairPlaying) {
-    //    user_status = kUserPlaying;
-    //    return kCommSucc;
-    //}
-
-    //// 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）//TODO 原空闲玩家?
-    //if (chair_status == kChairWaiting) {
-    //    user_status = kUserWaiting;
-    //    return kCommSucc;
-    //}
-
-    return kCommFaild;
-}
-
+//
+//int GameInfoManager::GetUserStatus(UserID userid, UserStatus& user_status) {
+//    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+//
+//    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
+//    auto user = user_map_[userid];
+//    auto chairno = user.chairno();
+//
+//    // 玩家信息中token为0则说明玩家离线； kUserOffline = 0x10000000		// 断线
+//    // TODO
+//
+//    // 玩家信息中椅子号为0则说明在旁观；
+//    if (chairno == 0) {
+//        user_status = kUserLooking;
+//        return kCommSucc;
+//    }
+//
+//    // 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
+//    game::base::Table table;
+//    if (kCommFaild == FindTable(userid, table)) return kCommFaild;
+//    auto table_status = table.table_status();
+//    if (table_status == kTableWaiting) {
+//        user_status = kUserWaiting;
+//        return kCommSucc;
+//    }
+//
+//    // 桌子playing && 椅子playing -> 玩家playing
+//    game::base::ChairInfo chair;
+//    if (kCommFaild == FindChair(userid, chair)) return kCommFaild;
+//    auto chair_status = chair.chair_status();
+//    if (table_status != kTablePlaying) return kCommFaild;
+//
+//    if (chair_status == kChairPlaying) {
+//        user_status = kUserPlaying;
+//        return kCommSucc;
+//    }
+//
+//    // 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）//TODO 原空闲玩家?
+//    if (chair_status == kChairWaiting) {
+//        user_status = kUserWaiting;
+//        return kCommSucc;
+//    }
+//
+//    return kCommFaild;
+//}
+//
 int GameInfoManager::FindTable(UserID userid, game::base::Table& table) {
     /* if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
      auto user = user_map_[userid];

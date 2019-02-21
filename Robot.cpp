@@ -47,18 +47,18 @@ int Robot::SendGameRequest(RequestID requestid, const google::protobuf::Message 
 }
 
 // 具体业务
-int Robot::SendEnterGame(const ROOM& room, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
+int Robot::SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
     RequestID nResponse;
     auto pSendData = std::make_unique<BYTE>();
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = 0;
-
     TCHAR hard_id[MAX_HARDID_LEN_EX];			// 硬件标识
     xyGetHardID(hard_id);
+
     game::base::EnterNormalGameReq enter_req;
     enter_req.set_userid(userid_);
-    //enter_req.set_roomid(roomid_);  //TODO
-    enter_req.set_flag(0);//TODO
+    enter_req.set_roomid(roomid);
+    enter_req.set_flag(kEnterDefault);
     enter_req.set_hardid(hard_id);
     REQUEST response = {};
     auto result = SendGameRequest(GR_ENTER_NORMAL_GAME, enter_req, response);
