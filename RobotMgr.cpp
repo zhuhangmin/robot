@@ -212,8 +212,15 @@ void CRobotMgr::ThreadMainProc() {
             if (kCommFaild == LogonHall(random_userid))
                 continue;
 
-            //IsConnected();
-            //enter game
+            //TODO 
+            // FIND ROBOT 
+            // CREATE ROBOT 
+            // CREATE CONNECTION
+            // SEND ENTER GAME
+            // HANDLE EXCEPTION
+            // DEPOSIT OVERFLOW UNDERFLOW
+            // ADD ASSERT
+            // ADD ROUTE PRINT
 
         }
     }
