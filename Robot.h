@@ -13,7 +13,10 @@ public:
     int ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
 
     // 游戏 断开
-    void OnDisconnect();
+    void DisConnect();
+
+    // 游戏 连接状态
+    void IsConnected();
 
 public:
     // 具体业务
@@ -34,13 +37,6 @@ public:
 
     void SetGainType(DepositType val);
 
-    // 大厅 登陆数据
-    void SetLogonData(LPLOGON_SUCCEED_V2 logonOk);
-
-    bool IsLogon();
-
-    void SetLogon(bool status);
-
 private:
 
     int SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
@@ -52,8 +48,8 @@ private:
     // 是否登入大厅
     bool logon_{false};
 
-    // 登陆数据
-    LOGON_SUCCEED_V2   m_LogonData{};
+    //// 登陆数据
+    //LOGON_SUCCEED_V2   m_LogonData{};
 
     // 补银类型
     DepositType gain_type_{DepositType::kDefault};

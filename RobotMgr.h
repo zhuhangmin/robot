@@ -7,6 +7,7 @@ class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
     using DepositMap = std::unordered_map<UserID, DepositType>;
+    using HallLogonStatusMap = std::unordered_map<UserID, HallLogonStatusType>;
 
 public:
     int Init();
@@ -21,7 +22,7 @@ private:
     int ConnectHall(bool bReconn = false);
 
     // 大厅 消息发送
-    int SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    int SendHallRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
 
     // 大厅 消息接收
     void ThreadHallNotify();
@@ -45,7 +46,7 @@ private:
     //具体业务
 
     // 大厅登陆网络辅助请求
-    int LogonHall();
+    int LogonHall(UserID userid);
 
     //@zhuhangmin 20190218 仅心跳线程可见
     void    OnTimerSendPluse(time_t nCurrTime);
@@ -62,6 +63,11 @@ private:
     void SetRobotWithLock(RobotPtr client);
 
     RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
+
+private:
+    int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status);
+    void SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status);
+    int GetRandomNotLogonUserID(UserID& random_userid);
 
 private:
     //主流程 定时器线程
@@ -83,10 +89,12 @@ private:
     //大厅连接
     std::mutex hall_connection_mutex_;
     CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};
+    HallLogonStatusMap hall_logon_status_map_;
 
     //补银队列
     std::mutex deposit_map_mutex_;
     DepositMap deposit_map_;
+
 
 
 };

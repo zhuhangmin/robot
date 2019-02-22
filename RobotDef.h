@@ -177,9 +177,16 @@ const int DepositInterval = 1 * Seconds; // seconds
 const int GainAmount = 200000;
 const int BackAmount = 200000;
 
+const int InvalidUserID = -1;
+
 const int MaxRandomTry = 10; //避免锁的时间过长
 enum class DepositType {
     kDefault,
     kGain,
     kBack,
+};
+
+enum class HallLogonStatusType {
+    kNotLogon,
+    kLogon,
 };

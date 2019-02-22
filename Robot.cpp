@@ -31,9 +31,14 @@ int Robot::ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t n
     return kCommFaild;
 }
 
-void Robot::OnDisconnect() {
+void Robot::DisConnect() {
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->DestroyEx();
+}
+
+void Robot::IsConnected() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    game_connection_->IsConnected();
 }
 
 int Robot::SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
@@ -105,22 +110,6 @@ void Robot::SendGamePulse() {
 }
 
 // ÊôÐÔ½Ó¿Ú
-void Robot::SetLogonData(LPLOGON_SUCCEED_V2 logonOk) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    m_LogonData = *logonOk;
-    logon_ = true;
-}
-
-bool Robot::IsLogon() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return logon_;
-}
-
-void Robot::SetLogon(bool status) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    logon_ = status;
-}
-
 int32_t Robot::GetUserID() {
     std::lock_guard<std::mutex> lock(mutex_);
     return userid_;

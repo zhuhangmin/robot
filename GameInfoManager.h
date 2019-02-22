@@ -12,7 +12,7 @@ protected:
 
 private:
     // 游戏 建立连接
-    int ConnectGame();
+    int ConnectInfoGame();
 
     // 游戏 消息发送
     int SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);

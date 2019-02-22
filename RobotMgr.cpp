@@ -57,20 +57,17 @@ int CRobotMgr::ConnectHall(bool bReconn /*= false*/) {
 }
 
 
-int CRobotMgr::SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
-    {
-        std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-        if (!hall_connection_) {
-            UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", nReqId);
-            assert(false);
-            return kCommFaild;
-        }
+int CRobotMgr::SendHallRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
+    if (!hall_connection_) {
+        UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", nReqId);
+        assert(false);
+        return kCommFaild;
+    }
 
-        if (!hall_connection_->IsConnected()) {
-            UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", nReqId);
-            assert(false);
-            return kCommFaild;
-        }
+    if (!hall_connection_->IsConnected()) {
+        UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", nReqId);
+        assert(false);
+        return kCommFaild;
     }
 
     CONTEXT_HEAD	Context = {};
@@ -85,10 +82,7 @@ int CRobotMgr::SendHallRequest(RequestID nReqId, uint32_t& nDataLen, void *pData
     Request.pDataPtr = pData;
 
     BOOL bTimeOut = FALSE, bResult = TRUE;
-    {
-        std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-        bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
-    }
+    bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
 
     if (!bResult)///if timeout or disconnect 
     {
@@ -155,18 +149,11 @@ void CRobotMgr::OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize) {
 
 void CRobotMgr::OnDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     UWL_ERR(_T("与大厅服务断开连接"));
-    {
-        std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-        hall_connection_->DestroyEx();
-    }
-
-    //@zhuhangmin 20190222 FixMe 请注意整个函数过程应该是原子性的
-    //大厅登陆线程应注意不影响此原子过程
-    {
-        std::lock_guard<std::mutex> lock(robot_map_mutex_);
-        for (auto&& it = robot_map_.begin(); it != robot_map_.end(); it++) {
-            it->second->SetLogon(false);
-        }
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    hall_connection_->DestroyEx();
+    for (auto& kv : hall_logon_status_map_) {
+        auto userid = kv.first;
+        SetLogonStatusWithLock(userid, HallLogonStatusType::kNotLogon);
     }
 }
 
@@ -202,8 +189,17 @@ void CRobotMgr::ThreadMainProc() {
             //UWL_DBG(_T("[interval] ---------------------- timer thread triggered. do something. interval = %ld ms."), DEF_TIMER_INTERVAL);
             //UWL_DBG("[interval] TimerThreadProc = %I32u", time(nullptr));
 
-            LogonHall();
+            UserID random_userid = InvalidUserID;
+            if (kCommFaild == GetRandomNotLogonUserID(random_userid))
+                continue;
 
+            if (InvalidUserID == random_userid)
+                continue;
+
+            if (kCommFaild == LogonHall(random_userid))
+                continue;
+
+            //IsConnected();
             //enter game
 
         }
@@ -327,35 +323,8 @@ int CRobotMgr::RobotBackDeposit(UserID userid, int32_t amount) {
     return kCommSucc;
 }
 
-int CRobotMgr::LogonHall() {
-    //pick up a random robot who is not logon hall
-    RobotSetting robot_setting_;
-
-    RobotPtr random_robot;
-    for (int i = 0; i < MaxRandomTry; i++) {
-        if (kCommFaild == SettingManager::Instance().GetRandomRobotSetting(robot_setting_)) {
-            return kCommFaild;
-        }
-        {
-            std::lock_guard<std::mutex> lock(robot_map_mutex_);
-            auto random_userid = robot_setting_.userid;
-            auto robot = GetRobotWithLock(random_userid);
-            if (!robot) {
-                robot = std::make_shared<Robot>(random_userid);
-                SetRobotWithLock(robot);
-            }
-
-            if (robot->IsLogon()) continue;
-            random_robot = robot; break;
-        }
-    }
-
-    if (!random_robot) {
-        UWL_WRN("not find robot who can logon");
-        return kCommFaild;
-    }
-
-    auto userid = random_robot->GetUserID();
+int CRobotMgr::LogonHall(UserID userid) {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
 
     RobotSetting setting;
     if (kCommFaild == SettingManager::Instance().GetRobotSetting(userid, setting)) {
@@ -381,7 +350,7 @@ int CRobotMgr::LogonHall() {
     RequestID nResponse;
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(logonUser);
-    if (kCommFaild == SendHallRequest(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData))
+    if (kCommFaild == SendHallRequestWithLock(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData))
         return kCommFaild;
 
     if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
@@ -389,13 +358,14 @@ int CRobotMgr::LogonHall() {
         return kCommFaild;
     }
 
-    random_robot->SetLogonData((LPLOGON_SUCCEED_V2) pRetData.get());
+    SetLogonStatusWithLock(userid, HallLogonStatusType::kLogon);
 
     UWL_INF("userid:%d logon hall ok.", userid);
     return kCommSucc;
 }
 
 void CRobotMgr::SendHallPluse() {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     HALLUSER_PULSE hp = {};
     hp.nUserID = 0;
     hp.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
@@ -403,7 +373,7 @@ void CRobotMgr::SendHallPluse() {
     RequestID nRespID = 0;
     std::shared_ptr<void> pRetData;
     uint32_t nDataLen = sizeof(HALLUSER_PULSE);
-    auto result = SendHallRequest(GR_HALLUSER_PULSE, nDataLen, &hp, nRespID, pRetData, false);
+    auto result = SendHallRequestWithLock(GR_HALLUSER_PULSE, nDataLen, &hp, nRespID, pRetData, false);
     if (result == kCommFaild) {
         UWL_ERR("Send hall pluse failed");
     }
@@ -437,4 +407,40 @@ RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
     });
 
     return it != robot_map_.end() ? it->second : nullptr;
+}
+
+int CRobotMgr::GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) {
+    if (hall_logon_status_map_.find(userid) == hall_logon_status_map_.end()) {
+        hall_logon_status_map_.insert(std::make_pair(userid, HallLogonStatusType::kNotLogon));
+    }
+
+    status = hall_logon_status_map_[userid];
+    return kCommSucc;
+}
+
+void CRobotMgr::SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status) {
+    hall_logon_status_map_[userid] = status;
+}
+
+int CRobotMgr::GetRandomNotLogonUserID(UserID& random_userid) {
+    //filter robots who are not logon on hall
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    HallLogonStatusMap temp_map;
+    for (auto& kv : hall_logon_status_map_) {
+        UserID userid = kv.first;
+        auto status = kv.second;
+        if (HallLogonStatusType::kNotLogon == status) {
+            temp_map[userid] = status;
+        }
+    }
+
+    //random pick up one
+    auto random_pos = 0;
+    if (kCommFaild == RobotUitls::GenRandInRange(0, temp_map.size() - 1, random_pos)) {
+        return kCommFaild;
+    }
+
+    auto random_it = std::next(std::begin(temp_map), random_pos);
+    random_userid = random_it->first;
+    return kCommSucc;
 }

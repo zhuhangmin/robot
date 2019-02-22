@@ -10,7 +10,7 @@
 
 
 int GameInfoManager::Init() {
-    if (kCommFaild == ConnectGame()) {
+    if (kCommFaild == ConnectInfoGame()) {
         UWL_ERR("ConnectGame failed");
         assert(false);
         return kCommFaild;
@@ -40,7 +40,7 @@ void GameInfoManager::Term() {
     heart_timer_thread_.Release();
 }
 
-int GameInfoManager::ConnectGame() {
+int GameInfoManager::ConnectInfoGame() {
     TCHAR szGameSvrIP[MAX_SERVERIP_LEN] = {};
     GetPrivateProfileString(_T("GameServer"), _T("IP"), _T(""), szGameSvrIP, sizeof(szGameSvrIP), g_szIniFile);
     auto nGameSvrPort = GetPrivateProfileInt(_T("GameServer"), _T("Port"), 0, g_szIniFile);
