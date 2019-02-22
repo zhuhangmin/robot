@@ -40,11 +40,17 @@ private:
     // 机器人 定时心跳
     void ThreadRobotPluse();
 
-    // 定时 业务主流程
-    void ThreadMainProc();
+    // 机器人 消息接收
+    void ThreadRobotNotify();
 
-    // 定时 补银还银
+    // 机器人 消息处理
+    void OnRobotNotify(RequestID nReqId, void* pDataPtr, int32_t nSize, TokenID nTokenID);
+
+    // 补银还银 定时触发
     void ThreadDeposit();
+
+    // 业务主流程
+    void ThreadMainProc();
 
 private:
     //具体业务
@@ -66,7 +72,7 @@ private:
 
     void SetRobotWithLock(RobotPtr client);
 
-    RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
+    RobotPtr GetRobotByTokenWithLock(const TokenID& id);
 
 private:
     //guard by lock
@@ -80,7 +86,8 @@ private:
     int GetRandomNotLogonUserID(UserID& random_userid);
 
 private:
-    // 根据业务划分数据和锁 
+    // 根据数据状态来源 划分 数据和锁范围 
+    // 1 大厅, 2 游戏, 3 后台补银
 
     //大厅 数据锁
     std::mutex hall_connection_mutex_;
@@ -97,18 +104,19 @@ private:
     std::mutex robot_map_mutex_;
     //机器人 游戏服务器连接集合
     RobotMap robot_map_;
+    //机器人 接收消息线程
+    UThread	robot_notify_thread_;
     //机器人 心跳线程
     UThread	robot_heart_timer_thread_;
 
-    //补银 数据锁
+    //后台补银 数据锁
     std::mutex deposit_map_mutex_;
-    //补银 任务
+    //后台补银 任务
     DepositMap deposit_map_;
-    //补银 定时器线程
+    //后台补银 定时器线程
     UThread	deposit_timer_thread_;
 
-
-    //主流程 定时器线程
+    //主流程 线程
     UThread	main_timer_thread_;
 
 };

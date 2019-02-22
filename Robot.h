@@ -13,7 +13,7 @@ public:
     int ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId);
 
     // 游戏 断开
-    void DisConnect();
+    void DisconnectGame();
 
     // 游戏 连接状态
     void IsConnected();

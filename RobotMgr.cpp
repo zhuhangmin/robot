@@ -20,17 +20,17 @@ int CRobotMgr::Init() {
         hall_logon_status_map_[userid] = HallLogonStatusType::kNotLogon;
     }
 
-    main_timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
-
     hall_notify_thread_.Initial(std::thread([this] {this->ThreadHallNotify(); }));
 
     hall_heart_timer_thread_.Initial(std::thread([this] {this->ThreadHallPluse(); }));
 
     robot_heart_timer_thread_.Initial(std::thread([this] {this->ThreadRobotPluse(); }));
 
-
+    robot_notify_thread_.Initial(std::thread([this] {this->ThreadRobotNotify(); }));
 
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
+
+    main_timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
 
     if (kCommFaild == ConnectHall()) {
         UWL_ERR("ConnectHall() return failed");
@@ -412,9 +412,7 @@ void CRobotMgr::SetRobotWithLock(RobotPtr client) {
     robot_map_.insert(std::make_pair(client->GetUserID(), client));
 }
 
-
-RobotPtr CRobotMgr::GetRobotByToken(const EConnType& type, const TokenID& id) {
-    std::lock_guard<std::mutex> lock(robot_map_mutex_);
+RobotPtr CRobotMgr::GetRobotByTokenWithLock(const TokenID& id) {
     auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& it) {
         return it.second->GetTokenID() == id;
     });
@@ -460,6 +458,8 @@ int CRobotMgr::GetRandomNotLogonUserID(UserID& random_userid) {
         }
     }
 
+    if (temp_map.size() == 0) return kCommFaild;
+
     //random pick up one
     auto random_pos = 0;
     if (kCommFaild == RobotUitls::GenRandInRange(0, temp_map.size() - 1, random_pos)) {
@@ -487,4 +487,53 @@ void CRobotMgr::ThreadRobotPluse() {
     }
     UWL_INF(_T("Robot KeepAlive thread exiting. id = %d"), GetCurrentThreadId());
     return;
+}
+
+void CRobotMgr::ThreadRobotNotify() {
+    UWL_INF(_T("Robot Notify thread started. id = %d"), GetCurrentThreadId());
+
+    MSG msg = {};
+    while (GetMessage(&msg, 0, 0, 0)) {
+        if (UM_DATA_RECEIVED == msg.message) {
+
+            LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
+            LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
+
+            TokenID		nTokenID = pContext->lTokenID;
+            RequestID		nReqstID = pRequest->head.nRequest;
+
+            OnRobotNotify(nReqstID, pRequest->pDataPtr, pRequest->nDataLen, nTokenID);
+
+            SAFE_DELETE(pContext);
+            UwlClearRequest(pRequest);
+            SAFE_DELETE(pRequest);
+        } else {
+            DispatchMessage(&msg);
+        }
+    }
+    UWL_INF(_T("Robot Notify thread exiting. id = %d"), GetCurrentThreadId());
+    return;
+}
+
+void CRobotMgr::OnRobotNotify(RequestID nReqId, void* pDataPtr, int32_t nSize, TokenID nTokenID) {
+    RobotPtr robot;
+    {
+        std::lock_guard<std::mutex> lock(robot_map_mutex_);
+        robot = GetRobotByTokenWithLock(nTokenID);
+    }
+
+    if (!robot) {
+        assert(false);
+        UWL_WRN(_T("GameNotify client not found. nTokenID = %d reqId:%d"), nTokenID, nReqId);
+        return;
+    }
+
+    switch (nReqId) {
+        case UR_SOCKET_ERROR:
+        case UR_SOCKET_CLOSE:
+            robot->DisconnectGame();
+            break;
+        default:
+            break;
+    }
 }

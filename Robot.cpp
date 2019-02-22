@@ -31,7 +31,7 @@ int Robot::ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t n
     return kCommFaild;
 }
 
-void Robot::DisConnect() {
+void Robot::DisconnectGame() {
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->DestroyEx();
 }
