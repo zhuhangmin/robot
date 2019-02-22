@@ -13,11 +13,22 @@
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 int CRobotMgr::Init() {
+
+    auto setting = SettingManager::Instance().GetAccountSettingMap();
+    for (auto& kv : setting) {
+        auto userid = kv.first;
+        hall_logon_status_map_[userid] = HallLogonStatusType::kNotLogon;
+    }
+
     main_timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
 
     hall_notify_thread_.Initial(std::thread([this] {this->ThreadHallNotify(); }));
 
-    heart_timer_thread_.Initial(std::thread([this] {this->ThreadSendPluse(); }));
+    hall_heart_timer_thread_.Initial(std::thread([this] {this->ThreadHallPluse(); }));
+
+    robot_heart_timer_thread_.Initial(std::thread([this] {this->ThreadRobotPluse(); }));
+
+
 
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
 
@@ -27,13 +38,15 @@ int CRobotMgr::Init() {
         return kCommFaild;
     }
 
+
+
     UWL_INF("CRobotMgr::Init Sucessed.");
     return kCommSucc;
 }
 void	CRobotMgr::Term() {
     main_timer_thread_.Release();
     hall_notify_thread_.Release();
-    heart_timer_thread_.Release();
+    hall_heart_timer_thread_.Release();
     deposit_timer_thread_.Release();
 }
 
@@ -157,7 +170,7 @@ void CRobotMgr::OnDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     }
 }
 
-void CRobotMgr::ThreadSendPluse() {
+void CRobotMgr::ThreadHallPluse() {
     UWL_INF(_T("Hall KeepAlive thread started. id = %d"), GetCurrentThreadId());
     while (TRUE) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
@@ -169,7 +182,7 @@ void CRobotMgr::ThreadSendPluse() {
 
             SendHallPluse();
 
-            SendGamePluse();
+            //SendGamePluse();
 
         }
     }
@@ -219,13 +232,13 @@ void	CRobotMgr::ThreadDeposit() {
         }
 
         if (WAIT_TIMEOUT == dwRet) {
-            DepositMap deposit_map_bak;
+            DepositMap deposit_map_temp;
             {
                 std::lock_guard<std::mutex> lock(deposit_map_mutex_);
-                deposit_map_bak = std::move(deposit_map_);
+                deposit_map_temp = std::move(deposit_map_);
             }
 
-            for (auto& kv : deposit_map_bak) {
+            for (auto& kv : deposit_map_temp) {
                 auto userid = kv.first;
                 auto deposit_type = kv.second;
 
@@ -422,6 +435,19 @@ void CRobotMgr::SetLogonStatusWithLock(const UserID userid, HallLogonStatusType 
     hall_logon_status_map_[userid] = status;
 }
 
+int CRobotMgr::GetDepositTypeWithLock(const UserID& userid, DepositType& type) {
+    if (deposit_map_.find(userid) == deposit_map_.end()) {
+        return kCommFaild;
+    }
+
+    type = deposit_map_[userid];
+    return kCommSucc;
+}
+
+void CRobotMgr::SetDepositTypesWithLock(const UserID userid, DepositType type) {
+    deposit_map_[userid] = type;
+}
+
 int CRobotMgr::GetRandomNotLogonUserID(UserID& random_userid) {
     //filter robots who are not logon on hall
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
@@ -443,4 +469,22 @@ int CRobotMgr::GetRandomNotLogonUserID(UserID& random_userid) {
     auto random_it = std::next(std::begin(temp_map), random_pos);
     random_userid = random_it->first;
     return kCommSucc;
+}
+
+void CRobotMgr::ThreadRobotPluse() {
+    UWL_INF(_T("Robot KeepAlive thread started. id = %d"), GetCurrentThreadId());
+    while (TRUE) {
+        DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
+        if (WAIT_OBJECT_0 == dwRet) {
+            break;
+        }
+
+        if (WAIT_TIMEOUT == dwRet) {
+
+            SendGamePluse();
+
+        }
+    }
+    UWL_INF(_T("Robot KeepAlive thread exiting. id = %d"), GetCurrentThreadId());
+    return;
 }

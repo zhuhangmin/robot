@@ -5,9 +5,10 @@
 // 机器人管理器
 class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
-    using RobotMap = std::unordered_map<UserID, RobotPtr>;
     using DepositMap = std::unordered_map<UserID, DepositType>;
+    using RobotMap = std::unordered_map<UserID, RobotPtr>;
     using HallLogonStatusMap = std::unordered_map<UserID, HallLogonStatusType>;
+
 
 public:
     int Init();
@@ -33,10 +34,13 @@ private:
     // 大厅 断开链接
     void OnDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
-    // 定时心跳
-    void ThreadSendPluse();
+    // 大厅 定时心跳
+    void ThreadHallPluse();
 
-    // 定时 业务流程
+    // 机器人 定时心跳
+    void ThreadRobotPluse();
+
+    // 定时 业务主流程
     void ThreadMainProc();
 
     // 定时 补银还银
@@ -65,37 +69,47 @@ private:
     RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
 
 private:
+    //guard by lock
     int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status);
     void SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status);
+
+    int GetDepositTypeWithLock(const UserID& userid, DepositType& type);
+    void SetDepositTypesWithLock(const UserID userid, DepositType type);
+
+private:
     int GetRandomNotLogonUserID(UserID& random_userid);
 
 private:
-    //主流程 定时器线程
-    UThread	main_timer_thread_;
+    // 根据业务划分数据和锁 
 
-    //心跳 定时器线程
-    UThread	heart_timer_thread_;
+    //大厅 数据锁
+    std::mutex hall_connection_mutex_;
+    //大厅 连接
+    CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};
+    //大厅 登陆状态
+    HallLogonStatusMap hall_logon_status_map_;
+    //大厅 接收消息线程
+    UThread	hall_notify_thread_;
+    //大厅 心跳线程
+    UThread	hall_heart_timer_thread_;
 
+    //机器人 数据锁
+    std::mutex robot_map_mutex_;
+    //机器人 游戏服务器连接集合
+    RobotMap robot_map_;
+    //机器人 心跳线程
+    UThread	robot_heart_timer_thread_;
+
+    //补银 数据锁
+    std::mutex deposit_map_mutex_;
+    //补银 任务
+    DepositMap deposit_map_;
     //补银 定时器线程
     UThread	deposit_timer_thread_;
 
-    //大厅 接收消息线程
-    UThread	hall_notify_thread_;
 
-    //所有机器人动态信息
-    std::mutex robot_map_mutex_;
-    RobotMap robot_map_;
-
-    //大厅连接
-    std::mutex hall_connection_mutex_;
-    CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};
-    HallLogonStatusMap hall_logon_status_map_;
-
-    //补银队列
-    std::mutex deposit_map_mutex_;
-    DepositMap deposit_map_;
-
-
+    //主流程 定时器线程
+    UThread	main_timer_thread_;
 
 };
 #define TheRobotMgr CRobotMgr::Instance()

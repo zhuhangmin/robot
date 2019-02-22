@@ -119,13 +119,3 @@ TokenID Robot::GetTokenID() {
     std::lock_guard<std::mutex> lock(mutex_);
     return game_connection_->GetTokenID();
 }
-
-DepositType Robot::GetGainType() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return gain_type_;
-}
-
-void Robot::SetGainType(DepositType val) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    gain_type_ = val;
-}

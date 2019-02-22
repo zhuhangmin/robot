@@ -33,10 +33,6 @@ public:
 
     TokenID	GetTokenID();
 
-    DepositType GetGainType();
-
-    void SetGainType(DepositType val);
-
 private:
 
     int SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
