@@ -385,15 +385,13 @@ int CRobotMgr::LogonHall() {
         return kCommFaild;
 
     if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
-        UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", random_robot->GetUserID());
+        UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", userid);
         return kCommFaild;
     }
 
-    random_robot->SetLogon(true);
     random_robot->SetLogonData((LPLOGON_SUCCEED_V2) pRetData.get());
 
-
-    UWL_INF("account:%d userid:%d logon hall ok.", random_robot->GetUserID(), random_robot->GetUserID());
+    UWL_INF("userid:%d logon hall ok.", userid);
     return kCommSucc;
 }
 

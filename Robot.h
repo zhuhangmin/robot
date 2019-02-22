@@ -30,7 +30,7 @@ public:
 
     TokenID	GetTokenID();
 
-    DepositType GetGainType() const;
+    DepositType GetGainType();
 
     void SetGainType(DepositType val);
 

@@ -106,18 +106,23 @@ void Robot::SendGamePulse() {
 
 // ÊôÐÔ½Ó¿Ú
 void Robot::SetLogonData(LPLOGON_SUCCEED_V2 logonOk) {
+    std::lock_guard<std::mutex> lock(mutex_);
     m_LogonData = *logonOk;
+    logon_ = status;
 }
 
 bool Robot::IsLogon() {
+    std::lock_guard<std::mutex> lock(mutex_);
     return logon_;
 }
 
 void Robot::SetLogon(bool status) {
+    std::lock_guard<std::mutex> lock(mutex_);
     logon_ = status;
 }
 
 int32_t Robot::GetUserID() {
+    std::lock_guard<std::mutex> lock(mutex_);
     return userid_;
 }
 
@@ -126,10 +131,12 @@ TokenID Robot::GetTokenID() {
     return game_connection_->GetTokenID();
 }
 
-DepositType Robot::GetGainType() const {
+DepositType Robot::GetGainType() {
+    std::lock_guard<std::mutex> lock(mutex_);
     return gain_type_;
 }
 
 void Robot::SetGainType(DepositType val) {
+    std::lock_guard<std::mutex> lock(mutex_);
     gain_type_ = val;
 }
