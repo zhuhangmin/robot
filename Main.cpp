@@ -129,8 +129,9 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     CMainServer MainServer;
 
-    if (FALSE == MainServer.Initialize()) {
+    if (kCommFaild == MainServer.Initialize()) {
         UwlTrace(_T("server initialize failed!"));
+        MainServer.Shutdown();
         return -1;
     }
 

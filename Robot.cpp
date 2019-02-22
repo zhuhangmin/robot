@@ -47,8 +47,8 @@ int Robot::SendGameRequest(RequestID requestid, const google::protobuf::Message 
 
 
     if (!game_connection_->IsConnected()) {
-        UWL_ERR("m_ConnGame not connected");
-        assert(false);
+        UWL_WRN("m_ConnGame not connected"); // invalid socket handle.
+        //assert(false);
         return kCommFaild;
     }
 

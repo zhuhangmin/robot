@@ -73,11 +73,11 @@ int CMainServer::Initialize() {
         return kCommFaild;
     }
 
-    if (kCommFaild == GameInfoManager::Instance().Init()) {
+    /*if (kCommFaild == GameInfoManager::Instance().Init()) {
         UWL_ERR(_T("GameInfoManager Init Failed"));
         assert(false);
         return kCommFaild;
-    }
+        }*/
 
     if (kCommFaild == TheRobotMgr.Init()) {
         UWL_ERR(_T("TheRobotMgr Init Failed"));

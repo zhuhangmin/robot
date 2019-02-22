@@ -9,7 +9,7 @@ int SettingManager::Init() {
         assert(false);
         return kCommFaild;
     }
-    UWL_INF("InitSetting Account Count = %d", GetAccountSettingMap().size());
+    UWL_INF("InitSetting Account Count = %d", account_setting_map_.size());
 
     return kCommSucc;
 }
@@ -57,7 +57,7 @@ bool SettingManager::InitSetting() {
         unit.password = sPassword;
         unit.nickName = sNickName;
         unit.portraitUrl = sPortrait;
-        GetAccountSettingMap()[nAccount] = unit;
+        account_setting_map_[nAccount] = unit;
     }
     return closeRet(true);
 }
@@ -66,8 +66,8 @@ int SettingManager::GetRobotSetting(int account, RobotSetting& robot_setting_) {
     if (account == 0)
         return kCommFaild;
 
-    auto it = GetAccountSettingMap().find(account);
-    if (it == GetAccountSettingMap().end())
+    auto it = account_setting_map_.find(account);
+    if (it == account_setting_map_.end())
         return kCommFaild;
 
     robot_setting_ = it->second;
@@ -77,7 +77,7 @@ int SettingManager::GetRobotSetting(int account, RobotSetting& robot_setting_) {
 
 int SettingManager::GetRandomRobotSetting(RobotSetting& robot_setting_) {
     auto random_pos = 0;
-    if (kCommFaild == RobotUitls::GenRandInRange(0, account_setting_map_.size(), random_pos)) {
+    if (kCommFaild == RobotUitls::GenRandInRange(0, account_setting_map_.size() - 1, random_pos)) {
         return kCommFaild;
     }
     auto random_it = std::next(std::begin(account_setting_map_), random_pos);

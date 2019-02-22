@@ -30,7 +30,7 @@ private:
     void OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
     // 大厅 断开链接
-    void OnDisconnHallWithLock(RequestID nReqId, void* pDataPtr, int32_t nSize);
+    void OnDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize);
 
     // 定时心跳
     void ThreadSendPluse();
@@ -57,15 +57,11 @@ private:
     int RobotBackDeposit(UserID userid, int32_t amount);
 
     // 机器人
+    RobotPtr GetRobotWithLock(UserID userid);
+
+    void SetRobotWithLock(RobotPtr client);
+
     RobotPtr GetRobotByToken(const EConnType& type, const TokenID& id);
-    bool IsLogon(UserID userid);
-    void SetLogon(UserID userid, bool status);
-    RobotPtr GetRobot(UserID userid);
-    void SetRobot(RobotPtr client);
-
-    void SetRoomID(UserID userid, RoomID roomid);
-
-    int GetRoomCurrentRobotSize(RoomID roomid); //房间里的机器人数
 
 private:
     //主流程 定时器线程
