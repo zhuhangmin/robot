@@ -108,7 +108,7 @@ void Robot::SendGamePulse() {
 void Robot::SetLogonData(LPLOGON_SUCCEED_V2 logonOk) {
     std::lock_guard<std::mutex> lock(mutex_);
     m_LogonData = *logonOk;
-    logon_ = status;
+    logon_ = true;
 }
 
 bool Robot::IsLogon() {
