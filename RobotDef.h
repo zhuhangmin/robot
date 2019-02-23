@@ -178,9 +178,9 @@ const int DepositInterval = 1 * Seconds; // seconds
 const int GainAmount = 200000;
 const int BackAmount = 200000;
 
-const int InvalidUserID = -1;
+const int InvalidUserID = 0;
 
-const int InvalidGameID = -1;
+const int InvalidGameID = 0;
 
 
 enum class DepositType {

@@ -15,7 +15,7 @@ public:
 
     RoomSettingMap& GetRoomSettingMap();
 
-    GameID GetGameID() const { return game_id_; }
+    GameID GetGameID() const;
 
     std::string& GetGameIP() { return game_ip_; }
 

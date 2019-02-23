@@ -240,12 +240,12 @@ void CRobotMgr::ThreadMainProc() {
             if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id))
                 continue;
 
-            robot->SendEnterGame(designed_roomid);
+            if (kCommFaild == robot->SendEnterGame(designed_roomid))
+                continue;
+
             //TODO 
             // HANDLE EXCEPTION
             // DEPOSIT OVERFLOW UNDERFLOW
-            // ADD ASSERT
-            // ADD ROUTE PRINT
 
         }
     }

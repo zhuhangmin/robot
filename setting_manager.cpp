@@ -31,7 +31,7 @@ bool SettingManager::InitSetting() {
 
     if (!root["robots"].isArray())				return close_ret(false);
 
-    game_id_ = root["game"].asInt();
+    game_id_ = root["game_id"].asInt();
 
     auto rooms = root["rooms"];
     int size = rooms.size();
@@ -60,20 +60,34 @@ bool SettingManager::InitSetting() {
         robot_setting_map_[userid] = unit;
     }
 
-    //optional setting
+    // optional setting
     if (root.isMember("game_ip"))
         game_ip_ = root["game_ip"].asString();
+
+
+    // check
+    if (InvalidGameID == game_id_) {
+        UWL_ERR("game_id_ = %d", InvalidGameID);
+        assert(false);
+        return close_ret(false);
+    }
 
     return close_ret(true);
 }
 
 int SettingManager::GetRobotSetting(UserID userid, RobotSetting& robot_setting_) {
-    if (userid == 0)
+    if (userid == 0) {
+        UWL_ERR("userid = %d", userid);
+        assert(false);
         return kCommFaild;
+    }
 
     auto it = robot_setting_map_.find(userid);
-    if (it == robot_setting_map_.end())
+    if (it == robot_setting_map_.end()) {
+        assert(false);
         return kCommFaild;
+    }
+
 
     robot_setting_ = it->second;
 
@@ -86,4 +100,8 @@ SettingManager::RobotSettingMap& SettingManager::GetRobotSettingMap() {
 
 SettingManager::RoomSettingMap& SettingManager::GetRoomSettingMap() {
     return room_setting_map_;
+}
+
+GameID SettingManager::GetGameID() const {
+    return game_id_;
 }
