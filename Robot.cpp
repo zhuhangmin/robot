@@ -17,14 +17,12 @@ Robot::Robot() {
 
 }
 
-int Robot::ConnectGame(const std::string& strIP, const int32_t nPort, uint32_t nThrdId) {
+int Robot::ConnectGame(const std::string& game_ip, const int32_t game_port, uint32_t game_notify_thread_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
-    //由于目前网络库不支持IPV6，所以添加配置项，可以选定本地地址
-    std::string sIp = (g_useLocal) ? "127.0.0.1" : strIP;
-    if (!game_connection_->Create(sIp.c_str(), nPort, 5, 0, nThrdId, 0, GetHelloData(), GetHelloLength())) {
-        UWL_ERR("ConnectGame Faild! IP:%s Port:%d", sIp.c_str(), nPort);
-        //assert(false);
+    if (!game_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_notify_thread_id, 0, GetHelloData(), GetHelloLength())) {
+        UWL_ERR("ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
+        assert(false);
         return kCommFaild;
     }
 
@@ -41,9 +39,7 @@ void Robot::IsConnected() {
     game_connection_->IsConnected();
 }
 
-int Robot::SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
-    std::lock_guard<std::mutex> lock(mutex_);
-
+int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
     if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
@@ -66,8 +62,8 @@ int Robot::SendGameRequest(RequestID requestid, const google::protobuf::Message 
 }
 
 // 具体业务
-int Robot::SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick, std::string sPortr, int nTableNo, int nChairNo) {
-
+int Robot::SendEnterGame(RoomID roomid) {
+    std::lock_guard<std::mutex> lock(mutex_);
     TCHAR hard_id[MAX_HARDID_LEN_EX];
     xyGetHardID(hard_id);
 
@@ -79,7 +75,7 @@ int Robot::SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick
 
     REQUEST response = {};
 
-    auto result = SendGameRequest(GR_ENTER_NORMAL_GAME, val, response);
+    auto result = SendGameRequestWithLock(GR_ENTER_NORMAL_GAME, val, response);
     if (kCommSucc != result) {
         UWL_ERR("ParseFromRequest faild.");
         return kCommFaild;
@@ -94,7 +90,7 @@ int Robot::SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick
 
     if (kCommSucc != resp.code()) {
         UWL_ERR("enter game faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(val).c_str());
-        return kCommFaild;
+        return resp.code();
     }
 
     //TODO 银子不够 case
@@ -103,19 +99,23 @@ int Robot::SendEnterGame(RoomID roomid, uint32_t nNofifyThrId, std::string sNick
 }
 
 void Robot::SendGamePulse() {
+    std::lock_guard<std::mutex> lock(mutex_);
     game::base::PulseReq val;
     val.set_id(userid_);
     REQUEST response = {};
-    SendGameRequest(GR_GAME_PLUSE, val, response, false);
+    SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
 }
 
-// 属性接口
-int32_t Robot::GetUserID() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return userid_;
-}
+// 属性接口 
 
 TokenID Robot::GetTokenID() {
     std::lock_guard<std::mutex> lock(mutex_);
     return game_connection_->GetTokenID();
 }
+
+// 配置机器人ID 初始化后不在改变,不需要锁保护
+int32_t Robot::GetUserID() {
+    return userid_;
+}
+
+

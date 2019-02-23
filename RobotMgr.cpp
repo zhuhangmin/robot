@@ -237,12 +237,11 @@ void CRobotMgr::ThreadMainProc() {
             auto game_ip = SettingManager::Instance().GetGameIP();
             auto game_port = hall_room_data.room.nPort;
             auto game_notify_thread_id = robot_notify_thread_.ThreadId();
-            robot->ConnectGame(game_ip, game_port, game_notify_thread_id);
+            if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id))
+                continue;
 
-
+            robot->SendEnterGame(designed_roomid);
             //TODO 
-            // CREATE CONNECTION
-            // SEND ENTER GAME
             // HANDLE EXCEPTION
             // DEPOSIT OVERFLOW UNDERFLOW
             // ADD ASSERT
