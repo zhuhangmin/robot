@@ -1,7 +1,6 @@
 ﻿#include "stdafx.h"
 #include "RobotMgr.h"
 #include "Main.h"
-#include "RobotReq.h"
 #include "common_func.h"
 #include "RobotUitls.h"
 #include "RobotDef.h"
@@ -70,15 +69,15 @@ int CRobotMgr::ConnectHall(bool bReconn /*= false*/) {
 }
 
 
-int CRobotMgr::SendHallRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho /*= true*/, uint32_t wait_ms /*= REQ_TIMEOUT_INTERVAL*/) {
+int CRobotMgr::SendHallRequestWithLock(RequestID requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo /*= true*/) {
     if (!hall_connection_) {
-        UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", nReqId);
+        UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", requestid);
         assert(false);
         return kCommFaild;
     }
 
     if (!hall_connection_->IsConnected()) {
-        UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", nReqId);
+        UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", requestid);
         assert(false);
         return kCommFaild;
     }
@@ -88,33 +87,33 @@ int CRobotMgr::SendHallRequestWithLock(RequestID nReqId, uint32_t& nDataLen, voi
     REQUEST			Response = {};
     Context.hSocket = hall_connection_->GetSocket();
     Context.lSession = 0;
-    Context.bNeedEcho = bNeedEcho;
+    Context.bNeedEcho = need_echo;
     Request.head.nRepeated = 0;
-    Request.head.nRequest = nReqId;
-    Request.nDataLen = nDataLen;
-    Request.pDataPtr = pData;
+    Request.head.nRequest = requestid;
+    Request.nDataLen = data_size;
+    Request.pDataPtr = req_data_ptr;
 
     BOOL bTimeOut = FALSE, bResult = TRUE;
-    bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, wait_ms);
+    bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, RequestTimeOut);
 
     if (!bResult)///if timeout or disconnect 
     {
-        UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", bTimeOut, nReqId);
+        UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", bTimeOut, requestid);
         assert(false);
         return kCommFaild;
         //TODO
         //std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
     }
 
-    nDataLen = Response.nDataLen;
-    nRespId = Response.head.nRequest;
-    pRetData.reset(Response.pDataPtr);
+    data_size = Response.nDataLen;
+    response_id = Response.head.nRequest;
+    resp_data_ptr.reset(Response.pDataPtr);
 
-    if (nRespId == GR_ERROR_INFOMATION) {
+    if (response_id == GR_ERROR_INFOMATION) {
         CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData);
-        nDataLen = 0;
-        UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail nRespId GR_ERROR_INFOMATION nReqId = %d", nReqId);
+        sprintf_s(info, "%s", resp_data_ptr);
+        data_size = 0;
+        UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail responseid GR_ERROR_INFOMATION nReqId = %d", requestid);
         assert(false);
         return kCommFaild;
     }
@@ -149,18 +148,18 @@ void	CRobotMgr::ThreadHallNotify() {
 }
 
 
-void CRobotMgr::OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize) {
-    switch (nReqId) {
+void CRobotMgr::OnHallNotify(RequestID requestid, void* ntf_data_ptr, int data_size) {
+    switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-        OnDisconnHall(nReqId, pDataPtr, nSize);
-        break;
+            OnDisconnHall(requestid, ntf_data_ptr, data_size);
+            break;
         default:
-        break;
+            break;
     }
 }
 
-void CRobotMgr::OnDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize) {
+void CRobotMgr::OnDisconnHall(RequestID requestid, void* data_ptr, int data_size) {
     UWL_ERR(_T("与大厅服务断开连接"));
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     hall_connection_->DestroyEx();
@@ -172,7 +171,7 @@ void CRobotMgr::OnDisconnHall(RequestID nReqId, void* pDataPtr, int32_t nSize) {
 
 void CRobotMgr::ThreadHallPluse() {
     UWL_INF(_T("Hall KeepAlive thread started. id = %d"), GetCurrentThreadId());
-    while (TRUE) {
+    while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;
@@ -201,7 +200,7 @@ void CRobotMgr::ThreadHallPluse() {
 
 void CRobotMgr::ThreadMainProc() {
     UwlTrace(_T("timer thread started. id = %d"), GetCurrentThreadId());
-    while (TRUE) {
+    while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingManager::Instance().GetMainsInterval());
         if (WAIT_OBJECT_0 == dwRet) {
             break;
@@ -210,6 +209,8 @@ void CRobotMgr::ThreadMainProc() {
             //UWL_DBG(_T("[interval] ---------------------- timer thread triggered. do something. interval = %ld ms."), DEF_TIMER_INTERVAL);
             //UWL_DBG("[interval] TimerThreadProc = %I32u", time(nullptr));
 
+            //TODO 随机选一个没有进入游戏的robot
+            //FixMe：
             UserID random_userid = InvalidUserID;
             if (kCommFaild == GetRandomNotLogonUserID(random_userid))
                 continue;
@@ -257,7 +258,7 @@ void CRobotMgr::ThreadMainProc() {
 void	CRobotMgr::ThreadDeposit() {
     UWL_INF(_T("Hall Deposit thread started. id = %d"), SettingManager::Instance().GetDepositInterval());
 
-    while (TRUE) {
+    while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, DepositInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;
@@ -292,7 +293,7 @@ void	CRobotMgr::ThreadDeposit() {
 
 ///////////// "具体业务"
 
-int CRobotMgr::RobotGainDeposit(UserID userid, int32_t amount) {
+int CRobotMgr::RobotGainDeposit(UserID userid, int amount) {
     static TCHAR szHttpUrl[128];
     static int nResult = GetPrivateProfileString(_T("RobotReward"), _T("HttpUrl_G"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
     if (0 == strcmp(szHttpUrl, "null"))
@@ -333,7 +334,7 @@ int CRobotMgr::RobotGainDeposit(UserID userid, int32_t amount) {
     return kCommSucc;
 }
 
-int CRobotMgr::RobotBackDeposit(UserID userid, int32_t amount) {
+int CRobotMgr::RobotBackDeposit(UserID userid, int amount) {
     static TCHAR szHttpUrl[128];
     static int nResult = GetPrivateProfileString(_T("RobotReward"), _T("HttpUrl_C"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
     if (0 == strcmp(szHttpUrl, "null"))
@@ -379,7 +380,7 @@ int CRobotMgr::LogonHall(UserID userid) {
     }
     std::string password = setting.password;
 
-    //账号对应client是否已经生成, 是否已经登入大厅
+    //账号对应robot是否已经生成, 是否已经登入大厅
     LOGON_USER_V2  logonUser = {};
     logonUser.nUserID = userid;
     xyGetHardID(logonUser.szHardID);  // 硬件ID
@@ -396,7 +397,7 @@ int CRobotMgr::LogonHall(UserID userid) {
 
     RequestID nResponse;
     std::shared_ptr<void> pRetData;
-    uint32_t nDataLen = sizeof(logonUser);
+    int nDataLen = sizeof(logonUser);
     if (kCommFaild == SendHallRequestWithLock(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData))
         return kCommFaild;
 
@@ -419,7 +420,7 @@ void CRobotMgr::SendHallPluse() {
 
     RequestID nRespID = 0;
     std::shared_ptr<void> pRetData;
-    uint32_t nDataLen = sizeof(HALLUSER_PULSE);
+    int nDataLen = sizeof(HALLUSER_PULSE);
     auto result = SendHallRequestWithLock(GR_HALLUSER_PULSE, nDataLen, &hp, nRespID, pRetData, false);
     if (result == kCommFaild) {
         UWL_ERR("Send hall pluse failed");
@@ -439,7 +440,7 @@ int CRobotMgr::SendGetRoomData(RoomID roomid) {
 
     RequestID nRespID = 0;
     std::shared_ptr<void> pRetData;
-    uint32_t nDataLen = sizeof(GET_ROOM);
+    int nDataLen = sizeof(GET_ROOM);
     auto result = SendHallRequestWithLock(GR_GET_ROOM, nDataLen, &gr, nRespID, pRetData);
     if (result == kCommFaild) {
         UWL_ERR("Send hall pluse failed");
@@ -470,8 +471,8 @@ RobotPtr CRobotMgr::GetRobotWithLock(UserID userid) {
     return nullptr;
 }
 
-void CRobotMgr::SetRobotWithLock(RobotPtr client) {
-    robot_map_.insert(std::make_pair(client->GetUserID(), client));
+void CRobotMgr::SetRobotWithLock(RobotPtr robot) {
+    robot_map_.insert(std::make_pair(robot->GetUserID(), robot));
 }
 
 RobotPtr CRobotMgr::GetRobotByTokenWithLock(const TokenID& id) {
@@ -553,7 +554,7 @@ int CRobotMgr::GetRandomNotLogonUserID(UserID& random_userid) {
 
 void CRobotMgr::ThreadRobotPluse() {
     UWL_INF(_T("Robot KeepAlive thread started. id = %d"), GetCurrentThreadId());
-    while (TRUE) {
+    while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;
@@ -595,25 +596,25 @@ void CRobotMgr::ThreadRobotNotify() {
     return;
 }
 
-void CRobotMgr::OnRobotNotify(RequestID nReqId, void* pDataPtr, int32_t nSize, TokenID nTokenID) {
+void CRobotMgr::OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id) {
     RobotPtr robot;
     {
         std::lock_guard<std::mutex> lock(robot_map_mutex_);
-        robot = GetRobotByTokenWithLock(nTokenID);
+        robot = GetRobotByTokenWithLock(token_id);
     }
 
     if (!robot) {
         assert(false);
-        UWL_WRN(_T("GameNotify client not found. nTokenID = %d reqId:%d"), nTokenID, nReqId);
+        UWL_WRN(_T("GameNotify robot not found. nTokenID = %d reqId:%d"), token_id, requestid);
         return;
     }
 
-    switch (nReqId) {
+    switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-        robot->DisconnectGame();
-        break;
+            robot->DisconnectGame();
+            break;
         default:
-        break;
+            break;
     }
 }

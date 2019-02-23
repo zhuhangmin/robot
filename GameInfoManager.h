@@ -78,10 +78,10 @@ private:
     int AddUser(game::base::User user_pb);
 private:
     //接收 游戏服务器消息 线程
-    UThread	game_info_notify_thread_;
+    YQThread	game_info_notify_thread_;
 
     //心跳 定时器 线程
-    UThread	heart_timer_thread_;
+    YQThread	heart_timer_thread_;
 
     //游戏服务器连接
     std::mutex game_info_connection_mutex_;

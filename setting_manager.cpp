@@ -23,7 +23,7 @@ bool SettingManager::InitSetting() {
 
     auto close_ret = [&ifile] (bool ret) {ifile.close(); return ret; };
 
-    if (!reader.parse(ifile, root, FALSE))		return close_ret(false);
+    if (!reader.parse(ifile, root, false))		return close_ret(false);
 
     if (!root.isMember("game_id"))               return close_ret(false);
 
@@ -39,7 +39,7 @@ bool SettingManager::InitSetting() {
     for (int n = 0; n < size; ++n) {
         RoomID roomid = rooms[n]["roomid"].asInt();
         EnterGameMode mode = (EnterGameMode) rooms[n]["mode"].asInt();
-        int32_t count = rooms[n]["count"].asInt();
+        int count = rooms[n]["count"].asInt();
         room_setting_map_[roomid] = RoomSetiing{roomid, mode, count};
     }
 
@@ -47,7 +47,7 @@ bool SettingManager::InitSetting() {
     size = robots.size();
     for (int i = 0; i < size; ++i) {
         auto robot = robots[i];
-        int32_t		userid = robot["userid"].asInt();
+        UserID		userid = (UserID) robot["userid"].asInt();
         std::string password = robot["password"].asString();
         std::string nickname = robot["nickname"].asString();
         std::string headurl = robot["headurl"].asString();

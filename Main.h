@@ -7,10 +7,9 @@
 #define STR_DISPLAY_NAME_ENU _T("TCY RobotToolLudo Service") 
 
 extern int				g_nClientID;
-extern int				g_useLocal;
+
 extern std::string		g_curExePath;
 
-extern TCHAR			g_szLicFile[MAX_PATH];
 extern TCHAR			g_szIniFile[MAX_PATH];
 
 extern HANDLE			g_hExitServer;

@@ -2,11 +2,11 @@
 #include "RobotUitls.h"
 
 
-int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
+int RobotUitls::SendRequest(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
     CONTEXT_HEAD	context_head = {};
-    context_head.hSocket = connection_->GetSocket();
+    context_head.hSocket = connection->GetSocket();
     context_head.lSession = 0;
-    context_head.bNeedEcho = bNeedEcho;
+    context_head.bNeedEcho = need_echo;
 
     std::unique_ptr<char> data(new char[val.ByteSize()]);
     bool is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
@@ -18,7 +18,7 @@ int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requesti
     REQUEST request(requestid, data.get(), val.ByteSize());
 
     BOOL timeout = false;
-    BOOL result = connection_->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
+    BOOL result = connection->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
 
     if (!result)///if timeout or disconnect 
     {
@@ -27,9 +27,9 @@ int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requesti
         return timeout ? ERROR_CODE::kConnectionDisable : ERROR_CODE::kOperationFailed;
     }
 
-    auto nRespId = response.head.nRequest;
+    auto responseid = response.head.nRequest;
 
-    if (0 == nRespId) {
+    if (0 == responseid) {
         assert(false);
         /*       UWL_ERR("game respId = 0");
         CHAR info[512] = {};
@@ -39,8 +39,8 @@ int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requesti
     return kCommSucc;
 }
 
-CString RobotUitls::ExecHttpRequestPost(const CString& strUrl, const CString& strParams) {
-    CString		strResult, strServer, strObject;
+CString RobotUitls::ExecHttpRequestPost(const CString& url, const CString& params) {
+    CString		result_str, server_str, object_str;
     CInternetSession* pSession = NULL;
     CHttpConnection*   pHttpConn = NULL;
     CHttpFile*   pHTTPFile = NULL;
@@ -52,23 +52,23 @@ CString RobotUitls::ExecHttpRequestPost(const CString& strUrl, const CString& st
         (void) pSession->SetOption(INTERNET_OPTION_CONNECT_TIMEOUT, HttpTimeOut);	//重试之间的等待延时
         (void) pSession->SetOption(INTERNET_OPTION_CONNECT_RETRIES, 1);			//重试次数
 
-        (void) AfxParseURL((LPCTSTR) strUrl, dwServiceType, strServer, strObject, nPort);
-        pHttpConn = pSession->GetHttpConnection(strServer, nPort);
-        pHTTPFile = pHttpConn->OpenRequest(0, strObject, NULL, 1, NULL, "HTTP/1.1", INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_NO_AUTO_REDIRECT);
+        (void) AfxParseURL((LPCTSTR) url, dwServiceType, server_str, object_str, nPort);
+        pHttpConn = pSession->GetHttpConnection(server_str, nPort);
+        pHTTPFile = pHttpConn->OpenRequest(0, object_str, NULL, 1, NULL, "HTTP/1.1", INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_NO_AUTO_REDIRECT);
         if (pHTTPFile) {
             (void) pHTTPFile->AddRequestHeaders("Content-Type:   application/json");
             (void) pHTTPFile->AddRequestHeaders("Accept:   */*");
-            (void) pHTTPFile->SendRequest(NULL, 0, (LPTSTR) (LPCTSTR) strParams, strParams.GetLength());
+            (void) pHTTPFile->SendRequest(NULL, 0, (LPTSTR) (LPCTSTR) params, params.GetLength());
             (void) pHTTPFile->QueryInfoStatusCode(retcode);
 
             CString   text;
             while (pHTTPFile->ReadString(text)) {
-                strResult += text;
+                result_str += text;
             }
         }
     } catch (...) {
-        UwlTrace(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), strUrl, retcode, GetLastError());
-        UwlLogFile(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), strUrl, retcode, GetLastError());
+        UwlTrace(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), url, retcode, GetLastError());
+        UwlLogFile(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), url, retcode, GetLastError());
         assert(false);
     };
 
@@ -76,25 +76,25 @@ CString RobotUitls::ExecHttpRequestPost(const CString& strUrl, const CString& st
     if (pHttpConn) { pHttpConn->Close(); delete  pHttpConn;  pHttpConn = NULL; }
     if (pSession) { pSession->Close();  delete   pSession;   pSession = NULL; }
 
-    if (strResult == "") {
-        UwlTrace(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), strUrl, retcode, GetLastError());
-        UwlLogFile(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), strUrl, retcode, GetLastError());
+    if (result_str == "") {
+        UwlTrace(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), url, retcode, GetLastError());
+        UwlLogFile(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), url, retcode, GetLastError());
         assert(false);
 
     } else {
-        UwlLogFile(_T("ExecHttpRequestPost strResult:%s "), strResult);
+        UwlLogFile(_T("ExecHttpRequestPost strResult:%s "), result_str);
     }
-    return strResult;
+    return result_str;
 }
 
-int RobotUitls::GenRandInRange(int min_value, int max_value, int& res) {
+int RobotUitls::GenRandInRange(int min_value, int max_value, int& random_result) {
     if (max_value < min_value) {
         UWL_ERR("MAX VALUE %d smaller than SMALL VALUE %d", max_value, min_value);
         assert(0);
         return kCommFaild;
     }
-    static std::default_random_engine defEngine(std::time(nullptr));
-    auto rnd = defEngine();
-    res = rnd % (max_value - min_value + 1) + min_value;
+    static std::default_random_engine default_engine(std::time(nullptr));
+    auto raw_result = default_engine();
+    random_result = raw_result % (max_value - min_value + 1) + min_value;
     return kCommSucc;
 }

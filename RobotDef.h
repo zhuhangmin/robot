@@ -38,6 +38,8 @@ using TokenID = int32_t;
 
 using RequestID = uint32_t;
 
+using ThreadID = uint32_t;
+
 using CDefSocketClientPtr = std::shared_ptr <CDefSocketClient>;
 
 // 机器人控制模式
@@ -87,7 +89,7 @@ public:
 struct RoomSetiing {
     RoomID roomid;
     EnterGameMode mode;
-    int32_t count;
+    int count;
 };
 
 struct HallRoomData {
@@ -119,11 +121,11 @@ _class_name_(){}; \
 virtual ~_class_name_(){}; \
 
 // 线程对象
-class UThread {
+class YQThread {
 public:
-    UThread() {}
-    UThread(std::thread&& thrd) { Initial(std::move(thrd)); }
-    ~UThread() { Release(); }
+    YQThread() {}
+    YQThread(std::thread&& thrd) { Initial(std::move(thrd)); }
+    ~YQThread() { Release(); }
 
 public:
     void Initial(std::thread&& thrd) {
@@ -139,10 +141,10 @@ public:
         m_thrd.detach(); //::CloseHandle(m_hThrd);
         m_nThrd = 0; m_hThrd = nullptr;
     }
-    uint32_t ThreadId() { return m_nThrd; }
+    ThreadID ThreadId() { return m_nThrd; }
 protected:
     std::thread     m_thrd;
-    uint32_t		m_nThrd{0};
+    ThreadID		m_nThrd{0};
     HANDLE			m_hThrd{nullptr};
 };
 

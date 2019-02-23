@@ -11,18 +11,15 @@
 #endif
 
 using namespace std;
-int					g_nClientID = 0;
-int					g_useLocal = 0;//是否使用本地地址127.0.0.1
 
-std::string			g_curExePath;
-TCHAR				g_szLicFile[MAX_PATH];//许可证文件
+int					g_nClientID = 0;
+
+string			    g_curExePath;
+
 TCHAR				g_szIniFile[MAX_PATH];//配置文件
 
 HANDLE				g_hExitServer = NULL;
 
-
-
-// 唯一的应用程序对象
 CWinApp				theApp;
 
 HINSTANCE			g_hResDll = NULL;
@@ -58,14 +55,12 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     WSAStartup(MAKEWORD(2, 2), &wsa);
     // 初始化 MFC 并在失败时显示错误
     if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0)) {
-        // TODO: 更改错误代码以符合您的需要
         MessageBox(NULL, _T("Fatal error: MFC initialization failed!\n"), APPLICATION_TITLE, MB_ICONSTOP);
         nRetCode = -1;
         return nRetCode;
     }
 
     if (!UwlInit()) {
-        // TODO: 更改错误代码以符合您的需要
         MessageBox(NULL, _T("Fatal error: UWL initialization failed!\n"), APPLICATION_TITLE, MB_ICONSTOP);
         nRetCode = -1;
         return nRetCode;
@@ -128,9 +123,9 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     CMainServer MainServer;
 
-    if (kCommFaild == MainServer.Initialize()) {
+    if (kCommFaild == MainServer.Init()) {
         UwlTrace(_T("server initialize failed!"));
-        MainServer.Shutdown();
+        MainServer.Term();
         return -1;
     }
 
@@ -140,21 +135,9 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         ch = _getch();
         ch = toupper(ch);
 
-        //#if 1 
-        //        //For test 
-        //        if ('A' == ch) {
-        //            TheRobotMgr.ApplyRobotForRoom(556, 3569, 2);
-        //            continue;
-        //        }
-        //        if ('B' == ch) {
-        //            TheRobotMgr.ApplyRobotForRoom(556, 3569, 1);
-        //            continue;
-        //        }
-        //#endif
-
     } while (ch != 'Q');
 
-    MainServer.Shutdown();
+    MainServer.Term();
 
     nRetCode = 1;
 #endif

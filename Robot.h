@@ -10,7 +10,7 @@ public:
 
 public:
     // 游戏 连接
-    int ConnectGame(const std::string& game_ip, const int32_t game_port, uint32_t game_notify_thread_id);
+    int ConnectGame(const std::string& game_ip, const int game_port, ThreadID game_notify_thread_id);
 
     // 游戏 断开
     void DisconnectGame();
@@ -29,13 +29,13 @@ public:
 
 public:
     // 属性接口
-    int32_t	GetUserID();
+    UserID GetUserID();
 
     TokenID	GetTokenID();
 
 private:
     // 辅助函数
-    int SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
+    int SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
 
 private:
     // 配置机器人ID 初始化后不在改变,不需要锁保护

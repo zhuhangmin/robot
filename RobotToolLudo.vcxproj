@@ -324,7 +324,6 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="Robot.h" />
     <ClInclude Include="RobotDef.h" />
     <ClInclude Include="RobotMgr.h" />
-    <ClInclude Include="RobotReq.h" />
     <ClInclude Include="RobotUitls.h" />
     <ClInclude Include="roommgr.h" />
     <ClInclude Include="Server.h" />

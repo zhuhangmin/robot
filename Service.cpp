@@ -57,7 +57,7 @@ BOOL CMainService::OnInit() {
 void CMainService::Run() {
     m_dwThreadId = GetCurrentThreadId();
 
-    if (FALSE == m_MainServer.Initialize()) {
+    if (kCommFaild == m_MainServer.Init()) {
         UwlTrace(_T("server initialize failed!"));
         UwlLogFile(_T("server initialize failed!"));
         PostQuitMessage(0);
@@ -68,7 +68,7 @@ void CMainService::Run() {
         DispatchMessage(&msg);
     }
 
-    m_MainServer.Shutdown();
+    m_MainServer.Term();
 
     // Sleep for a while
     UwlTrace(_T("service is sleeping to finish(%lu)..."), m_iState);

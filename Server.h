@@ -6,11 +6,13 @@ public:
     ~CMainServer();
 
 public:
-    int Initialize();
-    void Shutdown();
+    int Init();
+
+    void Term();
 
 protected:
-    int InitBase();
+
+    int InitLanuch();
 
 
 };

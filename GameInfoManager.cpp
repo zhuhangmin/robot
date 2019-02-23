@@ -139,7 +139,7 @@ void GameInfoManager::OnDisconnGameInfo() {
 
 void GameInfoManager::ThreadSendGamePluse() {
     UWL_INF(_T("Game KeepAlive thread started. id = %d"), GetCurrentThreadId());
-    while (TRUE) {
+    while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;

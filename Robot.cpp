@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Robot.h"
 #include "Main.h"
-#include "RobotReq.h"
 #include "common_func.h"
 #include "RobotUitls.h"
 
@@ -17,7 +16,7 @@ Robot::Robot() {
 
 }
 
-int Robot::ConnectGame(const std::string& game_ip, const int32_t game_port, uint32_t game_notify_thread_id) {
+int Robot::ConnectGame(const std::string& game_ip, const int game_port, ThreadID game_notify_thread_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!game_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_notify_thread_id, 0, GetHelloData(), GetHelloLength())) {
@@ -39,7 +38,7 @@ void Robot::IsConnected() {
     game_connection_->IsConnected();
 }
 
-int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
+int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
     if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);
@@ -53,7 +52,7 @@ int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::
         return kCommFaild;
     }
 
-    int result = RobotUitls::SendRequest(game_connection_, requestid, val, response, bNeedEcho);
+    int result = RobotUitls::SendRequest(game_connection_, requestid, val, response, need_echo);
     if (result != kCommSucc) {
         UWL_ERR("game send quest fail");
         assert(false);
@@ -64,7 +63,7 @@ int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::
 // 具体业务
 int Robot::SendEnterGame(RoomID roomid) {
     std::lock_guard<std::mutex> lock(mutex_);
-    TCHAR hard_id[MAX_HARDID_LEN_EX];
+    TCHAR hard_id[32];
     xyGetHardID(hard_id);
 
     game::base::EnterNormalGameReq val;
@@ -114,7 +113,7 @@ TokenID Robot::GetTokenID() {
 }
 
 // 配置机器人ID 初始化后不在改变,不需要锁保护
-int32_t Robot::GetUserID() {
+UserID Robot::GetUserID() {
     return userid_;
 }
 
