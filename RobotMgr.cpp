@@ -14,7 +14,7 @@
 
 int CRobotMgr::Init() {
 
-    auto setting = SettingManager::Instance().GetAccountSettingMap();
+    auto setting = SettingManager::Instance().GetRobotSettingMap();
     for (auto& kv : setting) {
         auto userid = kv.first;
         hall_logon_status_map_[userid] = HallLogonStatusType::kNotLogon;
@@ -201,7 +201,6 @@ void CRobotMgr::ThreadHallPluse() {
 
 void CRobotMgr::ThreadMainProc() {
     UwlTrace(_T("timer thread started. id = %d"), GetCurrentThreadId());
-
     while (TRUE) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, DEF_TIMER_INTERVAL);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -221,17 +220,27 @@ void CRobotMgr::ThreadMainProc() {
             if (kCommFaild == LogonHall(random_userid))
                 continue;
 
-            //TODO 
+
             RobotPtr robot;
             if (robot_map_.find(random_userid) == robot_map_.end()) {
                 robot_map_[random_userid] = std::make_shared<Robot>(random_userid);
             }
             robot = robot_map_[random_userid];
 
-            //robot->ConnectGame()
+            //TODO designed roomid
+            RoomID designed_roomid = 7846; //FixMe: hard code
+            HallRoomData hall_room_data;
+            if (kCommFaild == GetHallRoomData(designed_roomid, hall_room_data))
+                continue;
+
+            //@zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
+            auto game_ip = SettingManager::Instance().GetGameIP();
+            auto game_port = hall_room_data.room.nPort;
+            auto game_notify_thread_id = robot_notify_thread_.ThreadId();
+            robot->ConnectGame(game_ip, game_port, game_notify_thread_id);
 
 
-
+            //TODO 
             // CREATE CONNECTION
             // SEND ENTER GAME
             // HANDLE EXCEPTION
@@ -291,7 +300,8 @@ int CRobotMgr::RobotGainDeposit(UserID userid, int32_t amount) {
         return kCommFaild;
 
     TCHAR szField[128] = {};
-    sprintf_s(szField, "ActiveID_Game%d", g_gameID);
+    GameID gameid = SettingManager::Instance().GetGameID();
+    sprintf_s(szField, "ActiveID_Game%d", gameid);
     TCHAR szValue[128] = {};
     GetPrivateProfileString(_T("RobotReward"), szField, _T("null"), szValue, sizeof(szValue), g_szIniFile);
     if (0 == strcmp(szValue, "null"))
@@ -299,13 +309,13 @@ int CRobotMgr::RobotGainDeposit(UserID userid, int32_t amount) {
 
     Json::Value root;
     Json::FastWriter fast_writer;
-    root["GameId"] = Json::Value(g_gameID);
+    root["GameId"] = Json::Value(gameid);
     root["ActId"] = Json::Value(szValue);
     root["UserId"] = Json::Value(userid);
     root["UserNickName"] = Json::Value("Robot");
     root["Num"] = Json::Value(amount);
     root["Operation"] = Json::Value(1);
-    root["Device"] = Json::Value(xyConvertIntToStr(g_gameID) + "+" + xyConvertIntToStr(userid));
+    root["Device"] = Json::Value(xyConvertIntToStr(gameid) + "+" + xyConvertIntToStr(userid));
     root["Time"] = Json::Value((LONGLONG) time(NULL) * 1000);
     root["Sign"] = Json::Value(MD5String((root["ActId"].asString() + "|" + root["UserId"].asString() + "|" + root["Time"].asString() + "|" + ROBOT_APPLY_DEPOSIT_KEY).c_str()));
 
@@ -316,7 +326,7 @@ int CRobotMgr::RobotGainDeposit(UserID userid, int32_t amount) {
     if (!reader.parse((LPCTSTR) strResult, _root))
         return kCommFaild;
     if (_root["Code"].asInt() != 0) {
-        UWL_ERR("m_Account = %d gain deposit fail, code = %d, strResult = %s", userid, _root["Code"].asInt(), strResult);
+        UWL_ERR("userid = %d gain deposit fail, code = %d, strResult = %s", userid, _root["Code"].asInt(), strResult);
         //assert(false);
         return kCommFaild;
     }
@@ -331,7 +341,8 @@ int CRobotMgr::RobotBackDeposit(UserID userid, int32_t amount) {
         return kCommFaild;
 
     TCHAR szField[128] = {};
-    sprintf_s(szField, "ActiveID_Game%d", g_gameID);
+    GameID gameid = SettingManager::Instance().GetGameID();
+    sprintf_s(szField, "ActiveID_Game%d", gameid);
     TCHAR szValue[128] = {};
     GetPrivateProfileString(_T("RobotReward"), szField, _T("null"), szValue, sizeof(szValue), g_szIniFile);
     if (0 == strcmp(szValue, "null"))
@@ -339,13 +350,13 @@ int CRobotMgr::RobotBackDeposit(UserID userid, int32_t amount) {
 
     Json::Value root;
     Json::FastWriter fast_writer;
-    root["GameId"] = Json::Value(g_gameID);
+    root["GameId"] = Json::Value(gameid);
     root["ActId"] = Json::Value(szValue);
     root["UserId"] = Json::Value(userid);
     root["UserNickName"] = Json::Value("Robot");
     root["Num"] = Json::Value(amount);
     root["Operation"] = Json::Value(2);
-    root["Device"] = Json::Value(xyConvertIntToStr(g_gameID) + "+" + xyConvertIntToStr(userid));
+    root["Device"] = Json::Value(xyConvertIntToStr(gameid) + "+" + xyConvertIntToStr(userid));
     root["Time"] = Json::Value((LONGLONG) time(NULL) * 1000);
     root["Sign"] = Json::Value(MD5String((root["ActId"].asString() + "|" + root["UserId"].asString() + "|" + root["Time"].asString() + "|" + ROBOT_APPLY_DEPOSIT_KEY).c_str()));
 
@@ -391,7 +402,7 @@ int CRobotMgr::LogonHall(UserID userid) {
         return kCommFaild;
 
     if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
-        UWL_ERR("ACCOUNT = %d GR_LOGON_USER_V2 FAIL", userid);
+        UWL_ERR("userid = %d GR_LOGON_USER_V2 FAIL", userid);
         return kCommFaild;
     }
 
@@ -419,9 +430,9 @@ void CRobotMgr::SendHallPluse() {
 
 int CRobotMgr::SendGetRoomData(RoomID roomid) {
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-
+    GameID gameid = SettingManager::Instance().GetGameID();
     GET_ROOM  gr = {};
-    gr.nGameID = g_gameID;
+    gr.nGameID = gameid;
     gr.nRoomID = roomid;
     gr.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
     gr.dwFlags |= FLAG_GETROOMS_INCLUDE_HIDE;
@@ -496,6 +507,11 @@ int CRobotMgr::GetDepositTypeWithLock(const UserID& userid, DepositType& type) {
 
 void CRobotMgr::SetDepositTypesWithLock(const UserID userid, DepositType type) {
     deposit_map_[userid] = type;
+}
+
+int CRobotMgr::GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data) {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    return GetHallRoomDataWithLock(roomid, hall_room_data);
 }
 
 int CRobotMgr::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) {

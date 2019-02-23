@@ -39,6 +39,8 @@
 #define	ROOM_PLAYER_STATUS_PLAYING		14	// 玩游戏中
 #define	ROOM_PLAYER_STATUS_LOOKON		15	// 旁观
 #define	ROOM_PLAYER_STATUS_BEGAN		16	// 开始游戏
+
+using GameID = int32_t;
 using RoomID = int32_t;
 using TableNO = int32_t;
 using ChairNO = int32_t;
@@ -63,6 +65,14 @@ using       TInt32Vec = std::vector<int32_t>;
 #define ERR_OPERATE_SUCESS      "请求处理OK"
 #define ERR_NOT_NEED_OPERATE    "无需请求"
 
+// 每个房间里面机器人的申请控制模式
+enum class EnterGameMode {
+    kModeBeg = -1,
+    kConstantCount = 0, // 房间内机器人总是维持固定的数量
+    kScaleCount = 1,// 房间内机器人数据量总是房间内正常玩家的固定比例
+    kModeEnd = 2,
+};
+
 enum ERROR_CODE {
     CONNECT_NOT_EXIST = -1000, // "与服务器连接不存在"
     CONNECT_DISABLE, // "ROOM_SOCKET_ERROR"
@@ -83,23 +93,16 @@ enum EConnType :uint32_t {
 //配置类 只读
 class RobotSetting {
 public:
-    int32_t		userid;
+    UserID		userid;
     std::string	password;
-    std::string nickName;
-    std::string portraitUrl;
-};
-
-// 每个房间里面机器人的申请控制模式
-enum EACtrlMode :uint32_t {
-    EACM_Hold = 0, // 房间内机器人总是维持固定的数量
-    EACM_Scale = 1,// 房间内机器人数据量总是房间内正常玩家的固定比例
-    EACM_Max
+    std::string nickname;
+    std::string headurl;
 };
 
 struct RoomSetiing {
-    int32_t nRoomId;
-    int32_t nCtrlMode;
-    int32_t nCtrlVal;
+    RoomID roomid;
+    EnterGameMode mode;
+    int32_t count;
 };
 
 struct HallRoomData {
@@ -177,7 +180,9 @@ const int BackAmount = 200000;
 
 const int InvalidUserID = -1;
 
-const int MaxRandomTry = 10; //避免锁的时间过长
+const int InvalidGameID = -1;
+
+
 enum class DepositType {
     kDefault,
     kGain,
@@ -188,3 +193,4 @@ enum class HallLogonStatusType {
     kNotLogon,
     kLogon,
 };
+

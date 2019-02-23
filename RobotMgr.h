@@ -80,6 +80,7 @@ private:
     int GetDepositTypeWithLock(const UserID& userid, DepositType& type);
     void SetDepositTypesWithLock(const UserID userid, DepositType type);
 
+    int GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data);
     int GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data);
     void SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
 

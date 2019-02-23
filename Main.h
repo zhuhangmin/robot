@@ -8,7 +8,6 @@
 
 extern int				g_nClientID;
 extern int				g_useLocal;
-extern int				g_gameID;
 extern std::string		g_curExePath;
 
 extern TCHAR			g_szLicFile[MAX_PATH];
