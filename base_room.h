@@ -17,7 +17,7 @@ public:
 
     virtual RoomOptional GetRoomType();
 
-    // 玩家进入房间
+    // 玩家进入房间(如果tableno>0，则加入指定桌子。 否则由服务端自动分配)
     virtual int PlayerEnterGame(const std::shared_ptr<User> &user);
     int BindPlayer(const std::shared_ptr<User> &user);
     // 旁观者进入房间

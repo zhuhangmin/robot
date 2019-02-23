@@ -34,14 +34,15 @@ enum GameRequestEnum {
     GR_PLAYER2LOOKER = GR_REQUEST_BASE + 36,			// 玩家转旁观者
     GR_LOOKER2PLAYER = GR_REQUEST_BASE + 37,			// 旁观者转玩家
 
-    GN_PLAYER_ENTERGAME = GR_REQUEST_BASE + 1001,		// 玩家进游戏通知
+    //GN_PLAYER_ENTERGAME = GR_REQUEST_BASE + 1001,		// 玩家进游戏通知
     GN_TABLE_CHAT = GR_REQUEST_BASE + 1002,				// 聊天消息通知
     GN_COUNTDOWN_START = GR_REQUEST_BASE + 1003,		// 倒计时开始通知
     GN_COUNTDOWN_STOP = GR_REQUEST_BASE + 1004,			// 倒计时停止通知
     GN_GAME_START = GR_REQUEST_BASE + 1005,				// 游戏开始通知
     GN_GAME_RESULT = GR_REQUEST_BASE + 1006,			// 游戏结果通知
     //GN_PLAYER_GIVEUP = GR_REQUEST_BASE + 1007,		// 玩家弃牌通知
-    GN_USER_STATUS_CHANGE = GR_REQUEST_BASE + 1008,		// 用户状态变化通知
+    //GN_USER_STATUS_CHANGE = GR_REQUEST_BASE + 1008,		// 用户状态变化通知
+    GN_USER_ACTION = GR_REQUEST_BASE + 1010,			// 用户状行为通知（发给同桌其他用户）
 
     //========= 机器服相关消息 ==========
     GR_VALID_ROBOTSVR = GR_REQUEST_BASE + 4001,			// 机器人服务验证消息

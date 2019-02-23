@@ -1,11 +1,6 @@
 #include "stdafx.h"
 #include "RoomMgr.h"
 
-
-std::shared_ptr<BaseRoom> RoomMgr::NewRoom(int roomid/* = 0*/) {
-    return std::make_shared<BaseRoom>(roomid);
-}
-
 std::shared_ptr<BaseRoom> RoomMgr::GetRoom(int roomid) {
     static std::shared_ptr<BaseRoom> null_room = std::make_shared<BaseRoom>();
 

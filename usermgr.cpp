@@ -23,11 +23,18 @@ std::hash_map<int, std::shared_ptr<User>> UserMgr::GetAllUsers() {
 
 void UserMgr::DelUser(int userid) {
     // 删除用户之前先把用户的id置为0，防止erase后还有shared_ptr在拿着原来的数据使用
-    std::lock_guard<std::mutex> users_lock(users_mutex);
     std::shared_ptr<User> user = GetUser(userid);
     {
-        user->set_user_id(0);
+        //universal_lock<int> user_lock(userid, &g_user_lock_pool);
+        //user->set_user_id(0);
+        user->set_room_id(0);
+        user->set_table_no(0);
+        user->set_chair_no(0);
+        user->set_token(0);
+        user->set_sock(0);
     }
+
+    std::lock_guard<std::mutex> users_lock(users_mutex);
     users_.erase(userid);
 }
 
