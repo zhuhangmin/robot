@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "setting_manager.h"
-#include "Main.h"
-#include "RobotUitls.h"
+#include "main.h"
+#include "robot_utils.h"
 
 int SettingManager::Init() {
     if (!InitSetting()) {

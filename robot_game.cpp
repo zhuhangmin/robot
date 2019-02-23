@@ -1,8 +1,8 @@
 #include "stdafx.h"
-#include "Robot.h"
-#include "Main.h"
+#include "robot_game.h"
+#include "main.h"
 #include "common_func.h"
-#include "RobotUitls.h"
+#include "robot_utils.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

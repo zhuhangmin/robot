@@ -1,9 +1,9 @@
 ﻿#include "stdafx.h"
-#include "RobotMgr.h"
-#include "Main.h"
+#include "robot_manager.h"
+#include "main.h"
 #include "common_func.h"
-#include "RobotUitls.h"
-#include "RobotDef.h"
+#include "robot_utils.h"
+#include "robot_define.h"
 #include "setting_manager.h"
 
 #ifdef _DEBUG

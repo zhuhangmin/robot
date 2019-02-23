@@ -1,5 +1,5 @@
 #pragma once
-#include "RobotDef.h"
+#include "robot_define.h"
 class SettingManager : public ISingletion<SettingManager> {
 public:
     using RoomSettingMap = std::unordered_map<RoomID, RoomSetiing>;

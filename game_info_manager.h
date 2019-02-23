@@ -1,5 +1,5 @@
 #pragma once
-#include "RobotDef.h"
+#include "robot_define.h"
 class GameInfoManager : public ISingletion<GameInfoManager> {
 public:
     int Init();
