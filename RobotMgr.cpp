@@ -153,10 +153,10 @@ void CRobotMgr::OnHallNotify(RequestID nReqId, void* pDataPtr, int32_t nSize) {
     switch (nReqId) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            OnDisconnHall(nReqId, pDataPtr, nSize);
-            break;
+        OnDisconnHall(nReqId, pDataPtr, nSize);
+        break;
         default:
-            break;
+        break;
     }
 }
 
@@ -202,7 +202,7 @@ void CRobotMgr::ThreadHallPluse() {
 void CRobotMgr::ThreadMainProc() {
     UwlTrace(_T("timer thread started. id = %d"), GetCurrentThreadId());
     while (TRUE) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, DEF_TIMER_INTERVAL);
+        DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingManager::Instance().GetMainsInterval());
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
@@ -255,7 +255,7 @@ void CRobotMgr::ThreadMainProc() {
 }
 
 void	CRobotMgr::ThreadDeposit() {
-    UWL_INF(_T("Hall Deposit thread started. id = %d"), GetCurrentThreadId());
+    UWL_INF(_T("Hall Deposit thread started. id = %d"), SettingManager::Instance().GetDepositInterval());
 
     while (TRUE) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, DepositInterval);
@@ -275,11 +275,11 @@ void	CRobotMgr::ThreadDeposit() {
                 auto deposit_type = kv.second;
 
                 if (deposit_type == DepositType::kGain) {
-                    RobotGainDeposit(userid, GainAmount);
+                    RobotGainDeposit(userid, SettingManager::Instance().GetGainAmount());
                 }
 
                 if (deposit_type == DepositType::kBack) {
-                    RobotBackDeposit(userid, BackAmount);
+                    RobotBackDeposit(userid, SettingManager::Instance().GetBackAmount());
                 }
             }
         }
@@ -386,7 +386,7 @@ int CRobotMgr::LogonHall(UserID userid) {
     xyGetVolumeID(logonUser.szVolumeID);
     xyGetMachineID(logonUser.szMachineID);
     UwlGetSystemVersion(logonUser.dwSysVer);
-    logonUser.nAgentGroupID = ROBOT_AGENT_GROUP_ID; // 使用888作为组号
+    logonUser.nAgentGroupID = RobotAgentGroupID; // 使用888作为组号
     logonUser.dwLogonFlags |= (FLAG_LOGON_INTER | FLAG_LOGON_ROBOT_TOOL);
     logonUser.nLogonSvrID = 0;
     logonUser.nHallBuildNO = 20160414;
@@ -415,7 +415,7 @@ void CRobotMgr::SendHallPluse() {
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     HALLUSER_PULSE hp = {};
     hp.nUserID = 0;
-    hp.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
+    hp.nAgentGroupID = RobotAgentGroupID;
 
     RequestID nRespID = 0;
     std::shared_ptr<void> pRetData;
@@ -433,7 +433,7 @@ int CRobotMgr::SendGetRoomData(RoomID roomid) {
     GET_ROOM  gr = {};
     gr.nGameID = gameid;
     gr.nRoomID = roomid;
-    gr.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
+    gr.nAgentGroupID = RobotAgentGroupID;
     gr.dwFlags |= FLAG_GETROOMS_INCLUDE_HIDE;
     gr.dwFlags |= FLAG_GETROOMS_INCLUDE_ONLINES;
 
@@ -611,9 +611,9 @@ void CRobotMgr::OnRobotNotify(RequestID nReqId, void* pDataPtr, int32_t nSize, T
     switch (nReqId) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            robot->DisconnectGame();
-            break;
+        robot->DisconnectGame();
+        break;
         default:
-            break;
+        break;
     }
 }

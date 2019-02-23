@@ -14,7 +14,6 @@
 #define PRODUCT_NAME		_T("RobotToolLudo")
 #define	PRODUCT_VERSION		_T("1.00")
 
-//#define DEF_REFRESH_ELAPSE		(DEF_TIMER_INTERVAL * 12) // minitues
 
 #define MAX_FORBIDDEN_IPS		100 // 
 

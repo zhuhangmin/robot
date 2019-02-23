@@ -23,7 +23,7 @@ private:
     int ConnectHall(bool bReconn = false);
 
     // 大厅 消息发送
-    int SendHallRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = REQ_TIMEOUT_INTERVAL);
+    int SendHallRequestWithLock(RequestID nReqId, uint32_t& nDataLen, void *pData, RequestID &nRespId, std::shared_ptr<void> &pRetData, bool bNeedEcho = true, uint32_t wait_ms = RequestTimeOut);
 
     // 大厅 消息接收
     void ThreadHallNotify();

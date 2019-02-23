@@ -15,7 +15,7 @@ int SettingManager::Init() {
 }
 
 bool SettingManager::InitSetting() {
-    std::string filename = g_curExePath + ROBOT_SETTING_FILE_NAME;
+    std::string filename = g_curExePath + _T("robot.setting");
     Json::Value root;
     Json::Reader reader;
     std::ifstream ifile;
@@ -63,6 +63,18 @@ bool SettingManager::InitSetting() {
     // optional setting
     if (root.isMember("game_ip"))
         game_ip_ = root["game_ip"].asString();
+
+    if (root.isMember("main_interval"))
+        main_interval_ = root["main_interval"].asInt();
+
+    if (root.isMember("deposit_interval"))
+        deposit_interval_ = root["deposit_interval"].asInt();
+
+    if (root.isMember("gain_amount"))
+        gain_amount_ = root["gain_amount"].asInt();
+
+    if (root.isMember("back_amount"))
+        back_amount_ = root["back_amount"].asInt();
 
 
     // check

@@ -18,13 +18,13 @@ int RobotUitls::SendRequest(CDefSocketClientPtr& connection_, RequestID requesti
     REQUEST request(requestid, data.get(), val.ByteSize());
 
     BOOL timeout = false;
-    BOOL result = connection_->SendRequest(&context_head, &request, &response, timeout, REQ_TIMEOUT_INTERVAL);
+    BOOL result = connection_->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
 
     if (!result)///if timeout or disconnect 
     {
         UWL_ERR("send request fail");
         //assert(false);
-        return timeout ? ERROR_CODE::REQUEST_TIMEOUT : ERROR_CODE::OPERATION_FAILED;
+        return timeout ? ERROR_CODE::kConnectionDisable : ERROR_CODE::kOperationFailed;
     }
 
     auto nRespId = response.head.nRequest;
@@ -49,7 +49,7 @@ CString RobotUitls::ExecHttpRequestPost(const CString& strUrl, const CString& st
     DWORD  retcode = -1;
     try {
         pSession = new CInternetSession();
-        (void) pSession->SetOption(INTERNET_OPTION_CONNECT_TIMEOUT, HTTP_CONNECT_TIMEOUT);	//重试之间的等待延时
+        (void) pSession->SetOption(INTERNET_OPTION_CONNECT_TIMEOUT, HttpTimeOut);	//重试之间的等待延时
         (void) pSession->SetOption(INTERNET_OPTION_CONNECT_RETRIES, 1);			//重试次数
 
         (void) AfxParseURL((LPCTSTR) strUrl, dwServiceType, strServer, strObject, nPort);

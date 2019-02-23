@@ -19,6 +19,14 @@ public:
 
     std::string& GetGameIP() { return game_ip_; }
 
+    int GetMainsInterval() const { return main_interval_; }
+
+    int GetDepositInterval() const { return deposit_interval_; }
+
+    int GetGainAmount() const { return gain_amount_; }
+
+    int GetBackAmount() const { return back_amount_; }
+
 protected:
     SINGLETION_CONSTRUCTOR(SettingManager);
 
@@ -33,6 +41,14 @@ private:
     GameID game_id_{InvalidGameID};
 
     std::string game_ip_ = std::string("127.0.0.1");
+
+    int main_interval_{MainInterval};
+
+    int deposit_interval_{DepositInterval};
+
+    int gain_amount_{GainAmount};
+
+    int back_amount_{BackAmount};
 
 };
 
