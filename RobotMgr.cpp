@@ -182,7 +182,16 @@ void CRobotMgr::ThreadHallPluse() {
 
             SendHallPluse();
 
-            //SendGamePluse();
+
+            auto setting = SettingManager::Instance().GetRoomSettingMap();
+            for (auto& kv : setting) {
+                auto roomid = kv.first;
+                if (kCommFaild == SendGetRoomData(roomid)) {
+                    assert(false);
+                    UWL_ERR("cannnot get hall room data = %d", roomid);
+                }
+            }
+
 
         }
     }
@@ -213,8 +222,16 @@ void CRobotMgr::ThreadMainProc() {
                 continue;
 
             //TODO 
-            // FIND ROBOT 
-            // CREATE ROBOT 
+            RobotPtr robot;
+            if (robot_map_.find(random_userid) == robot_map_.end()) {
+                robot_map_[random_userid] = std::make_shared<Robot>(random_userid);
+            }
+            robot = robot_map_[random_userid];
+
+            //robot->ConnectGame()
+
+
+
             // CREATE CONNECTION
             // SEND ENTER GAME
             // HANDLE EXCEPTION
@@ -400,6 +417,34 @@ void CRobotMgr::SendHallPluse() {
 
 }
 
+int CRobotMgr::SendGetRoomData(RoomID roomid) {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+
+    GET_ROOM  gr = {};
+    gr.nGameID = g_gameID;
+    gr.nRoomID = roomid;
+    gr.nAgentGroupID = ROBOT_AGENT_GROUP_ID;
+    gr.dwFlags |= FLAG_GETROOMS_INCLUDE_HIDE;
+    gr.dwFlags |= FLAG_GETROOMS_INCLUDE_ONLINES;
+
+    RequestID nRespID = 0;
+    std::shared_ptr<void> pRetData;
+    uint32_t nDataLen = sizeof(GET_ROOM);
+    auto result = SendHallRequestWithLock(GR_GET_ROOM, nDataLen, &gr, nRespID, pRetData);
+    if (result == kCommFaild) {
+        UWL_ERR("Send hall pluse failed");
+    }
+
+    if (nRespID != UR_FETCH_SUCCEEDED) {
+        UWL_ERR("SendHallRequest GR_GET_ROOM fail nRoomId = %d, nResponse = %d", roomid, nRespID);
+        assert(false);
+        return kCommFaild;
+    }
+
+    SetHallRoomDataWithLock(roomid, (HallRoomData*) pRetData.get());
+    return kCommSucc;
+}
+
 void CRobotMgr::SendGamePluse() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     for (auto& kv : robot_map_) {
@@ -453,10 +498,23 @@ void CRobotMgr::SetDepositTypesWithLock(const UserID userid, DepositType type) {
     deposit_map_[userid] = type;
 }
 
+int CRobotMgr::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) {
+    if (hall_room_data_map_.find(roomid) == hall_room_data_map_.end()) {
+        return kCommFaild;
+    }
+
+    hall_room_data = hall_room_data_map_[roomid];
+    return kCommSucc;
+}
+
+void CRobotMgr::SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data) {
+    hall_room_data_map_[roomid] = *hall_room_data;
+}
+
 int CRobotMgr::GetRandomNotLogonUserID(UserID& random_userid) {
     //filter robots who are not logon on hall
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-    HallLogonStatusMap temp_map;
+    HallLogonMap temp_map;
     for (auto& kv : hall_logon_status_map_) {
         UserID userid = kv.first;
         auto status = kv.second;

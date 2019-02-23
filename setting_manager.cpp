@@ -88,3 +88,7 @@ int SettingManager::GetRandomRobotSetting(RobotSetting& robot_setting_) {
 SettingManager::AccountSettingMap& SettingManager::GetAccountSettingMap() {
     return account_setting_map_;
 }
+
+SettingManager::RoomSettingMap& SettingManager::GetRoomSettingMap() {
+    return room_setting_map_;
+}

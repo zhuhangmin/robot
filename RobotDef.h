@@ -100,12 +100,10 @@ struct RoomSetiing {
     int32_t nRoomId;
     int32_t nCtrlMode;
     int32_t nCtrlVal;
-    //int32_t nCurrNum; // 当前人数
 };
 
 struct HallRoomData {
     ROOM	 room;
-    uint32_t nLastGetTime;
 };
 // 单例模板类
 template< typename T >

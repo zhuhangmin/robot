@@ -13,6 +13,8 @@ public:
     int GetRandomRobotSetting(RobotSetting& robot_setting_);
 
     AccountSettingMap& GetAccountSettingMap();
+
+    RoomSettingMap& GetRoomSettingMap();
 protected:
     SINGLETION_CONSTRUCTOR(SettingManager);
 
@@ -23,6 +25,7 @@ private:
 
     // 机器人房间配置 robot.setting
     RoomSettingMap room_setting_map_;
+
 
 };
 

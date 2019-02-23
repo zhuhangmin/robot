@@ -7,8 +7,8 @@ class CRobotMgr : public ISingletion<CRobotMgr> {
 public:
     using DepositMap = std::unordered_map<UserID, DepositType>;
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
-    using HallLogonStatusMap = std::unordered_map<UserID, HallLogonStatusType>;
-
+    using HallLogonMap = std::unordered_map<UserID, HallLogonStatusType>;
+    using HallRoomDataMap = std::unordered_map<int32_t, HallRoomData>;
 
 public:
     int Init();
@@ -57,10 +57,10 @@ private:
 
     // 大厅登陆网络辅助请求
     int LogonHall(UserID userid);
+    void SendHallPluse();
+    int SendGetRoomData(RoomID roomid);
 
-    //@zhuhangmin 20190218 仅心跳线程可见
-    void    OnTimerSendPluse(time_t nCurrTime);
-    void    SendHallPluse();
+    // game
     void    SendGamePluse();
 
     //@zhuhangmin 20190218 仅补银线程可见
@@ -69,9 +69,7 @@ private:
 
     // 机器人
     RobotPtr GetRobotWithLock(UserID userid);
-
     void SetRobotWithLock(RobotPtr client);
-
     RobotPtr GetRobotByTokenWithLock(const TokenID& id);
 
 private:
@@ -81,6 +79,9 @@ private:
 
     int GetDepositTypeWithLock(const UserID& userid, DepositType& type);
     void SetDepositTypesWithLock(const UserID userid, DepositType type);
+
+    int GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data);
+    void SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
 
 private:
     int GetRandomNotLogonUserID(UserID& random_userid);
@@ -94,7 +95,9 @@ private:
     //大厅 连接
     CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};
     //大厅 登陆状态
-    HallLogonStatusMap hall_logon_status_map_;
+    HallLogonMap hall_logon_status_map_;
+    //大厅 房间配置
+    HallRoomDataMap hall_room_data_map_;
     //大厅 接收消息线程
     UThread	hall_notify_thread_;
     //大厅 心跳线程
