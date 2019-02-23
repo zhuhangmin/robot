@@ -6,7 +6,6 @@ public:
 
     void Term();
 
-
 protected:
     SINGLETION_CONSTRUCTOR(GameInfoManager);
 
@@ -87,6 +86,6 @@ private:
     std::mutex game_info_connection_mutex_;
     CDefSocketClientPtr game_info_connection_{std::make_shared<CDefSocketClient>()};
 
-
 };
 
+#define GameMgr GameInfoManager::Instance()

@@ -14,6 +14,10 @@ int SettingManager::Init() {
     return kCommSucc;
 }
 
+void SettingManager::Term() {
+
+}
+
 bool SettingManager::InitSetting() {
     std::string filename = g_curExePath + _T("robot.setting");
     Json::Value root;

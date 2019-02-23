@@ -7,6 +7,8 @@ public:
 public:
     int Init();
 
+    void Term();
+
 public:
     // 获得指定机器人配置
     int GetRobotSetting(UserID userid, RobotSetting& robot_setting_);
@@ -52,3 +54,4 @@ private:
 
 };
 
+#define SettingMgr  SettingManager::Instance()

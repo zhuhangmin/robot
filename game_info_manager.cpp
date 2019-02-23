@@ -511,7 +511,7 @@ void GameInfoManager::OnSwitchGame(const REQUEST &request) {
 
 }
 //
-//int GameInfoManager::GetUserStatus(UserID userid, UserStatus& user_status) {
+//int RobotGameInfoManager::GetUserStatus(UserID userid, UserStatus& user_status) {
 //    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
 //
 //    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;

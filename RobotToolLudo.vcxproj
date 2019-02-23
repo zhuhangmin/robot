@@ -299,9 +299,11 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="base_room.cpp" />
     <ClCompile Include="common_func.cpp" />
     <ClCompile Include="game_info_manager.cpp" />
+    <ClCompile Include="robot_hall_manager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="robot_deposit_manager.cpp" />
     <ClCompile Include="robot_game.cpp" />
-    <ClCompile Include="robot_manager.cpp" />
+    <ClCompile Include="robot_game_manager.cpp" />
     <ClCompile Include="robot_utils.cpp" />
     <ClCompile Include="roommgr.cpp" />
     <ClCompile Include="server.cpp" />
@@ -319,11 +321,13 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="common_func.h" />
     <ClInclude Include="gamedef.h" />
     <ClInclude Include="game_info_manager.h" />
+    <ClInclude Include="robot_hall_manager.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="robot_deposit_manager.h" />
     <ClInclude Include="robot_game.h" />
     <ClInclude Include="robot_define.h" />
-    <ClInclude Include="robot_manager.h" />
+    <ClInclude Include="robot_game_manager.h" />
     <ClInclude Include="robot_utils.h" />
     <ClInclude Include="roommgr.h" />
     <ClInclude Include="server.h" />
