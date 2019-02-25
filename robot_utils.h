@@ -1,5 +1,7 @@
 #pragma once
 #include "robot_define.h"
+#include "user.h"
+#include "table.h"
 class RobotUtils {
 public:
     static int SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
@@ -25,6 +27,10 @@ public:
     static int IsValidTokenID(TokenID tokenid);
 
     static int IsValidRequestID(RequestID requestid);
+
+    static int IsValidUser(const std::shared_ptr<User>& user);
+
+    static int IsValidTable(const std::shared_ptr<Table>& table);
 };
 
 #define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {assert(false); return kCommFaild;}
@@ -40,3 +46,7 @@ public:
 #define CHECK_TOKENID(x)  if(kCommSucc != RobotUtils::IsValidTokenID(x))  {assert(false); return kCommFaild;}
 
 #define CHECK_REQUESTID(x)  if(kCommSucc != RobotUtils::IsValidRequestID(x))  {assert(false); return kCommFaild;}
+
+#define CHECK_USER(x)  if(kCommSucc != RobotUtils::IsValidUser(x))  {assert(false); return kCommFaild;}
+
+#define CHECK_TABLE(x)  if(kCommSucc != RobotUtils::IsValidTable(x))  {assert(false); return kCommFaild;}

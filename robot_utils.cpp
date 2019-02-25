@@ -7,6 +7,10 @@
 
 
 int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
+    if (!connection) {
+        assert(false);
+        return kCommFaild;
+    }
     CHECK_REQUESTID(requestid);
     CONTEXT_HEAD	context_head = {};
     context_head.hSocket = connection->GetSocket();
@@ -28,7 +32,7 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
     if (!result)///if timeout or disconnect 
     {
         UWL_ERR("send request fail");
-        //assert(false);
+        assert(false);
         return timeout ? ERROR_CODE::kConnectionDisable : ERROR_CODE::kOperationFailed;
     }
 
@@ -36,15 +40,17 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
 
     if (0 == responseid) {
         assert(false);
-        /*       UWL_ERR("game respId = 0");
-        CHAR info[512] = {};
-        sprintf_s(info, "%s", pRetData.get());*/
         return kCommFaild;
     }
     return kCommSucc;
 }
 
 CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& params) {
+    if (!url) {
+        assert(false);
+        return "";
+    }
+
     CString		result_str, server_str, object_str;
     CInternetSession* pSession = NULL;
     CHttpConnection*   pHttpConn = NULL;
@@ -163,5 +169,13 @@ int RobotUtils::IsValidTokenID(TokenID tokenid) {
 
 int RobotUtils::IsValidRequestID(RequestID requestid) {
     return requestid <= InvalidRequestID ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::IsValidUser(const std::shared_ptr<User>& user) {
+    return user == nullptr ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::IsValidTable(const std::shared_ptr<Table>& table) {
+    return table == nullptr ? kCommFaild : kCommSucc;
 }
 
