@@ -10,6 +10,7 @@
 
 
 int GameInfoManager::Init() {
+    // 同步过程
     if (kCommFaild == ConnectInfoGame()) {
         UWL_ERR("ConnectGame failed");
         assert(false);
@@ -28,6 +29,7 @@ int GameInfoManager::Init() {
         return kCommFaild;
     }
 
+    // @zhuhangmin 20190225 不可颠倒同步过程和接收消息顺序。不然前置通知消息会被SendGetGameInfo覆盖
     game_info_notify_thread_.Initial(std::thread([this] {this->ThreadGameInfoNotify(); }));
 
     heart_timer_thread_.Initial(std::thread([this] {this->ThreadSendGamePluse(); }));
@@ -61,7 +63,7 @@ int GameInfoManager::ConnectInfoGame() {
 
 int GameInfoManager::SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-    return RobotUitls::SendRequest(game_info_connection_, requestid, val, response, bNeedEcho);
+    return RobotUitls::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
 }
 
 void GameInfoManager::ThreadGameInfoNotify() {
@@ -122,7 +124,7 @@ void GameInfoManager::OnGameInfoNotify(RequestID nReqstID, const REQUEST &reques
             OnLeaveGame(request);
             break;
         case GN_RS_SWITCH_TABLE:
-            OnSwitchGame(request);
+            OnSwitchTable(request);
             break;
         default:
             break;
@@ -133,8 +135,9 @@ void GameInfoManager::OnGameInfoNotify(RequestID nReqstID, const REQUEST &reques
 
 void GameInfoManager::OnDisconnGameInfo() {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-    if (game_info_connection_)
+    if (game_info_connection_) {
         game_info_connection_->DestroyEx();
+    }
 }
 
 void GameInfoManager::ThreadSendGamePluse() {
@@ -146,17 +149,17 @@ void GameInfoManager::ThreadSendGamePluse() {
         }
 
         if (WAIT_TIMEOUT == dwRet) {
-
-            std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+            SendPulse();
+            /*std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
 
             game::base::PulseReq val;
             val.set_id(g_nClientID);
             REQUEST response = {};
-            auto result = RobotUitls::SendRequest(game_info_connection_, GR_GAME_PLUSE, val, response, false);
+            auto result = RobotUitls::SendRequestWithLock(game_info_connection_, GR_GAME_PLUSE, val, response, false);
 
             if (kCommSucc != result) {
-                UWL_ERR("Send game pluse failed");
-            }
+            UWL_ERR("Send game pluse failed");
+            }*/
 
         }
     }
@@ -193,6 +196,7 @@ int GameInfoManager::SendValidateReq() {
 }
 
 int GameInfoManager::SendGetGameInfo(RoomID roomid /*= 0*/) {
+    //TODO: NOTE NOTIFY THREAD COULD RECV DATA BEFORE SendGetGameInfo
     game::base::GetGameUsersReq val;
     val.set_clientid(g_nClientID);
     val.set_roomid(roomid);
@@ -228,6 +232,22 @@ int GameInfoManager::SendGetGameInfo(RoomID roomid /*= 0*/) {
     }
 
     return kCommSucc;
+}
+
+int GameInfoManager::SendPulse() {
+    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+
+    game::base::PulseReq val;
+    val.set_id(g_nClientID);
+    REQUEST response = {};
+
+    auto result = RobotUitls::SendRequestWithLock(game_info_connection_, GR_GAME_PLUSE, val, response, false);
+
+    if (kCommSucc != result) {
+        UWL_ERR("Send game pluse failed");
+    }
+
+    return result;
 }
 
 void GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
@@ -483,7 +503,7 @@ void GameInfoManager::OnLeaveGame(const REQUEST &request) {
     UserMgr::Instance().DelUser(userid);
 }
 
-void GameInfoManager::OnSwitchGame(const REQUEST &request) {
+void GameInfoManager::OnSwitchTable(const REQUEST &request) {
     game::base::RS_SwitchTableNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {

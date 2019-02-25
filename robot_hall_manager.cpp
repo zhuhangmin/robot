@@ -79,8 +79,8 @@ int RobotHallManager::SendHallRequestWithLock(RequestID requestid, int& data_siz
     Request.nDataLen = data_size;
     Request.pDataPtr = req_data_ptr;
 
-    BOOL bTimeOut = FALSE, bResult = TRUE;
-    bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, RequestTimeOut);
+    BOOL bTimeOut = FALSE;
+    BOOL bResult = hall_connection_->SendRequest(&Context, &Request, &Response, bTimeOut, RequestTimeOut);
 
     if (!bResult)///if timeout or disconnect 
     {

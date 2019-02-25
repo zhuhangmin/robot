@@ -52,15 +52,8 @@ public:
         chair_status_ = val;
     }
 
-    /*int get_bind_timestamp() const {
-        return bind_timestamp_;
-        }
-        void set_bind_timestamp(const int &val) {
-        bind_timestamp_ = val;
-        }*/
 private:
     int userid_ = 0;
-    //int bind_timestamp_ = 0;		// 玩家和椅子绑定的时间戳（秒）
     ChairStatus chair_status_ = kChairWaiting;	// 椅子状态
 };
 

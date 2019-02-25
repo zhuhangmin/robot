@@ -37,6 +37,9 @@ private:
     // 向游戏服务器 获取 游戏内所有信息 (room、table、user)
     int SendGetGameInfo(RoomID roomid = 0);
 
+    // 向游戏服务器 发送 心跳
+    int SendPulse();
+
 private:
     // 接收业务消息 一般需要先更新user数据，在触发table上的用户数据变化
 
@@ -65,7 +68,7 @@ private:
     void OnLeaveGame(const REQUEST &request);
 
     // 用户换桌	UnbindUser+BindPlaye
-    void OnSwitchGame(const REQUEST &request);
+    void OnSwitchTable(const REQUEST &request);
 
 private:
     //int GetUserStatus(UserID userid, UserStatus& user_status);

@@ -120,7 +120,7 @@ private:
     int token_ = 0;
     SOCKET sock_ = 0;
 
-    int user_id_ = InvalidUserID;
+    int user_id_ = 0;           // InvalidUserID
     int user_type_ = 0;			// 用户类型：机器人、管理员、普通玩家
     INT64 deposit_ = 0;			// 银子数
 

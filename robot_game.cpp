@@ -52,7 +52,7 @@ int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::
         return kCommFaild;
     }
 
-    int result = RobotUitls::SendRequest(game_connection_, requestid, val, response, need_echo);
+    int result = RobotUitls::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
     if (result != kCommSucc) {
         UWL_ERR("game send quest fail");
         assert(false);

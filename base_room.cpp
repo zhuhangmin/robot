@@ -3,6 +3,7 @@
 #include "usermgr.h"
 
 BaseRoom::BaseRoom() {
+    //TODO HOW TO ADD TABLE , WILL ALL THE TABLE BE NOTIFY ON INIT GAMEINFO ?
     //CreateTables();
 }
 
@@ -27,8 +28,6 @@ RoomOptional BaseRoom::GetRoomType() {
 }
 
 int BaseRoom::PlayerEnterGame(const std::shared_ptr<User> &user) {
-    std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
-
     auto tableno = user->get_table_no();
     std::shared_ptr<Table> table = GetTable(tableno);
     int ret = table->BindPlayer(user);
@@ -41,8 +40,7 @@ int BaseRoom::PlayerEnterGame(const std::shared_ptr<User> &user) {
 }
 
 int BaseRoom::BindPlayer(const std::shared_ptr<User> &user) {
-    std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
-
+    //V524 It is odd that the body of 'BindPlayer' function is fully equivalent to the body of 'PlayerEnterGame' function.base_room.cpp 43
     auto tableno = user->get_table_no();
     std::shared_ptr<Table> table = GetTable(tableno);
     int ret = table->BindPlayer(user);
@@ -89,6 +87,7 @@ int BaseRoom::UserLeaveGame(int userid, int tableno) {
 }
 
 int BaseRoom::UnbindUser(int userid, int tableno) {
+    //V524 It is odd that the body of 'UnbindUser' function is fully equivalent to the body of 'UserLeaveGame' function.base_room.cpp 91
     auto table = GetTable(tableno);
     if (!IsValidTable(table->get_table_no())) {
         UWL_WRN("Get table[%d] faild", tableno);
@@ -116,8 +115,6 @@ int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
         UWL_WRN("user[%d] deposit[%I64d] invalid.", user->get_user_id(), user->get_deposit());
         return kInvalidDeposit;
     }
-
-    std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
 
     auto table = GetTable(user->get_table_no());
     if (!IsValidTable(table->get_table_no())) {
@@ -163,56 +160,6 @@ int BaseRoom::Player2Looker(std::shared_ptr<User> &user) {
 
 
     table->UnbindPlayer(user->get_user_id());
-
-    return kCommSucc;
-}
-
-int BaseRoom::SwitchTable(std::shared_ptr<User> &user) {
-    // 解除和原桌子的关系
-    {
-        auto table = GetTable(user->get_table_no());
-        if (!IsValidTable(table->get_table_no())) {
-            UWL_WRN("Get table[%d] faild", user->get_table_no());
-            return kCommFaild;
-        }
-
-        if (IS_BIT_SET(table->get_table_status(), kTablePlaying) && table->IsTablePlayer(user->get_user_id())) {
-            (void) UserGiveUp(user->get_user_id(), user->get_table_no());
-        }
-        table->UnbindUser(user->get_user_id());
-
-        // 填充新桌椅信息  TODO:要更新usermanager里面的user
-        user->set_table_no(0);
-        user->set_chair_no(0);
-    }
-
-    // TODO
-    // 绑定新桌子
-    {
-        //std::lock_guard<std::mutex> lock_g(alloc_table_chair_mutex_);
-
-        //// 获取一个有效桌子
-        //int tableno = GetAvailableTableno(user, user->get_table_no());
-
-        //// 玩家上桌
-        //auto table = GetTable(tableno);
-        //if (!IsValidTable(table->get_table_no())) {
-        //    UWL_WRN("Get table[%d] faild", tableno);
-        //    return kCommFaild;
-        //}
-
-        //int chairno = 0;
-        //int ret = table->BindPlayer(user);
-        //if (ret != kCommSucc) {
-        //    UWL_WRN("BindPlayer faild. user[%d], table[%d]", user->get_user_id(), tableno);
-        //    return kCommFaild;
-        //}
-
-        //// 填充新桌椅信息  TODO:要更新usermanager里面的user
-        //user->set_table_no(tableno);
-        //user->set_chair_no(chairno);
-        //user->set_enter_timestamp(time(0));
-    }
 
     return kCommSucc;
 }

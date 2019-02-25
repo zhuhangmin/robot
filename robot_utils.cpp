@@ -2,7 +2,7 @@
 #include "robot_utils.h"
 
 
-int RobotUitls::SendRequest(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
+int RobotUitls::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
     CONTEXT_HEAD	context_head = {};
     context_head.hSocket = connection->GetSocket();
     context_head.lSession = 0;

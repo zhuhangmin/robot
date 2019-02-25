@@ -33,8 +33,6 @@ public:
     virtual int Looker2Player(std::shared_ptr<User> &user);
     // 玩家转旁观者
     virtual int Player2Looker(std::shared_ptr<User> &user);
-    // 玩家换桌
-    virtual int SwitchTable(std::shared_ptr<User> &user);
 
     // 判断桌子号是否合法
     virtual bool IsValidTable(int tableno);
@@ -43,20 +41,16 @@ public:
 
 public:
     void AddTable(TableNO tableno, std::shared_ptr<Table> table);
+
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
     virtual std::shared_ptr<Table> GetTable(int tableno);
+
 protected:
-
-
-
     // 获取符合要求的桌子号范围（用于缩小遍历桌子的范围）
     virtual int GetEligibleTable(const std::shared_ptr<User> &user, int &min_tableno, int &max_tableno);
 
 private:
     std::array<std::shared_ptr<Table>, kMaxTableCountPerRoom> tables_;
-
-    std::mutex alloc_table_chair_mutex_;				// 分配桌椅锁  这个锁不允许在桌子锁的范围内使用，否则可能死锁
-
     int room_id_ = 0;
     int options_ = 0;
     int configs_ = 0;

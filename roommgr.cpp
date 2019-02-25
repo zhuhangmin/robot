@@ -9,7 +9,7 @@ std::shared_ptr<BaseRoom> RoomMgr::GetRoom(int roomid) {
     if (itr == rooms_.end()) {
         return null_room;
     }
-    return itr->second;
+    return itr->second; //TODO return nullptr ?
 }
 
 void RoomMgr::AddRoom(int roomid, const std::shared_ptr<BaseRoom> &room) {
@@ -18,6 +18,7 @@ void RoomMgr::AddRoom(int roomid, const std::shared_ptr<BaseRoom> &room) {
 }
 
 void RoomMgr::Reset() {
+    std::lock_guard<std::mutex> lock_g(rooms_mutex_);
     rooms_.clear();
 }
 
