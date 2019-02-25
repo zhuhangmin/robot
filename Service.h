@@ -17,6 +17,6 @@ public:
 
     int m_iState;
 
-    CMainServer	m_MainServer;
+    MainServer	m_MainServer;
     DWORD		m_dwThreadId;
 };

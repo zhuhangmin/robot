@@ -5,7 +5,6 @@
 
 class Robot {
 public:
-    Robot();
     Robot(UserID userid);
 
 public:

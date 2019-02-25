@@ -19,8 +19,6 @@ public:
 
     GameID GetGameID() const;
 
-    std::string& GetGameIP() { return game_ip_; }
-
     int GetMainsInterval() const { return main_interval_; }
 
     int GetDepositInterval() const { return deposit_interval_; }
@@ -42,8 +40,6 @@ private:
 
     GameID game_id_{InvalidGameID};
 
-    std::string game_ip_ = std::string("127.0.0.1");
-
     int main_interval_{MainInterval};
 
     int deposit_interval_{DepositInterval};
@@ -52,6 +48,7 @@ private:
 
     int back_amount_{BackAmount};
 
+    //TODO HOT UPDATE NEED RESET AND LOCK?
 };
 
 #define SettingMgr  SettingManager::Instance()

@@ -1,11 +1,22 @@
 #pragma once
-
 // Ä¬ÈÏ²ÎÊý
+#define SERVICE_NAME _T("robot_tool_xxx")
+
+#define DISPLAY_NAME _T("robot_tool_xxx")
+
+const std::string LocalIPStr = std::string("127.0.0.1");
+
 const int RobotAgentGroupID = 1;
 
 const int InvalidUserID = 0;
 
 const int InvalidGameID = 0;
+
+const int InvalidRoomID = 0;
+
+const int InvalidTableNO = 0;
+
+const int InvalidChairNO = 0;
 
 const int MS_PER_SECOND = 1000;  // ms
 
@@ -147,4 +158,3 @@ protected:
     ThreadID		m_nThrd{0};
     HANDLE			m_hThrd{nullptr};
 };
-

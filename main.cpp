@@ -20,6 +20,8 @@ TCHAR				g_szIniFile[MAX_PATH];//配置文件
 
 HANDLE				g_hExitServer = NULL;
 
+string	        	g_localGameIP;
+
 CWinApp				theApp;
 
 HINSTANCE			g_hResDll = NULL;
@@ -55,13 +57,13 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     WSAStartup(MAKEWORD(2, 2), &wsa);
     // 初始化 MFC 并在失败时显示错误
     if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0)) {
-        MessageBox(NULL, _T("Fatal error: MFC initialization failed!\n"), APPLICATION_TITLE, MB_ICONSTOP);
+        MessageBox(NULL, _T("Fatal error: MFC initialization failed!\n"), "", MB_ICONSTOP);
         nRetCode = -1;
         return nRetCode;
     }
 
     if (!UwlInit()) {
-        MessageBox(NULL, _T("Fatal error: UWL initialization failed!\n"), APPLICATION_TITLE, MB_ICONSTOP);
+        MessageBox(NULL, _T("Fatal error: UWL initialization failed!\n"), "", MB_ICONSTOP);
         nRetCode = -1;
         return nRetCode;
     }
@@ -76,7 +78,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     UwlRegSocketWnd();
 
     if (!AfxSocketInit()) {
-        MessageBox(NULL, _T("Fatal error: Failed to initialize sockets!\n"), APPLICATION_TITLE, MB_ICONSTOP);
+        MessageBox(NULL, _T("Fatal error: Failed to initialize sockets!\n"), "", MB_ICONSTOP);
         nRetCode = -1;
         return nRetCode;
     }
@@ -98,10 +100,10 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     lstrcat(szIniFile, szExeIni);
 
     TCHAR serviceName[MAX_PATH] = {0};
-    GetPrivateProfileString("service", "servicename", STR_SERVICE_NAME, serviceName, MAX_PATH, szIniFile);
+    GetPrivateProfileString("service", "service_name", SERVICE_NAME, serviceName, MAX_PATH, szIniFile);
 
     TCHAR displayName[MAX_PATH] = {0};
-    GetPrivateProfileString("service", "displayname", STR_DISPLAY_NAME, displayName, MAX_PATH, szIniFile);
+    GetPrivateProfileString("service", "display_name", DISPLAY_NAME, displayName, MAX_PATH, szIniFile);
 
     if (strcmp(szExeName, serviceName) != 0) {
         UWL_ERR("szExeName[%s] != serviceName[%s]", szExeName, serviceName);
@@ -121,7 +123,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     nRetCode = MainService.m_Status.dwWin32ExitCode;
 #else
 
-    CMainServer MainServer;
+    MainServer MainServer;
 
     if (kCommFaild == MainServer.Init()) {
         UwlTrace(_T("server initialize failed!"));

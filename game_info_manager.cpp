@@ -9,9 +9,9 @@
 #include "usermgr.h"
 
 
-int GameInfoManager::Init() {
+int GameInfoManager::Init(std::string game_ip, int game_port) {
     // 同步过程
-    if (kCommFaild == ConnectInfoGame()) {
+    if (kCommFaild == ConnectInfoGame(game_ip, game_port)) {
         UWL_ERR("ConnectGame failed");
         assert(false);
         return kCommFaild;
@@ -42,28 +42,22 @@ void GameInfoManager::Term() {
     heart_timer_thread_.Release();
 }
 
-int GameInfoManager::ConnectInfoGame() {
-    TCHAR szGameSvrIP[MAX_SERVERIP_LEN] = {};
-    GetPrivateProfileString(_T("GameServer"), _T("IP"), _T(""), szGameSvrIP, sizeof(szGameSvrIP), g_szIniFile);
-    auto nGameSvrPort = GetPrivateProfileInt(_T("GameServer"), _T("Port"), 0, g_szIniFile);
-
-    {
-        std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-        game_info_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
-        if (!game_info_connection_->Create(szGameSvrIP, nGameSvrPort, 5, 0, game_info_notify_thread_.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
-            UWL_ERR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
-            assert(false);
-            return kCommFaild;
-        }
+int GameInfoManager::ConnectInfoGame(std::string game_ip, int game_port) {
+    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+    game_info_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
+    if (!game_info_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_info_notify_thread_.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
+        UWL_ERR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
+        assert(false);
+        return kCommFaild;
     }
 
-    UWL_INF("ConnectGame OK! IP:%s Port:%d", szGameSvrIP, nGameSvrPort);
+    UWL_INF("ConnectGame OK! IP:%s Port:%d", game_ip.c_str(), game_port);
     return kCommSucc;
 }
 
 int GameInfoManager::SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
-    return RobotUitls::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
+    return RobotUtils::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
 }
 
 void GameInfoManager::ThreadGameInfoNotify() {
@@ -195,11 +189,10 @@ int GameInfoManager::SendValidateReq() {
     return kCommSucc;
 }
 
-int GameInfoManager::SendGetGameInfo(RoomID roomid /*= 0*/) {
-    //TODO: NOTE NOTIFY THREAD COULD RECV DATA BEFORE SendGetGameInfo
+int GameInfoManager::SendGetGameInfo() {
     game::base::GetGameUsersReq val;
     val.set_clientid(g_nClientID);
-    val.set_roomid(roomid);
+    val.set_roomid(0);
     REQUEST response = {};
     auto result = SendGameRequest(GR_GET_GAMEUSERS, val, response);
     if (kCommSucc != result) {
@@ -222,13 +215,13 @@ int GameInfoManager::SendGetGameInfo(RoomID roomid /*= 0*/) {
     RoomMgr::Instance().Reset();
     for (int room_index = 0; room_index < resp.rooms_size(); room_index++) {
         game::base::Room room_pb = resp.rooms(room_index);
-        AddRoom(room_pb);
+        AddRoomPB(room_pb);
     }
 
     UserMgr::Instance().Reset();
     for (int user_index = 0; user_index < resp.users_size(); user_index++) {
         game::base::User user_pb = resp.users(user_index);
-        AddUser(user_pb);
+        AddUserPB(user_pb);
     }
 
     return kCommSucc;
@@ -241,7 +234,7 @@ int GameInfoManager::SendPulse() {
     val.set_id(g_nClientID);
     REQUEST response = {};
 
-    auto result = RobotUitls::SendRequestWithLock(game_info_connection_, GR_GAME_PLUSE, val, response, false);
+    auto result = RobotUtils::SendRequestWithLock(game_info_connection_, GR_GAME_PLUSE, val, response, false);
 
     if (kCommSucc != result) {
         UWL_ERR("Send game pluse failed");
@@ -407,6 +400,7 @@ void GameInfoManager::OnStartGame(const REQUEST &request) {
     auto roomid = ntf.roomid();
     auto tableno = ntf.tableno();
 
+    //TODO refactor into RoomMgr add param check chari
     std::unordered_map<ChairNO, game::base::ChairInfo> chairs_pb_map;
     for (auto index = 0; index < ntf.chairs_size(); index++) {
         auto chair_pb = ntf.chairs(index);
@@ -543,7 +537,6 @@ void GameInfoManager::OnSwitchTable(const REQUEST &request) {
 //    auto chairno = user.chairno();
 //
 //    // 玩家信息中token为0则说明玩家离线； kUserOffline = 0x10000000		// 断线
-//    // TODO
 //
 //    // 玩家信息中椅子号为0则说明在旁观；
 //    if (chairno == 0) {
@@ -571,7 +564,7 @@ void GameInfoManager::OnSwitchTable(const REQUEST &request) {
 //        return kCommSucc;
 //    }
 //
-//    // 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）//TODO 原空闲玩家?
+//    // 桌子playing && 椅子waiting -> 等待下局游戏开始（原空闲玩家）
 //    if (chair_status == kChairWaiting) {
 //        user_status = kUserWaiting;
 //        return kCommSucc;
@@ -580,46 +573,7 @@ void GameInfoManager::OnSwitchTable(const REQUEST &request) {
 //    return kCommFaild;
 //}
 //
-int GameInfoManager::FindTable(UserID userid, game::base::Table& table) {
-    /* if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-     auto user = user_map_[userid];
-     auto tableno = user.tableno();
-
-     auto roomid = user.roomid();
-     if (room_map_.find(roomid) == room_map_.end()) return kCommFaild;
-
-     auto tables = room_map_[roomid].tables();
-
-     for (auto& table : tables) {
-     if (table.tableno() == tableno) {
-     table = tables[tableno];
-     return kCommSucc;
-     }
-     }*/
-    return kCommFaild;
-}
-
-int GameInfoManager::FindChair(UserID userid, game::base::ChairInfo& chair) {
-    /* if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
-     auto user = user_map_[userid];
-     auto chairno = user.chairno();
-
-     game::base::Table table;
-     if (kCommFaild == FindTable(userid, table)) return kCommFaild;
-
-     auto chairs = table.chairs();
-
-     for (auto& chair : chairs) {
-     if (chair.chairno() == chairno) {
-     chair = chairs[chairno];
-     return kCommSucc;
-     }
-     }*/
-
-    return kCommFaild;
-}
-
-int GameInfoManager::AddRoom(game::base::Room room_pb) {
+int GameInfoManager::AddRoomPB(game::base::Room room_pb) {
     game::base::RoomData room_data_pb = room_pb.room_data();
     RoomID roomid = room_data_pb.roomid();
 
@@ -638,42 +592,50 @@ int GameInfoManager::AddRoom(game::base::Room room_pb) {
         game::base::Table table_pb = room_pb.tables(table_index);
         TableNO tableno = table_pb.tableno();
         auto table = std::make_shared<Table>();
-        table->set_table_no(table_pb.tableno()); // tableno start from 1
-        table->set_room_id(table_pb.roomid());
-        table->set_chair_count(table_pb.chair_count());
-        table->set_banker_chair(table_pb.banker_chair());
-        table->set_min_deposit(table_pb.min_deposit());
-        table->set_max_deposit(table_pb.max_deposit());
-        table->set_base_deposit(table_pb.base_deposit());
-        table->set_table_status(table_pb.table_status());
-
-        // CHAIR
-        for (int chair_index = 0; chair_index < table_pb.chairs_size(); chair_index++) {
-            game::base::ChairInfo chair_pb = table_pb.chairs(chair_index);
-            ChairNO chairno = chair_pb.chairno(); // chairno start from 1
-            ChairInfo chair_info;
-            chair_info.set_userid(chair_pb.userid());
-            chair_info.set_chair_status((ChairStatus) chair_pb.chair_status());
-            table->AddChair(chairno, chair_info);
-        }
-
-        //TABLE USER INFO
-        for (int table_user_index = 0; table_user_index < table_pb.table_users_size(); table_user_index++) {
-            game::base::TableUserInfo table_user_pb = table_pb.table_users(table_user_index);
-            UserID userid = table_user_pb.userid();
-            TableUserInfo table_user_info;
-            table_user_info.set_userid(table_user_pb.userid());
-            table_user_info.set_bind_timestamp(table_user_pb.bind_timestamp());
-            table->AddTableUserInfo(userid, table_user_info);
-        }
-
+        AddTablePB(table_pb, table);
         base_room->AddTable(tableno, table);
     }
+
+    // ROOM
     RoomMgr::Instance().AddRoom(roomid, base_room);
     return kCommSucc;
 }
 
-int GameInfoManager::AddUser(game::base::User user_pb) {
+int GameInfoManager::AddTablePB(game::base::Table table_pb, std::shared_ptr<Table> table) {
+    TableNO tableno = table_pb.tableno();
+    table->set_table_no(table_pb.tableno()); // tableno start from 1
+    table->set_room_id(table_pb.roomid());
+    table->set_chair_count(table_pb.chair_count());
+    table->set_banker_chair(table_pb.banker_chair());
+    table->set_min_deposit(table_pb.min_deposit());
+    table->set_max_deposit(table_pb.max_deposit());
+    table->set_base_deposit(table_pb.base_deposit());
+    table->set_table_status(table_pb.table_status());
+
+    // CHAIR
+    for (int chair_index = 0; chair_index < table_pb.chairs_size(); chair_index++) {
+        game::base::ChairInfo chair_pb = table_pb.chairs(chair_index);
+        ChairNO chairno = chair_pb.chairno(); // chairno start from 1
+        ChairInfo chair_info;
+        chair_info.set_userid(chair_pb.userid());
+        chair_info.set_chair_status((ChairStatus) chair_pb.chair_status());
+        table->AddChair(chairno, chair_info);
+    }
+
+    // TABLE USER INFO
+    for (int table_user_index = 0; table_user_index < table_pb.table_users_size(); table_user_index++) {
+        game::base::TableUserInfo table_user_pb = table_pb.table_users(table_user_index);
+        UserID userid = table_user_pb.userid();
+        TableUserInfo table_user_info;
+        table_user_info.set_userid(table_user_pb.userid());
+        table_user_info.set_bind_timestamp(table_user_pb.bind_timestamp());
+        table->AddTableUserInfo(userid, table_user_info);
+    }
+
+    return kCommSucc;
+}
+
+int GameInfoManager::AddUserPB(game::base::User user_pb) {
     UserID userid = user_pb.userid();
     auto user = std::make_shared<User>();
     user->set_user_id(user_pb.userid());

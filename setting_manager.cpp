@@ -65,9 +65,6 @@ bool SettingManager::InitSetting() {
     }
 
     // optional setting
-    if (root.isMember("game_ip"))
-        game_ip_ = root["game_ip"].asString();
-
     if (root.isMember("main_interval"))
         main_interval_ = root["main_interval"].asInt();
 
@@ -92,21 +89,14 @@ bool SettingManager::InitSetting() {
 }
 
 int SettingManager::GetRobotSetting(UserID userid, RobotSetting& robot_setting_) {
-    if (userid == 0) {
-        UWL_ERR("userid = %d", userid);
-        assert(false);
-        return kCommFaild;
-    }
-
+    CHECK_USERID(userid);
     auto it = robot_setting_map_.find(userid);
     if (it == robot_setting_map_.end()) {
         assert(false);
         return kCommFaild;
     }
 
-
     robot_setting_ = it->second;
-
     return kCommSucc;
 }
 
@@ -121,3 +111,4 @@ SettingManager::RoomSettingMap& SettingManager::GetRoomSettingMap() {
 GameID SettingManager::GetGameID() const {
     return game_id_;
 }
+

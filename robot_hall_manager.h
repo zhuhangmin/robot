@@ -21,6 +21,9 @@ public:
     // 大厅 房间数据
     int SendGetRoomData(RoomID roomid);
 
+    // 大厅 所有房间数据
+    int SendGetAllRoomData();
+
 public:
     // 获得大厅房间数据
     int GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data);
@@ -55,12 +58,11 @@ private:
 
     int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status);
 
-    void SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status);
+    int SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status);
 
     int GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data);
 
-    void SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
-
+    int SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
 
 private:
     //大厅 数据锁

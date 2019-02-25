@@ -22,8 +22,6 @@ public:
     int BindPlayer(const std::shared_ptr<User> &user);
     // 旁观者进入房间
     virtual int LookerEnterGame(const std::shared_ptr<User> &user);
-    // 玩家回房间 断线续玩
-    virtual int ContinueGame(const std::shared_ptr<User> &user);
     // 玩家离开游戏
     virtual int UserLeaveGame(int userid, int tableno);
     int UnbindUser(int userid, int tableno);
@@ -40,7 +38,7 @@ public:
     virtual bool IsValidDeposit(INT64 deposit);
 
 public:
-    void AddTable(TableNO tableno, std::shared_ptr<Table> table);
+    int AddTable(TableNO tableno, std::shared_ptr<Table> table);
 
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
     virtual std::shared_ptr<Table> GetTable(int tableno);

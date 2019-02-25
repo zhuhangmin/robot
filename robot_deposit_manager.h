@@ -28,7 +28,7 @@ private:
 
     int GetDepositTypeWithLock(const UserID& userid, DepositType& type);
 
-    void SetDepositTypesWithLock(const UserID userid, DepositType type);
+    int SetDepositTypesWithLock(const UserID userid, DepositType type);
 
 private:
     // 后台补银 数据锁

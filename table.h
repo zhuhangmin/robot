@@ -205,8 +205,8 @@ public:
     virtual bool IfContinueWhenOneUserLeave();
 
 public:
-    void AddChair(ChairNO chairno, ChairInfo info);
-    void AddTableUserInfo(UserID userid, TableUserInfo table_user_info);
+    int AddChair(ChairNO chairno, ChairInfo info);
+    int AddTableUserInfo(UserID userid, TableUserInfo table_user_info);
     std::array<ChairInfo, kMaxChairCountPerTable>& GetChairs() { return chairs_; }
 private:
 

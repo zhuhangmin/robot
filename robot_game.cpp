@@ -11,11 +11,6 @@
 Robot::Robot(UserID userid) {
     userid_ = userid;
 }
-
-Robot::Robot() {
-
-}
-
 int Robot::ConnectGame(const std::string& game_ip, const int game_port, ThreadID game_notify_thread_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
@@ -52,7 +47,7 @@ int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::
         return kCommFaild;
     }
 
-    int result = RobotUitls::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
+    int result = RobotUtils::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
     if (result != kCommSucc) {
         UWL_ERR("game send quest fail");
         assert(false);
@@ -62,6 +57,7 @@ int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::
 
 // 具体业务
 int Robot::SendEnterGame(RoomID roomid) {
+    CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(mutex_);
     TCHAR hard_id[32];
     xyGetHardID(hard_id);
@@ -91,8 +87,6 @@ int Robot::SendEnterGame(RoomID roomid) {
         UWL_ERR("enter game faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(val).c_str());
         return resp.code();
     }
-
-    //TODO 银子不够 case
 
     return kCommSucc;
 }

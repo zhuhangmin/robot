@@ -6,36 +6,25 @@
 #include "game_info_manager.h"
 #include "robot_deposit_manager.h"
 #include "robot_hall_manager.h"
+#include "robot_utils.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-#define	MAX_PROCESSORS_SUPPORT	4
-
-#define LICENSE_FILE		_T("license.dat")
-#define PRODUCT_NAME		_T("RobotToolLudo")
-#define	PRODUCT_VERSION		_T("1.00")
-
-
-#define MAX_FORBIDDEN_IPS		100 // 
-
-#define	DEF_KICKOFF_DEADTIME	360			// minutes
-#define	DEF_KICKOFF_STIFFTIME	300			// seconds
-
-CMainServer::CMainServer() {
+MainServer::MainServer() {
     g_hExitServer = NULL;
 }
 
-CMainServer::~CMainServer() {}
+MainServer::~MainServer() {}
 
-int CMainServer::InitLanuch() {
+int MainServer::InitLanuch() {
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     TCHAR szFullName[MAX_PATH];
     GetModuleFileName(GetModuleHandle(NULL), szFullName, sizeof(szFullName));
     UwlSplitPath(szFullName, SPLIT_DRIVE_DIR, g_szIniFile);
     g_curExePath = g_szIniFile;
-    lstrcat(g_szIniFile, PRODUCT_NAME);
+    lstrcat(g_szIniFile, "RobotTool");
     lstrcat(g_szIniFile, _T(".ini"));
 
     TCHAR szPID[32];
@@ -53,7 +42,7 @@ int CMainServer::InitLanuch() {
     return kCommSucc;
 }
 
-int CMainServer::Init() {
+int MainServer::Init() {
     UwlLogFile(_T("server starting..."));
 
     if (S_FALSE == ::CoInitialize(NULL))
@@ -72,16 +61,18 @@ int CMainServer::Init() {
         return kCommFaild;
     }
 
-    // 游戏服务数据管理类 TODO
-    /*if (kCommFaild == GameMgr.Init()) {
-        UWL_ERR(_T("RobotGameInfoManager Init Failed"));
-        assert(false);
-        return kCommFaild;
-        }*/
-
     // 机器人大厅管理类
     if (kCommFaild == HallMgr.Init()) {
         UWL_ERR(_T("RobotHallManager Init Failed"));
+        assert(false);
+        return kCommFaild;
+    }
+
+    // 游戏服务数据管理类
+    auto game_port = RobotUtils::GetGamePort();
+    auto game_ip = RobotUtils::GetGameIP();
+    if (kCommFaild == GameMgr.Init(game_ip, game_port)) {
+        UWL_ERR(_T("RobotGameInfoManager Init Failed"));
         assert(false);
         return kCommFaild;
     }
@@ -108,7 +99,7 @@ int CMainServer::Init() {
     return kCommSucc;
 }
 
-void CMainServer::Term() {
+void MainServer::Term() {
     SetEvent(g_hExitServer);
 
     DepositMgr.Term();
@@ -125,7 +116,7 @@ void CMainServer::Term() {
     UwlLogFile(_T("server exited."));
 }
 
-void CMainServer::ThreadMainProc() {
+void MainServer::ThreadMainProc() {
     UwlTrace(_T("timer thread started. id = %d"), GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetMainsInterval());
@@ -148,6 +139,8 @@ void CMainServer::ThreadMainProc() {
             if (kCommFaild == HallMgr.LogonHall(random_userid))
                 continue;
 
+            if (random_userid <= InvalidUserID)
+                continue;
 
             RobotPtr robot = RobotMgr.GetRobotWithCreate(random_userid);
 
@@ -158,8 +151,8 @@ void CMainServer::ThreadMainProc() {
                 continue;
 
             //@zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
-            auto game_ip = SettingMgr.GetGameIP();
-            auto game_port = hall_room_data.room.nPort;
+            auto game_ip = RobotUtils::GetGameIP();
+            auto game_port = RobotUtils::GetGamePort();
             auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
             if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id))
                 continue;

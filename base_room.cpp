@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "base_room.h"
 #include "usermgr.h"
+#include "robot_utils.h"
 
 BaseRoom::BaseRoom() {
     //TODO HOW TO ADD TABLE , WILL ALL THE TABLE BE NOTIFY ON INIT GAMEINFO ?
     //CreateTables();
 }
-
 
 BaseRoom::BaseRoom(int roomid) {
     set_room_id(roomid);
@@ -48,28 +48,6 @@ int BaseRoom::BindPlayer(const std::shared_ptr<User> &user) {
         UWL_WRN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
-    return kCommSucc;
-}
-
-int BaseRoom::ContinueGame(const std::shared_ptr<User> &user) {
-    auto table = GetTable(user->get_table_no());
-    if (!IsValidTable(table->get_table_no())) {
-        UWL_WRN("Get table[%d] faild", user->get_table_no());
-        return kCommFaild;
-    }
-
-    // 如果是玩家，校验椅子上是否已经有其他人
-    if (user->get_chair_no() > 0) {
-        int seat_userid = table->GetUserID(user->get_chair_no());
-        if (seat_userid != user->get_user_id()) {
-            UWL_WRN("user[%d] has in table[%d], chair[%d]. user[%d] continue game faild.",
-                    seat_userid, user->get_table_no(), user->get_chair_no(), user->get_user_id());
-            return kCommFaild;
-        }
-    }
-
-    // 更新玩家信息
-    UserMgr::Instance().AddUser(user->get_user_id(), user);
     return kCommSucc;
 }
 
@@ -192,8 +170,8 @@ bool BaseRoom::IsValidDeposit(INT64 deposit) {
     return false;
 }
 
-void BaseRoom::AddTable(TableNO tableno, std::shared_ptr<Table> table) {
-    assert(tableno >= 1);
+int BaseRoom::AddTable(TableNO tableno, std::shared_ptr<Table> table) {
+    CHECK_TABLENO(tableno);
     tables_[tableno - 1] = table;
 }
 

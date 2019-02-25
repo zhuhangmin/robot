@@ -1,10 +1,10 @@
 #pragma once
 #include "robot_define.h"
 
-class CMainServer {
+class MainServer {
 public:
-    CMainServer();
-    ~CMainServer();
+    MainServer();
+    ~MainServer();
 
 public:
     int Init();

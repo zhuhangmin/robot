@@ -1,8 +1,9 @@
 #pragma once
 #include "robot_define.h"
+#include "table.h"
 class GameInfoManager : public ISingletion<GameInfoManager> {
 public:
-    int Init();
+    int Init(std::string game_ip, int game_port);
 
     void Term();
 
@@ -11,7 +12,7 @@ protected:
 
 private:
     // 游戏 建立连接
-    int ConnectInfoGame();
+    int ConnectInfoGame(std::string game_ip, int game_port);
 
     // 游戏 消息发送
     int SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
@@ -35,7 +36,7 @@ private:
     int SendValidateReq();
 
     // 向游戏服务器 获取 游戏内所有信息 (room、table、user)
-    int SendGetGameInfo(RoomID roomid = 0);
+    int SendGetGameInfo();
 
     // 向游戏服务器 发送 心跳
     int SendPulse();
@@ -72,12 +73,12 @@ private:
 
 private:
     //int GetUserStatus(UserID userid, UserStatus& user_status);
-    int FindTable(UserID userid, game::base::Table& table);
-    int FindChair(UserID userid, game::base::ChairInfo& chair);
+    int AddRoomPB(game::base::Room room_pb);
 
-    int AddRoom(game::base::Room room_pb);
+    int AddTablePB(game::base::Table table_pb, std::shared_ptr<Table> table);
 
-    int AddUser(game::base::User user_pb);
+    int AddUserPB(game::base::User user_pb);
+
 private:
     //接收 游戏服务器消息 线程
     YQThread	game_info_notify_thread_;

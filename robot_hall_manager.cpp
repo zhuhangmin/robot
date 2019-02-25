@@ -26,6 +26,8 @@ int RobotHallManager::Init() {
         return kCommFaild;
     }
 
+    SendGetAllRoomData();
+
     UWL_INF("HallManager::Init Sucessed.");
     return kCommSucc;
 }
@@ -37,8 +39,8 @@ void	RobotHallManager::Term() {
 
 int RobotHallManager::ConnectHall(bool bReconn /*= false*/) {
     TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
-    GetPrivateProfileString(_T("HallServer"), _T("IP"), _T(""), szHallSvrIP, sizeof(szHallSvrIP), g_szIniFile);
-    auto nHallSvrPort = GetPrivateProfileInt(_T("HallServer"), _T("Port"), 0, g_szIniFile);
+    GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof(szHallSvrIP), g_szIniFile);
+    auto nHallSvrPort = GetPrivateProfileInt(_T("hall_server"), _T("port"), 0, g_szIniFile);
 
     {
         std::lock_guard<std::mutex> lock(hall_connection_mutex_);
@@ -164,16 +166,7 @@ void RobotHallManager::ThreadHallPluse() {
 
             SendHallPluse();
 
-
-            auto setting = SettingMgr.GetRoomSettingMap();
-            for (auto& kv : setting) {
-                auto roomid = kv.first;
-                if (kCommFaild == SendGetRoomData(roomid)) {
-                    assert(false);
-                    UWL_ERR("cannnot get hall room data = %d", roomid);
-                }
-            }
-
+            SendGetAllRoomData();
 
         }
     }
@@ -183,6 +176,7 @@ void RobotHallManager::ThreadHallPluse() {
 
 
 int RobotHallManager::LogonHall(UserID userid) {
+    CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
 
     RobotSetting setting;
@@ -239,11 +233,26 @@ void RobotHallManager::SendHallPluse() {
 
 }
 
+int RobotHallManager::SendGetAllRoomData() {
+    auto setting = SettingMgr.GetRoomSettingMap();
+    for (auto& kv : setting) {
+        auto roomid = kv.first;
+        if (kCommFaild == SendGetRoomData(roomid)) {
+            assert(false);
+            UWL_ERR("cannnot get hall room data = %d", roomid);
+        }
+    }
+
+    return kCommFaild;
+}
+
 int RobotHallManager::SendGetRoomData(RoomID roomid) {
+    CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-    GameID gameid = SettingMgr.GetGameID();
+    GameID game_id = SettingMgr.GetGameID();
+    CHECK_GAMEID(game_id);
     GET_ROOM  gr = {};
-    gr.nGameID = gameid;
+    gr.nGameID = game_id;
     gr.nRoomID = roomid;
     gr.nAgentGroupID = RobotAgentGroupID;
     gr.dwFlags |= FLAG_GETROOMS_INCLUDE_HIDE;
@@ -268,6 +277,7 @@ int RobotHallManager::SendGetRoomData(RoomID roomid) {
 }
 
 int RobotHallManager::GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) {
+    CHECK_USERID(userid);
     if (hall_logon_status_map_.find(userid) == hall_logon_status_map_.end()) {
         hall_logon_status_map_.insert(std::make_pair(userid, HallLogonStatusType::kNotLogon));
     }
@@ -276,16 +286,20 @@ int RobotHallManager::GetLogonStatusWithLock(const UserID& userid, HallLogonStat
     return kCommSucc;
 }
 
-void RobotHallManager::SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status) {
+int RobotHallManager::SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status) {
+    CHECK_USERID(userid);
     hall_logon_status_map_[userid] = status;
+    return kCommSucc;
 }
 
 int RobotHallManager::GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data) {
+    CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     return GetHallRoomDataWithLock(roomid, hall_room_data);
 }
 
 int RobotHallManager::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) {
+    CHECK_ROOMID(roomid);
     if (hall_room_data_map_.find(roomid) == hall_room_data_map_.end()) {
         return kCommFaild;
     }
@@ -294,8 +308,10 @@ int RobotHallManager::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData
     return kCommSucc;
 }
 
-void RobotHallManager::SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data) {
+int RobotHallManager::SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data) {
+    CHECK_ROOMID(roomid);
     hall_room_data_map_[roomid] = *hall_room_data;
+    return kCommSucc;
 }
 
 int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
@@ -314,7 +330,7 @@ int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
 
     //random pick up one
     auto random_pos = 0;
-    if (kCommFaild == RobotUitls::GenRandInRange(0, temp_map.size() - 1, random_pos)) {
+    if (kCommFaild == RobotUtils::GenRandInRange(0, temp_map.size() - 1, random_pos)) {
         return kCommFaild;
     }
 

@@ -30,7 +30,7 @@
 #include "game_base.pb.h"
 #include "gamedef.h"
 
-//@zhuhangmin 20192015 请勿在预编译中加入任何具体业务逻辑相关头文件！
+//@zhuhangmin 20192015 [请勿加入任何]具体业务逻辑相关头文件在预编译
 
 
 

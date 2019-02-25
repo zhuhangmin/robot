@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "table.h"
 #include "user.h"
+#include "robot_utils.h"
 
 Table::Table() {}
 
@@ -147,13 +148,15 @@ bool Table::IfContinueWhenOneUserLeave() {
 }
 
 
-void Table::AddChair(ChairNO chairno, ChairInfo info) {
-    assert(chairno >= 1);
+int Table::AddChair(ChairNO chairno, ChairInfo info) {
+    CHECK_CHAIRNO(chairno);
     chairs_[chairno - 1] = info;
 }
 
-void Table::AddTableUserInfo(UserID userid, TableUserInfo table_user_info) {
+int Table::AddTableUserInfo(UserID userid, TableUserInfo table_user_info) {
+    CHECK_USERID(userid);
     table_users_[userid] = table_user_info;
+    return kCommSucc;
 }
 
 int Table::GiveUp(int userid) {
