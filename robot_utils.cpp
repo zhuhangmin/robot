@@ -8,7 +8,7 @@ int RobotUitls::SendRequest(CDefSocketClientPtr& connection, RequestID requestid
     context_head.lSession = 0;
     context_head.bNeedEcho = need_echo;
 
-    std::unique_ptr<char> data(new char[val.ByteSize()]);
+    std::unique_ptr<char[]> data(new char[val.ByteSize()]);
     bool is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
     if (false == is_succ) {
         UWL_ERR("SerializePartialToArray failed.");

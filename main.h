@@ -14,4 +14,4 @@ extern TCHAR			g_szIniFile[MAX_PATH];
 
 extern HANDLE			g_hExitServer;
 
-
+//@zhuhangmin 20190225 请勿添加任何具体业务逻辑的全局变量！

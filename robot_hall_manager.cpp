@@ -96,9 +96,6 @@ int RobotHallManager::SendHallRequestWithLock(RequestID requestid, int& data_siz
     resp_data_ptr.reset(Response.pDataPtr);
 
     if (response_id == GR_ERROR_INFOMATION) {
-        CHAR info[512] = {};
-        sprintf_s(info, "%s", resp_data_ptr);
-        data_size = 0;
         UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail responseid GR_ERROR_INFOMATION nReqId = %d", requestid);
         assert(false);
         return kCommFaild;

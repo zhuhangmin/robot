@@ -242,7 +242,9 @@ void GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
     game::base::RoomData room_data = ntf.room_data();
     auto roomid = room_data.roomid();
 
-    std::shared_ptr<User> user;
+    //V614 The 'user' smart pointer is utilized immediately after being declared or reset.
+    //It is suspicious that no value was assigned to it.
+    auto user = std::make_shared<User>();
     user->set_user_id(ntf.userid());
     user->set_table_no(ntf.tableno());
     user->set_chair_no(ntf.chairno());
@@ -278,7 +280,9 @@ void GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
     game::base::RoomData room_data = ntf.room_data();
     auto roomid = room_data.roomid();
 
-    std::shared_ptr<User> user;
+    //V614 The 'user' smart pointer is utilized immediately after being declared or reset.
+    //It is suspicious that no value was assigned to it.
+    auto user = std::make_shared<User>();
     user->set_user_id(ntf.userid());
     user->set_room_id(roomid);
     user->set_table_no(ntf.tableno());
