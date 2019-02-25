@@ -7,6 +7,7 @@
 
 
 int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
+    CHECK_REQUESTID(requestid);
     CONTEXT_HEAD	context_head = {};
     context_head.hSocket = connection->GetSocket();
     context_head.lSession = 0;
@@ -154,5 +155,13 @@ int RobotUtils::IsValidTableNO(TableNO tableno) {
 
 int RobotUtils::IsValidChairNO(ChairNO chairno) {
     return chairno <= InvalidChairNO ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::IsValidTokenID(TokenID tokenid) {
+    return tokenid <= InvalidTokenID ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::IsValidRequestID(RequestID requestid) {
+    return requestid <= InvalidRequestID ? kCommFaild : kCommSucc;
 }
 

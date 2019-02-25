@@ -45,7 +45,7 @@ private:
     void ThreadHallNotify();
 
     // 大厅 消息处理
-    void OnHallNotify(RequestID requestid, void* ntf_data_ptr, int data_size);
+    int OnHallNotify(RequestID requestid, void* ntf_data_ptr, int data_size);
 
     // 大厅 断开链接
     void OnDisconnHall(RequestID requestid, void* data_ptr, int data_size);

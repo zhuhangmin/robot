@@ -57,12 +57,13 @@ void RobotGameManager::SetRobotWithLock(RobotPtr robot) {
     robot_map_.insert(std::make_pair(robot->GetUserID(), robot));
 }
 
-RobotPtr RobotGameManager::GetRobotByTokenWithLock(const TokenID& id) {
+int RobotGameManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) {
+    CHECK_TOKENID(token_id);
     auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& it) {
-        return it.second->GetTokenID() == id;
+        return it.second->GetTokenID() == token_id;
     });
-
-    return it != robot_map_.end() ? it->second : nullptr;
+    robot = (it != robot_map_.end() ? it->second : nullptr);
+    return kCommSucc;
 }
 
 
@@ -95,9 +96,9 @@ void RobotGameManager::ThreadRobotNotify() {
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
             TokenID		nTokenID = pContext->lTokenID;
-            RequestID		nReqstID = pRequest->head.nRequest;
+            RequestID		requestid = pRequest->head.nRequest;
 
-            OnRobotNotify(nReqstID, pRequest->pDataPtr, pRequest->nDataLen, nTokenID);
+            OnRobotNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen, nTokenID);
 
             SAFE_DELETE(pContext);
             UwlClearRequest(pRequest);
@@ -110,17 +111,20 @@ void RobotGameManager::ThreadRobotNotify() {
     return;
 }
 
-void RobotGameManager::OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id) {
+int RobotGameManager::OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id) {
+    CHECK_REQUESTID(requestid);
     RobotPtr robot;
     {
         std::lock_guard<std::mutex> lock(robot_map_mutex_);
-        robot = GetRobotByTokenWithLock(token_id);
+        auto result = GetRobotByTokenWithLock(token_id, robot);
+        if (kCommSucc != result)
+            return result;
     }
 
     if (!robot) {
         assert(false);
         UWL_WRN(_T("GameNotify robot not found. nTokenID = %d reqId:%d"), token_id, requestid);
-        return;
+        return kCommFaild;
     }
 
     switch (requestid) {
@@ -131,4 +135,5 @@ void RobotGameManager::OnRobotNotify(RequestID requestid, void* ntf_data_ptr, in
         default:
             break;
     }
+    return kCommSucc;
 }

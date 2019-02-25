@@ -21,7 +21,7 @@ private:
     void ThreadGameInfoNotify();
 
     // 游戏 消息处理
-    void OnGameInfoNotify(RequestID nReqstID, const REQUEST &request);
+    int OnGameInfoNotify(RequestID requestid, const REQUEST &request);
 
     // 游戏 断开连接
     void OnDisconnGameInfo();

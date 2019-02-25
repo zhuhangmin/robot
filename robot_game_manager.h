@@ -27,7 +27,7 @@ private:
     void ThreadRobotNotify();
 
     // 机器人 消息处理
-    void OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id);
+    int OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id);
 
 private:
     //具体业务
@@ -38,7 +38,7 @@ private:
     // 机器人
     RobotPtr GetRobotWithLock(UserID userid);
     void SetRobotWithLock(RobotPtr robot);
-    RobotPtr GetRobotByTokenWithLock(const TokenID& id);
+    int GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot);
 
 private:
     //机器人 数据锁

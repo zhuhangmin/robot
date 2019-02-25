@@ -58,6 +58,7 @@ int RobotHallManager::ConnectHall(bool bReconn /*= false*/) {
 
 
 int RobotHallManager::SendHallRequestWithLock(RequestID requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo /*= true*/) {
+    CHECK_REQUESTID(requestid);
     if (!hall_connection_) {
         UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", requestid);
         assert(false);
@@ -113,13 +114,13 @@ void	RobotHallManager::ThreadHallNotify() {
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
 
-            LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
-            LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
+            LPCONTEXT_HEAD pContext = (LPCONTEXT_HEAD) (msg.wParam);
+            LPREQUEST pRequest = (LPREQUEST) (msg.lParam);
 
-            TokenID		nTokenID = pContext->lTokenID;
-            RequestID		nReqstID = pRequest->head.nRequest;
+            TokenID	nTokenID = pContext->lTokenID;
+            RequestID requestid = pRequest->head.nRequest;
 
-            OnHallNotify(nReqstID, pRequest->pDataPtr, pRequest->nDataLen);
+            OnHallNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen);
 
             SAFE_DELETE(pContext);
             UwlClearRequest(pRequest);
@@ -133,7 +134,8 @@ void	RobotHallManager::ThreadHallNotify() {
 }
 
 
-void RobotHallManager::OnHallNotify(RequestID requestid, void* ntf_data_ptr, int data_size) {
+int RobotHallManager::OnHallNotify(RequestID requestid, void* ntf_data_ptr, int data_size) {
+    CHECK_REQUESTID(requestid);
     switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
@@ -142,6 +144,7 @@ void RobotHallManager::OnHallNotify(RequestID requestid, void* ntf_data_ptr, int
         default:
             break;
     }
+    return kCommSucc;
 }
 
 void RobotHallManager::OnDisconnHall(RequestID requestid, void* data_ptr, int data_size) {
@@ -248,6 +251,10 @@ int RobotHallManager::SendGetAllRoomData() {
 
 int RobotHallManager::SendGetRoomData(RoomID roomid) {
     CHECK_ROOMID(roomid);
+    /*if (kCommSucc != RobotUtils::IsValidRoomID(roomid)) {
+        assert(false); return kCommFaild;
+        }
+        return kCommSucc;*/
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     GameID game_id = SettingMgr.GetGameID();
     CHECK_GAMEID(game_id);

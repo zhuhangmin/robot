@@ -21,14 +21,22 @@ public:
     static int IsValidTableNO(TableNO tableno);
 
     static int IsValidChairNO(ChairNO chairno);
+
+    static int IsValidTokenID(TokenID tokenid);
+
+    static int IsValidRequestID(RequestID requestid);
 };
 
-#define CHECK_GAMEID(x)  if(kCommFaild == RobotUtils::IsValidGameID(x))  assert(false); return kCommFaild;
+#define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {assert(false); return kCommFaild;}
 
-#define CHECK_USERID(x)  if(kCommFaild == RobotUtils::IsValidUserID(x))  assert(false); return kCommFaild;
+#define CHECK_USERID(x)  if(kCommSucc != RobotUtils::IsValidUserID(x))  {assert(false); return kCommFaild;}
 
-#define CHECK_ROOMID(x)  if(kCommFaild == RobotUtils::IsValidRoomID(x))  assert(false); return kCommFaild;
+#define CHECK_ROOMID(x)  if(kCommSucc != RobotUtils::IsValidRoomID(x)) { assert(false); return kCommFaild;}
 
-#define CHECK_TABLENO(x)  if(kCommFaild == RobotUtils::IsValidTableNO(x))  assert(false); return kCommFaild;
+#define CHECK_TABLENO(x)  if(kCommSucc != RobotUtils::IsValidTableNO(x))  {assert(false); return kCommFaild;}
 
-#define CHECK_CHAIRNO(x)  if(kCommFaild == RobotUtils::IsValidChairNO(x))  assert(false); return kCommFaild;
+#define CHECK_CHAIRNO(x)  if(kCommSucc != RobotUtils::IsValidChairNO(x))  {assert(false); return kCommFaild;}
+
+#define CHECK_TOKENID(x)  if(kCommSucc != RobotUtils::IsValidTokenID(x))  {assert(false); return kCommFaild;}
+
+#define CHECK_REQUESTID(x)  if(kCommSucc != RobotUtils::IsValidRequestID(x))  {assert(false); return kCommFaild;}

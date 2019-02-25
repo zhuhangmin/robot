@@ -56,6 +56,7 @@ int GameInfoManager::ConnectInfoGame(std::string game_ip, int game_port) {
 }
 
 int GameInfoManager::SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
+    CHECK_REQUESTID(requestid);
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
     return RobotUtils::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
 }
@@ -71,9 +72,9 @@ void GameInfoManager::ThreadGameInfoNotify() {
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
 
             TokenID		nTokenID = pContext->lTokenID;
-            RequestID		nReqstID = pRequest->head.nRequest;
+            RequestID		requestid = pRequest->head.nRequest;
 
-            OnGameInfoNotify(nReqstID, *pRequest);
+            OnGameInfoNotify(requestid, *pRequest);
 
             SAFE_DELETE(pContext);
             UwlClearRequest(pRequest);
@@ -86,9 +87,9 @@ void GameInfoManager::ThreadGameInfoNotify() {
     return;
 }
 
-void GameInfoManager::OnGameInfoNotify(RequestID nReqstID, const REQUEST &request) {
-
-    switch (nReqstID) {
+int GameInfoManager::OnGameInfoNotify(RequestID requestid, const REQUEST &request) {
+    CHECK_REQUESTID(requestid);
+    switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
             OnDisconnGameInfo();
@@ -125,6 +126,7 @@ void GameInfoManager::OnGameInfoNotify(RequestID nReqstID, const REQUEST &reques
 
 
     }
+    return kCommSucc;
 }
 
 void GameInfoManager::OnDisconnGameInfo() {

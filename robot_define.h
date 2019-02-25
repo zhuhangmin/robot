@@ -18,6 +18,10 @@ const int InvalidTableNO = 0;
 
 const int InvalidChairNO = 0;
 
+const int InvalidTokenID = 0;
+
+const int InvalidRequestID = 0;
+
 const int MS_PER_SECOND = 1000;  // ms
 
 const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间

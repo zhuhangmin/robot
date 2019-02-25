@@ -34,6 +34,7 @@ void Robot::IsConnected() {
 }
 
 int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
+    CHECK_REQUESTID(requestid);
     if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
         assert(false);

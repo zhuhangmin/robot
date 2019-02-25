@@ -173,6 +173,7 @@ bool BaseRoom::IsValidDeposit(INT64 deposit) {
 int BaseRoom::AddTable(TableNO tableno, std::shared_ptr<Table> table) {
     CHECK_TABLENO(tableno);
     tables_[tableno - 1] = table;
+    return kCommSucc;
 }
 
 std::shared_ptr<Table> BaseRoom::GetTable(int tableno) {

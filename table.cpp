@@ -151,6 +151,7 @@ bool Table::IfContinueWhenOneUserLeave() {
 int Table::AddChair(ChairNO chairno, ChairInfo info) {
     CHECK_CHAIRNO(chairno);
     chairs_[chairno - 1] = info;
+    return kCommSucc;
 }
 
 int Table::AddTableUserInfo(UserID userid, TableUserInfo table_user_info) {
