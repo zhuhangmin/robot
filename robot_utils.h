@@ -6,14 +6,19 @@
 #include "robot_game.h"
 class RobotUtils {
 public:
+    // 某个特定的connection发送协议
     static int SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
 
+    // 发送HTTP POST协议
     static CString ExecHttpRequestPost(const CString& url, const CString& params);
 
+    // 产生随机数
     static int GenRandInRange(int min_value, int max_value, int& random_result);
 
+    // 获得配置游戏服务器地址
     static std::string GetGameIP();
 
+    // 获得动态游戏服务器端口
     static int GetGamePort();
 
     static int IsValidGameID(const GameID game_id);

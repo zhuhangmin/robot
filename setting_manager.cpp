@@ -4,7 +4,7 @@
 #include "robot_utils.h"
 
 int SettingManager::Init() {
-    if (!InitSetting()) {
+    if (kCommSucc != InitSetting()) {
         UWL_ERR("InitSetting() failed");
         assert(false);
         return kCommFaild;
@@ -18,22 +18,20 @@ void SettingManager::Term() {
 
 }
 
-bool SettingManager::InitSetting() {
+int SettingManager::InitSetting() {
     std::string filename = g_curExePath + _T("robot.setting");
     Json::Value root;
     Json::Reader reader;
-    std::ifstream ifile;
+    std::ifstream ifile; //@zhuhangmin 20190226 RAII OBJ, NO NEED TO CLOSE
     ifile.open(filename, std::ifstream::in);
 
-    auto close_ret = [&ifile] (bool ret) {ifile.close(); return ret; };
+    if (!reader.parse(ifile, root, false))		return kCommFaild;
 
-    if (!reader.parse(ifile, root, false))		return close_ret(false);
+    if (!root.isMember("game_id"))               return kCommFaild;
 
-    if (!root.isMember("game_id"))               return close_ret(false);
+    if (!root["rooms"].isArray())				return kCommFaild;
 
-    if (!root["rooms"].isArray())				return close_ret(false);
-
-    if (!root["robots"].isArray())				return close_ret(false);
+    if (!root["robots"].isArray())				return kCommFaild;
 
     game_id_ = root["game_id"].asInt();
 
@@ -82,10 +80,10 @@ bool SettingManager::InitSetting() {
     if (InvalidGameID == game_id_) {
         UWL_ERR("game_id_ = %d", InvalidGameID);
         assert(false);
-        return close_ret(false);
+        return kCommFaild;
     }
 
-    return close_ret(true);
+    return kCommSucc;
 }
 
 int SettingManager::GetRobotSetting(UserID userid, RobotSetting& robot_setting_) {
@@ -106,6 +104,22 @@ SettingManager::RobotSettingMap& SettingManager::GetRobotSettingMap() {
 
 SettingManager::RoomSettingMap& SettingManager::GetRoomSettingMap() {
     return room_setting_map_;
+}
+
+int SettingManager::GetMainsInterval() const {
+    return main_interval_;
+}
+
+int SettingManager::GetDepositInterval() const {
+    return deposit_interval_;
+}
+
+int SettingManager::GetGainAmount() const {
+    return gain_amount_;
+}
+
+int SettingManager::GetBackAmount() const {
+    return back_amount_;
 }
 
 GameID SettingManager::GetGameID() const {

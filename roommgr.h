@@ -10,7 +10,7 @@ public:
     int AddRoom(RoomID roomid, const std::shared_ptr<BaseRoom> &room);
 
 public:
-    void Reset();
+    int Reset();
 
 private:
     std::mutex rooms_mutex_;

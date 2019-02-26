@@ -41,10 +41,7 @@ int UserMgr::AddUser(int userid, const std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
-bool UserMgr::IsValidUserID(int userid) {
-    return userid > 0;
-}
-
-void UserMgr::Reset() {
+int UserMgr::Reset() {
     users_.clear();
+    return kCommSucc;
 }

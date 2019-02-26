@@ -18,9 +18,10 @@ int RobotGameManager::Init() {
     return kCommSucc;
 }
 
-void RobotGameManager::Term() {
+int RobotGameManager::Term() {
     robot_heart_timer_thread_.Release();
     robot_notify_thread_.Release();
+    return kCommSucc;
 }
 
 int RobotGameManager::GetRobotWithCreate(UserID userid, RobotPtr& robot) {
@@ -45,17 +46,18 @@ ThreadID RobotGameManager::GetRobotNotifyThreadID() {
 
 // 具体业务
 
-void RobotGameManager::SendGamePluse() {
+int RobotGameManager::SendGamePluse() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     for (auto& kv : robot_map_) {
         auto robot = kv.second;
         robot->SendGamePulse();
     }
+
+    return kCommSucc;
 }
 
 int RobotGameManager::GetRobotWithLock(UserID userid, RobotPtr& robot) {
     CHECK_USERID(userid);
-    CHECK_ROBOT(robot);
     if (robot_map_.find(userid) == robot_map_.end()) {
         assert(false);
         return kCommFaild;
@@ -80,7 +82,7 @@ int RobotGameManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& 
 }
 
 
-void RobotGameManager::ThreadRobotPluse() {
+int RobotGameManager::ThreadRobotPluse() {
     UWL_INF(_T("Robot KeepAlive thread started. id = %d"), GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
@@ -95,10 +97,10 @@ void RobotGameManager::ThreadRobotPluse() {
         }
     }
     UWL_INF(_T("Robot KeepAlive thread exiting. id = %d"), GetCurrentThreadId());
-    return;
+    return kCommSucc;
 }
 
-void RobotGameManager::ThreadRobotNotify() {
+int RobotGameManager::ThreadRobotNotify() {
     UWL_INF(_T("Robot Notify thread started. id = %d"), GetCurrentThreadId());
 
     MSG msg = {};
@@ -121,23 +123,15 @@ void RobotGameManager::ThreadRobotNotify() {
         }
     }
     UWL_INF(_T("Robot Notify thread exiting. id = %d"), GetCurrentThreadId());
-    return;
+    return kCommSucc;
 }
 
 int RobotGameManager::OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id) {
-    CHECK_REQUESTID(requestid);
     RobotPtr robot;
     {
         std::lock_guard<std::mutex> lock(robot_map_mutex_);
-        auto result = GetRobotByTokenWithLock(token_id, robot);
-        if (kCommSucc != result)
-            return result;
-    }
-
-    if (!robot) {
-        assert(false);
-        UWL_WRN(_T("GameNotify robot not found. nTokenID = %d reqId:%d"), token_id, requestid);
-        return kCommFaild;
+        if (kCommSucc != GetRobotByTokenWithLock(token_id, robot))
+            return kCommFaild;
     }
 
     switch (requestid) {

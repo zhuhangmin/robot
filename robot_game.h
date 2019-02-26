@@ -33,7 +33,7 @@ public:
     TokenID	GetTokenID();
 
 private:
-    // 辅助函数
+    // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
     int SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
 
 private:

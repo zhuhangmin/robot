@@ -114,6 +114,7 @@ void MainServer::Term() {
 
     ::CoUninitialize();
     UwlLogFile(_T("server exited."));
+
 }
 
 void MainServer::ThreadMainProc() {

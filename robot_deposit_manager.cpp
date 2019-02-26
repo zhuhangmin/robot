@@ -60,6 +60,10 @@ void RobotDepositManager::ThreadDeposit() {
 
 int RobotDepositManager::RobotGainDeposit(UserID userid, int amount) {
     CHECK_USERID(userid);
+    if (amount <= 0) {
+        assert(false);
+        return kCommFaild;
+    }
     static TCHAR szHttpUrl[128];
     static int nResult = GetPrivateProfileString(_T("robot_depoist"), _T("deposit_gain_url"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
     if (0 == strcmp(szHttpUrl, "null"))
@@ -101,6 +105,10 @@ int RobotDepositManager::RobotGainDeposit(UserID userid, int amount) {
 
 int RobotDepositManager::RobotBackDeposit(UserID userid, int amount) {
     CHECK_USERID(userid);
+    if (amount <= 0) {
+        assert(false);
+        return kCommFaild;
+    }
     static TCHAR szHttpUrl[128];
     static int nResult = GetPrivateProfileString(_T("robot_depoist"), _T("deposit_back_url"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
     if (0 == strcmp(szHttpUrl, "null"))

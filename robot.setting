@@ -7,13 +7,19 @@
 
     "deposit_interval": 1000,
 
-    "gain_amount": 200000,
+    "deposit_active_id" : "33",
 
-    "back_amount": 200000,
+    "deposit_gain_url": "http://activityapi.comfun.org:1505/Robot/ChipsOperate",
+
+    "deposit_back_url": "http://activityapi.comfun.org:1505/Robot/ChipsOperate",
+
+    "deposit_gain_amount": 200000,
+
+    "deposit_back_amount": 200000,
     
     "rooms":[
         {"roomid":7846,"mode":0,"count":1},
-        {"roomid":7948,"mode":0,"count":1},
+        {"roomid":7948,"mode":0,"count":3},
         {"roomid":7965,"mode":0,"count":1},
         {"roomid":7969,"mode":0,"count":3}
     ],

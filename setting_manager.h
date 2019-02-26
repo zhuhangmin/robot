@@ -10,32 +10,39 @@ public:
     void Term();
 
 public:
+    // 游戏ID
+    GameID GetGameID() const;
+
+    // 机器人账号配置
+    RobotSettingMap& GetRobotSettingMap();
+
+    // 机器人房间配置
+    RoomSettingMap& GetRoomSettingMap();
+
     // 获得指定机器人配置
     int GetRobotSetting(UserID userid, RobotSetting& robot_setting_);
 
-    RobotSettingMap& GetRobotSettingMap();
+    // 主业务定时器间隔
+    int GetMainsInterval() const;
 
-    RoomSettingMap& GetRoomSettingMap();
+    // 补银定时器间隔
+    int GetDepositInterval() const;
 
-    GameID GetGameID() const;
+    // 每次补银数量
+    int GetGainAmount() const;
 
-    int GetMainsInterval() const { return main_interval_; }
-
-    int GetDepositInterval() const { return deposit_interval_; }
-
-    int GetGainAmount() const { return gain_amount_; }
-
-    int GetBackAmount() const { return back_amount_; }
+    // 每次还银数量
+    int GetBackAmount() const;
 
 protected:
     SINGLETION_CONSTRUCTOR(SettingManager);
 
-    bool InitSetting();
 private:
-    // 机器人账号配置
+    int InitSetting();
+
+private:
     RobotSettingMap	robot_setting_map_;
 
-    // 机器人房间配置
     RoomSettingMap room_setting_map_;
 
     GameID game_id_{InvalidGameID};

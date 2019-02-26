@@ -3,6 +3,7 @@
 class RobotDepositManager :public ISingletion<RobotDepositManager> {
 public:
     using DepositMap = std::unordered_map<UserID, DepositType>;
+
 public:
     int Init();
 
@@ -12,7 +13,7 @@ protected:
     SINGLETION_CONSTRUCTOR(RobotDepositManager);
 
 private:
-    // 补银还银 定时触发
+    // 后台 补银定时器
     void ThreadDeposit();
 
 private:
@@ -25,7 +26,7 @@ private:
     int RobotBackDeposit(UserID userid, int amount);
 
 private:
-
+    // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
     int GetDepositTypeWithLock(const UserID& userid, DepositType& type);
 
     int SetDepositTypesWithLock(const UserID userid, DepositType type);

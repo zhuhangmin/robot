@@ -54,7 +54,7 @@ private:
     void ThreadHallPluse();
 
 private:
-    //guard by lock
+    //辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
 
     int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status);
 

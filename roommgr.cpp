@@ -20,9 +20,10 @@ int RoomMgr::AddRoom(RoomID roomid, const std::shared_ptr<BaseRoom> &room) {
     return kCommSucc;
 }
 
-void RoomMgr::Reset() {
+int RoomMgr::Reset() {
     std::lock_guard<std::mutex> lock_g(rooms_mutex_);
     rooms_.clear();
+    return kCommSucc;
 }
 
 std::hash_map<int, std::shared_ptr<BaseRoom>> RoomMgr::GetAllRooms() {

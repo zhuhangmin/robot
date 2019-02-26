@@ -10,34 +10,38 @@ public:
 public:
     int Init();
 
-    void Term();
+    int Term();
 
 public:
+    // 获得（不存在创建）指定机器人
     int GetRobotWithCreate(UserID userid, RobotPtr& robot);
 
+    // 获得所有机器人接收消息的线程
     ThreadID GetRobotNotifyThreadID();
+
 protected:
     SINGLETION_CONSTRUCTOR(RobotGameManager);
 
 private:
     // 机器人 定时心跳
-    void ThreadRobotPluse();
+    int ThreadRobotPluse();
 
     // 机器人 消息接收
-    void ThreadRobotNotify();
+    int ThreadRobotNotify();
 
     // 机器人 消息处理
     int OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id);
 
+    // 机器人 发送心跳
+    int SendGamePluse();
+
 private:
-    //具体业务
+    //辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
 
-    // 游戏 心跳
-    void SendGamePluse();
-
-    // 机器人
     int GetRobotWithLock(UserID userid, RobotPtr& robot);
+
     int SetRobotWithLock(RobotPtr robot);
+
     int GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot);
 
 private:

@@ -13,10 +13,8 @@ public:
     // ÃÌº””√ªß
     int AddUser(int userid, const std::shared_ptr<User> &user);
 
-    bool IsValidUserID(int userid);
-
 public:
-    void Reset();
+    int Reset();
 
 protected:
     SINGLETION_CONSTRUCTOR(UserMgr);
