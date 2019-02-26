@@ -3,6 +3,7 @@
 #include "user.h"
 #include "table.h"
 #include "base_room.h"
+#include "robot_game.h"
 class RobotUtils {
 public:
     static int SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
@@ -15,25 +16,31 @@ public:
 
     static int GetGamePort();
 
-    static int IsValidGameID(GameID game_id);
+    static int IsValidGameID(const GameID game_id);
 
-    static int IsValidUserID(UserID userid);
+    static int IsValidUserID(const UserID userid);
 
-    static int IsValidRoomID(RoomID roomid);
+    static int IsValidRoomID(const RoomID roomid);
 
-    static int IsValidTableNO(TableNO tableno);
+    static int IsValidTableNO(const TableNO tableno);
 
-    static int IsValidChairNO(ChairNO chairno);
+    static int IsValidChairNO(const ChairNO chairno);
 
-    static int IsValidTokenID(TokenID tokenid);
+    static int IsValidTokenID(const TokenID tokenid);
 
-    static int IsValidRequestID(RequestID requestid);
+    static int IsValidRequestID(const RequestID requestid);
 
     static int IsValidUser(const std::shared_ptr<User>& user);
 
     static int IsValidTable(const std::shared_ptr<Table>& table);
 
     static int IsValidRoom(const std::shared_ptr<BaseRoom>& room);
+
+    static int IsValidRobot(const std::shared_ptr<Robot>& robot);
+
+    static int IsValidGameIP(const std::string& game_ip);
+
+    static int IsValidGamePort(const int32_t game_port);
 
 };
 
@@ -56,3 +63,9 @@ public:
 #define CHECK_TABLE(x)  if(kCommSucc != RobotUtils::IsValidTable(x))  {assert(false); return kCommFaild;}
 
 #define CHECK_ROOM(x)  if(kCommSucc != RobotUtils::IsValidRoom(x))  {assert(false); return kCommFaild;}
+
+#define CHECK_ROBOT(x)  if(kCommSucc != RobotUtils::IsValidRobot(x))  {assert(false); return kCommFaild;}
+
+#define CHECK_GAMEIP(x)  if(kCommSucc != RobotUtils::IsValidGameIP(x))  {assert(false); return kCommFaild;}
+
+#define CHECK_GAMEPORT(x)  if(kCommSucc != RobotUtils::IsValidGamePort(x))  {assert(false); return kCommFaild;}

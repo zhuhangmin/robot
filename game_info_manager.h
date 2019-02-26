@@ -3,7 +3,7 @@
 #include "table.h"
 class GameInfoManager : public ISingletion<GameInfoManager> {
 public:
-    int Init(std::string game_ip, int game_port);
+    int Init(const std::string game_ip, const int game_port);
 
     void Term();
 
@@ -21,7 +21,7 @@ private:
     void ThreadGameInfoNotify();
 
     // 游戏 消息处理
-    int OnGameInfoNotify(RequestID requestid, const REQUEST &request);
+    void OnGameInfoNotify(RequestID requestid, const REQUEST &request);
 
     // 游戏 断开连接
     void OnDisconnGameInfo();
@@ -45,16 +45,16 @@ private:
     // 接收业务消息 一般需要先更新user数据，在触发table上的用户数据变化
 
     // 玩家进入游戏	BindPlayer
-    void OnPlayerEnterGame(const REQUEST &request);
+    int OnPlayerEnterGame(const REQUEST &request);
 
     // 旁观者进入游戏	BindLooker
-    void OnLookerEnterGame(const REQUEST &request);
+    int OnLookerEnterGame(const REQUEST &request);
 
     // 旁观转玩家	BindPlayer
-    void OnLooker2Player(const REQUEST &request);
+    int OnLooker2Player(const REQUEST &request);
 
     // 玩家转旁观	UnbindPlayer
-    void OnPlayer2Looker(const REQUEST &request);
+    int OnPlayer2Looker(const REQUEST &request);
 
     // 开始游戏	StartGame
     int OnStartGame(const REQUEST &request);
@@ -66,10 +66,10 @@ private:
     int OnFreshResult(const REQUEST &request);
 
     // 用户离开游戏	UnbindUser
-    void OnLeaveGame(const REQUEST &request);
+    int OnLeaveGame(const REQUEST &request);
 
     // 用户换桌	UnbindUser+BindPlaye
-    void OnSwitchTable(const REQUEST &request);
+    int OnSwitchTable(const REQUEST &request);
 
 private:
     //int GetUserStatus(UserID userid, UserStatus& user_status);

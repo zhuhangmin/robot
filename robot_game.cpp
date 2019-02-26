@@ -12,6 +12,8 @@ Robot::Robot(UserID userid) {
     userid_ = userid;
 }
 int Robot::ConnectGame(const std::string& game_ip, const int game_port, ThreadID game_notify_thread_id) {
+    CHECK_GAMEIP(game_ip);
+    CHECK_GAMEPORT(game_port);
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!game_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_notify_thread_id, 0, GetHelloData(), GetHelloLength())) {
@@ -28,9 +30,9 @@ void Robot::DisconnectGame() {
     game_connection_->DestroyEx();
 }
 
-void Robot::IsConnected() {
+BOOL Robot::IsConnected() {
     std::lock_guard<std::mutex> lock(mutex_);
-    game_connection_->IsConnected();
+    return game_connection_->IsConnected();
 }
 
 int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
@@ -40,7 +42,6 @@ int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::
         assert(false);
         return kCommFaild;
     }
-
 
     if (!game_connection_->IsConnected()) {
         UWL_WRN("m_ConnGame not connected"); // invalid socket handle.
@@ -92,12 +93,12 @@ int Robot::SendEnterGame(RoomID roomid) {
     return kCommSucc;
 }
 
-void Robot::SendGamePulse() {
+int Robot::SendGamePulse() {
     std::lock_guard<std::mutex> lock(mutex_);
     game::base::PulseReq val;
     val.set_id(userid_);
     REQUEST response = {};
-    SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
+    return SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
 }
 
 // ÊôÐÔ½Ó¿Ú 

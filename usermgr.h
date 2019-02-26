@@ -5,13 +5,13 @@
 class UserMgr : public ISingletion<UserMgr> {
 public:
     // 获取用户的shared_ptr
-    std::shared_ptr<User> GetUser(int userid);
+    int GetUser(int userid, std::shared_ptr<User>& user);
     // 获取所有的用户
     std::hash_map<int, std::shared_ptr<User>> GetAllUsers();
     // 删除用户
-    void DelUser(int userid);
+    int DelUser(int userid);
     // 添加用户
-    void AddUser(int userid, const std::shared_ptr<User> &user);
+    int AddUser(int userid, const std::shared_ptr<User> &user);
 
     bool IsValidUserID(int userid);
 

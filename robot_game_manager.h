@@ -13,7 +13,7 @@ public:
     void Term();
 
 public:
-    RobotPtr GetRobotWithCreate(UserID userid);
+    int GetRobotWithCreate(UserID userid, RobotPtr& robot);
 
     ThreadID GetRobotNotifyThreadID();
 protected:
@@ -36,8 +36,8 @@ private:
     void SendGamePluse();
 
     // »úÆ÷ÈË
-    RobotPtr GetRobotWithLock(UserID userid);
-    void SetRobotWithLock(RobotPtr robot);
+    int GetRobotWithLock(UserID userid, RobotPtr& robot);
+    int SetRobotWithLock(RobotPtr robot);
     int GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot);
 
 private:

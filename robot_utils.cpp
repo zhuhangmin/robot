@@ -143,31 +143,31 @@ int RobotUtils::GetGamePort() {
     return hall_room_data.room.nPort;
 }
 
-int RobotUtils::IsValidGameID(GameID game_id) {
+int RobotUtils::IsValidGameID(const GameID game_id) {
     return game_id <= InvalidGameID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidUserID(UserID userid) {
+int RobotUtils::IsValidUserID(const UserID userid) {
     return userid <=InvalidUserID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidRoomID(RoomID roomid) {
+int RobotUtils::IsValidRoomID(const RoomID roomid) {
     return roomid <= InvalidRoomID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidTableNO(TableNO tableno) {
+int RobotUtils::IsValidTableNO(const TableNO tableno) {
     return tableno <= InvalidTableNO ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidChairNO(ChairNO chairno) {
+int RobotUtils::IsValidChairNO(const ChairNO chairno) {
     return chairno <= InvalidChairNO ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidTokenID(TokenID tokenid) {
+int RobotUtils::IsValidTokenID(const TokenID tokenid) {
     return tokenid <= InvalidTokenID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidRequestID(RequestID requestid) {
+int RobotUtils::IsValidRequestID(const RequestID requestid) {
     return requestid <= InvalidRequestID ? kCommFaild : kCommSucc;
 }
 
@@ -181,5 +181,17 @@ int RobotUtils::IsValidTable(const std::shared_ptr<Table>& table) {
 
 int RobotUtils::IsValidRoom(const std::shared_ptr<BaseRoom>& room) {
     return room == nullptr ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::IsValidRobot(const std::shared_ptr<Robot>& robot) {
+    return robot == nullptr ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::IsValidGameIP(const std::string& game_ip) {
+    return game_ip.empty() ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::IsValidGamePort(const int32_t game_port) {
+    return game_port <= 0 ? kCommFaild : kCommSucc;
 }
 

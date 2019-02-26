@@ -142,7 +142,11 @@ void MainServer::ThreadMainProc() {
             if (random_userid <= InvalidUserID)
                 continue;
 
-            RobotPtr robot = RobotMgr.GetRobotWithCreate(random_userid);
+            RobotPtr robot;
+            if (kCommSucc != RobotMgr.GetRobotWithCreate(random_userid, robot)) {
+                assert(false);
+                continue;
+            }
 
             //TODO designed roomid
             RoomID designed_roomid = 7846; //FixMe: hard code

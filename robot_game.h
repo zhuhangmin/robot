@@ -15,7 +15,7 @@ public:
     void DisconnectGame();
 
     // 游戏 连接状态
-    void IsConnected();
+    BOOL IsConnected();
 
 public:
     // 具体业务
@@ -24,7 +24,7 @@ public:
     int SendEnterGame(RoomID roomid);
 
     // 发送心跳
-    void SendGamePulse();
+    int SendGamePulse();
 
 public:
     // 属性接口
