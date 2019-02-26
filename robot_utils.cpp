@@ -179,3 +179,7 @@ int RobotUtils::IsValidTable(const std::shared_ptr<Table>& table) {
     return table == nullptr ? kCommFaild : kCommSucc;
 }
 
+int RobotUtils::IsValidRoom(const std::shared_ptr<BaseRoom>& room) {
+    return room == nullptr ? kCommFaild : kCommSucc;
+}
+

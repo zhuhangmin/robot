@@ -5,9 +5,9 @@ class RoomMgr : public ISingletion<RoomMgr> {
 protected:
     SINGLETION_CONSTRUCTOR(RoomMgr);
 public:
-    virtual std::shared_ptr<BaseRoom> GetRoom(RoomID roomid);
+    int GetRoom(RoomID roomid, std::shared_ptr<BaseRoom>& room);
     virtual std::hash_map<RoomID, std::shared_ptr<BaseRoom>> GetAllRooms();
-    virtual void AddRoom(RoomID roomid, const std::shared_ptr<BaseRoom> &room);
+    int AddRoom(RoomID roomid, const std::shared_ptr<BaseRoom> &room);
 
 public:
     void Reset();

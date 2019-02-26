@@ -1,20 +1,23 @@
 #include "stdafx.h"
 #include "RoomMgr.h"
+#include "robot_utils.h"
 
-std::shared_ptr<BaseRoom> RoomMgr::GetRoom(int roomid) {
-    static std::shared_ptr<BaseRoom> null_room = std::make_shared<BaseRoom>();
-
+int RoomMgr::GetRoom(RoomID roomid, std::shared_ptr<BaseRoom>& room) {
     std::lock_guard<std::mutex> lock_g(rooms_mutex_);
     auto itr = rooms_.find(roomid);
     if (itr == rooms_.end()) {
-        return null_room;
+        return kCommFaild;
     }
-    return itr->second; //TODO return nullptr ?
+    room = rooms_[roomid];
+    return kCommSucc;
 }
 
-void RoomMgr::AddRoom(int roomid, const std::shared_ptr<BaseRoom> &room) {
+int RoomMgr::AddRoom(RoomID roomid, const std::shared_ptr<BaseRoom> &room) {
+    CHECK_ROOMID(roomid);
+    CHECK_ROOM(room);
     std::lock_guard<std::mutex> lock_g(rooms_mutex_);
     rooms_[roomid] = room;
+    return kCommSucc;
 }
 
 void RoomMgr::Reset() {

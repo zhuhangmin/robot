@@ -161,13 +161,13 @@ public:
     // 玩家和桌子进行绑定
     virtual int BindPlayer(const std::shared_ptr<User> &user);
     // 旁观者和桌子进行绑定
-    virtual void BindLooker(const std::shared_ptr<User> &user);
+    int BindLooker(const std::shared_ptr<User> &user);
     // 解除用户（玩家\旁观者）和桌子的绑定关系
-    virtual void UnbindUser(int userid);
+    int UnbindUser(int userid);
     // 解除玩家和桌子的绑定关系
-    virtual void UnbindPlayer(int userid);
+    int UnbindPlayer(int userid);
     // 解除旁观者和桌子的绑定关系
-    virtual void UnbindLooker(int userid);
+    int UnbindLooker(int userid);
 
     // (游戏中)弃牌
     virtual int GiveUp(int userid);
@@ -194,8 +194,8 @@ public:
     // 获取用户的椅子号，如果椅子号是0，则说明是旁观者
     virtual int GetUserChair(int userid);
     // 获取椅子信息
-    virtual ChairInfo GetChairInfoByChairno(int chairno);
-    virtual ChairInfo GetChairInfoByUserid(int userid);
+    int GetChairInfoByChairno(int chairno, ChairInfo& info);
+    int GetChairInfoByUserid(int userid, ChairInfo& info);
     // 校验椅子号是否合法
     virtual bool IsValidChairno(int chairno);
     // 校验银子数是否合法

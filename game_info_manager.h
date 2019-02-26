@@ -57,13 +57,13 @@ private:
     void OnPlayer2Looker(const REQUEST &request);
 
     // 开始游戏	StartGame
-    void OnStartGame(const REQUEST &request);
+    int OnStartGame(const REQUEST &request);
 
     // 用户单人结算	RefreshGameResult(int userid)
-    void OnUserFreshResult(const REQUEST &request);
+    int OnUserFreshResult(const REQUEST &request);
 
     // 整桌结算	RefreshGameResult
-    void OnFreshResult(const REQUEST &request);
+    int OnFreshResult(const REQUEST &request);
 
     // 用户离开游戏	UnbindUser
     void OnLeaveGame(const REQUEST &request);

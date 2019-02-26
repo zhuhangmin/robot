@@ -266,8 +266,8 @@ void GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
     user->set_user_type(ntf.user_type());
     user->set_room_id(roomid);
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
         return;
@@ -304,8 +304,8 @@ void GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
     user->set_chair_no(ntf.chairno());
     user->set_user_type(ntf.user_type());
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
         return;
@@ -334,8 +334,8 @@ void GameInfoManager::OnLooker2Player(const REQUEST &request) {
     auto tableno = ntf.tableno();
     auto chairno = ntf.chairno();
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
         return;
@@ -369,8 +369,8 @@ void GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
     auto tableno = ntf.tableno();
     auto chairno = ntf.chairno();
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
         return;
@@ -390,13 +390,13 @@ void GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
 
 }
 
-void GameInfoManager::OnStartGame(const REQUEST &request) {
+int GameInfoManager::OnStartGame(const REQUEST &request) {
     game::base::RS_StartGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         assert(false);
         UWL_WRN("ParseFromRequest failed.");
-        return;
+        return kCommFaild;
     }
 
     auto roomid = ntf.roomid();
@@ -409,14 +409,19 @@ void GameInfoManager::OnStartGame(const REQUEST &request) {
         chairs_pb_map[chair_pb.chairno()] = chair_pb;
     }
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
-        return;
+        return kCommFaild;
     }
 
-    auto table = base_room->GetTable(tableno);
+    std::shared_ptr<Table> table;
+    if (kCommSucc != base_room->GetTable(tableno, table)) {
+        UWL_WRN("GetTable faild tableno=%d", tableno);
+        return kCommFaild;
+    }
+
     auto chairs = table->GetChairs();
     for (auto& kv : chairs_pb_map) {
         auto chair_pb = kv.second;
@@ -424,16 +429,16 @@ void GameInfoManager::OnStartGame(const REQUEST &request) {
         chairs[chairno].set_userid(chair_pb.userid());
         chairs[chairno].set_chair_status((ChairStatus) chair_pb.chair_status());
     }
-
+    return kCommSucc;
 }
 
-void GameInfoManager::OnUserFreshResult(const REQUEST &request) {
+int GameInfoManager::OnUserFreshResult(const REQUEST &request) {
     game::base::RS_UserRefreshResultNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         assert(false);
         UWL_WRN("ParseFromRequest failed.");
-        return;
+        return kCommFaild;
     }
 
     auto userid = ntf.userid();
@@ -441,37 +446,48 @@ void GameInfoManager::OnUserFreshResult(const REQUEST &request) {
     auto tableno = ntf.tableno();
     auto chairno = ntf.chairno();
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
-        return;
+        return kCommFaild;
     }
-    auto table = base_room->GetTable(tableno);
+    std::shared_ptr<Table> table;
+    if (kCommSucc != base_room->GetTable(tableno, table)) {
+        UWL_WRN("GetTable faild. tableno=%d", tableno);
+        return kCommFaild;
+    }
+
     table->RefreshGameResult(userid);
+    return kCommSucc;
 }
 
-void GameInfoManager::OnFreshResult(const REQUEST &request) {
+int GameInfoManager::OnFreshResult(const REQUEST &request) {
     game::base::RS_RefreshResultNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         assert(false);
         UWL_WRN("ParseFromRequest failed.");
-        return;
+        return kCommFaild;
     }
 
     auto roomid = ntf.roomid();
     auto tableno = ntf.tableno();
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
-        return;
+        return kCommFaild;
     }
 
-    auto table = base_room->GetTable(tableno);
+    std::shared_ptr<Table> table;
+    if (kCommSucc != base_room->GetTable(tableno, table)) {
+        UWL_WRN("GetTable faild.  tableno=%d", tableno);
+        return kCommFaild;
+    }
     table->RefreshGameResult();
+    return kCommSucc;
 }
 
 void GameInfoManager::OnLeaveGame(const REQUEST &request) {
@@ -487,8 +503,8 @@ void GameInfoManager::OnLeaveGame(const REQUEST &request) {
     auto roomid = ntf.roomid();
     auto tableno = ntf.tableno();
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
         return;
@@ -519,8 +535,8 @@ void GameInfoManager::OnSwitchTable(const REQUEST &request) {
     user->set_table_no(new_tableno);
     user->set_chair_no(new_chairno);
 
-    auto base_room = RoomMgr::Instance().GetRoom(roomid);
-    if (!base_room) {
+    std::shared_ptr<BaseRoom> base_room;
+    if (kCommSucc != RoomMgr::Instance().GetRoom(roomid, base_room)) {
         assert(false);
         UWL_WRN("GetRoom failed room");
         return;
@@ -599,7 +615,7 @@ int GameInfoManager::AddRoomPB(game::base::Room room_pb) {
     }
 
     // ROOM
-    RoomMgr::Instance().AddRoom(roomid, base_room);
+    if (kCommSucc != RoomMgr::Instance().AddRoom(roomid, base_room)) return kCommFaild;
     return kCommSucc;
 }
 

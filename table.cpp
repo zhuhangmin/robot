@@ -16,6 +16,7 @@ Table::Table(int tableno, int roomid, int chair_count, int min_player_count, INT
 Table::~Table() {}
 
 int Table::BindPlayer(const std::shared_ptr<User> &user) {
+    CHECK_USER(user);
     int userid = user->get_user_id();
     int chairno = user->get_chair_no();
     chairs_[chairno].set_userid(userid);
@@ -29,27 +30,43 @@ int Table::BindPlayer(const std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
-void Table::BindLooker(const std::shared_ptr<User> &user) {
+int Table::BindLooker(const std::shared_ptr<User> &user) {
+    CHECK_USER(user);
     TableUserInfo userinfo;
     userinfo.set_userid(user->get_user_id());
     userinfo.set_user_type(user->get_user_type());
     table_users_[user->get_user_id()] = userinfo;
+    return kCommSucc;
 }
 
-void Table::UnbindUser(int userid) {
-    UnbindPlayer(userid);
-    UnbindLooker(userid);
+int Table::UnbindUser(int userid) {
+    CHECK_USERID(userid);
+    if (kCommSucc != UnbindPlayer(userid)) {
+        assert(false);
+        return kCommFaild;
+    }
+
+    if (kCommSucc != UnbindLooker(userid)) {
+        assert(false);
+        return kCommFaild;
+    }
+
+    return kCommSucc;
 }
 
-void Table::UnbindPlayer(int userid) {
+int Table::UnbindPlayer(int userid) {
+    CHECK_USERID(userid);
     int chairno = GetUserChair(userid);
-    assert(chairno >= 1);
+    CHECK_CHAIRNO(chairno);
     chairs_[chairno - 1].set_userid(0);
     chairs_[chairno - 1].set_chair_status(kChairWaiting);
+    return kCommSucc;
 }
 
-void Table::UnbindLooker(int userid) {
+int Table::UnbindLooker(int userid) {
+    CHECK_USERID(userid);
     table_users_.erase(userid);
+    return kCommSucc;
 }
 
 int Table::GetPlayerCount() {
@@ -65,6 +82,7 @@ int Table::GetPlayerCount() {
 }
 
 int Table::GetUserID(int chairno) {
+    CHECK_CHAIRNO(chairno);
     int index = chairno - 1;
     if (index < 0 || index >= chairs_.size()) {
         return 0;
@@ -103,6 +121,7 @@ bool Table::IsTableUser(int userid) {
 }
 
 int Table::GetUserChair(int userid) {
+    CHECK_USERID(userid);
     for (int i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
         if (chairs_.at(i).get_userid() == userid) {
             // 下标+1就是椅子号
@@ -112,19 +131,25 @@ int Table::GetUserChair(int userid) {
     return 0;
 }
 
-ChairInfo Table::GetChairInfoByChairno(int chairno) {
-    if (IsValidChairno(chairno)) {
-        UWL_WRN("Invalid chairno[%d]", chairno);
-        ChairInfo info;
-        return info;
+int Table::GetChairInfoByChairno(int chairno, ChairInfo& info) {
+    CHECK_CHAIRNO(chairno);
+    if (!IsValidChairno(chairno)) {
+        UWL_ERR("Invalid chairno[%d]", chairno);
+        return kCommFaild;
     }
 
-    return chairs_.at(chairno - 1);
+    info = chairs_.at(chairno - 1);
+    return kCommSucc;
 }
 
-ChairInfo Table::GetChairInfoByUserid(int userid) {
+int Table::GetChairInfoByUserid(int userid, ChairInfo& info) {
+    CHECK_USERID(userid);
     int chairno = GetUserChair(userid);
-    return GetChairInfoByChairno(chairno);
+    if (kCommSucc != GetChairInfoByChairno(chairno, info)) {
+        assert(false);
+        return kCommFaild;
+    }
+    return kCommSucc;
 }
 
 bool Table::IsValidChairno(int chairno) {
@@ -161,6 +186,7 @@ int Table::AddTableUserInfo(UserID userid, TableUserInfo table_user_info) {
 }
 
 int Table::GiveUp(int userid) {
+    CHECK_USERID(userid);
     if (!IS_BIT_SET(get_table_status(), kTablePlaying)) {
         UWL_WRN("user[%d] giveup, but not playing.", userid);
         return kCommFaild;
@@ -185,6 +211,7 @@ int Table::RefreshGameResult() {
 }
 
 int Table::RefreshGameResult(int userid) {
+    CHECK_USERID(userid);
     int chairno = GetUserChair(userid);
     if (!IsValidChairno(chairno)) {
         UWL_WRN("user[%d] is not player.", userid);

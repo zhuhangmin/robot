@@ -2,6 +2,7 @@
 #include "robot_define.h"
 #include "user.h"
 #include "table.h"
+#include "base_room.h"
 class RobotUtils {
 public:
     static int SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
@@ -31,6 +32,9 @@ public:
     static int IsValidUser(const std::shared_ptr<User>& user);
 
     static int IsValidTable(const std::shared_ptr<Table>& table);
+
+    static int IsValidRoom(const std::shared_ptr<BaseRoom>& room);
+
 };
 
 #define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {assert(false); return kCommFaild;}
@@ -50,3 +54,5 @@ public:
 #define CHECK_USER(x)  if(kCommSucc != RobotUtils::IsValidUser(x))  {assert(false); return kCommFaild;}
 
 #define CHECK_TABLE(x)  if(kCommSucc != RobotUtils::IsValidTable(x))  {assert(false); return kCommFaild;}
+
+#define CHECK_ROOM(x)  if(kCommSucc != RobotUtils::IsValidRoom(x))  {assert(false); return kCommFaild;}

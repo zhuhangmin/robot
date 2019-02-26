@@ -41,7 +41,7 @@ public:
     int AddTable(TableNO tableno, std::shared_ptr<Table> table);
 
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
-    virtual std::shared_ptr<Table> GetTable(int tableno);
+    int GetTable(int tableno, std::shared_ptr<Table>& table);
 
 private:
     std::array<std::shared_ptr<Table>, kMaxTableCountPerRoom> tables_;
