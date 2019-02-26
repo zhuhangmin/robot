@@ -135,7 +135,7 @@ int RobotHallManager::ThreadHallNotify() {
 }
 
 
-int RobotHallManager::OnHallNotify(RequestID requestid, void* ntf_data_ptr, int data_size) {
+int RobotHallManager::OnHallNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size) {
     CHECK_REQUESTID(requestid);
     switch (requestid) {
         case UR_SOCKET_ERROR:
@@ -148,7 +148,7 @@ int RobotHallManager::OnHallNotify(RequestID requestid, void* ntf_data_ptr, int 
     return kCommSucc;
 }
 
-int RobotHallManager::OnDisconnHall(RequestID requestid, void* data_ptr, int data_size) {
+int RobotHallManager::OnDisconnHall(const RequestID requestid, void* data_ptr, const int data_size) {
     UWL_ERR(_T("与大厅服务断开连接"));
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     hall_connection_->DestroyEx();
@@ -287,13 +287,14 @@ int RobotHallManager::SendGetRoomData(const RoomID roomid) {
     return kCommSucc;
 }
 
-int RobotHallManager::GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) {
+int RobotHallManager::GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) const {
     CHECK_USERID(userid);
-    if (hall_logon_status_map_.find(userid) == hall_logon_status_map_.end()) {
-        hall_logon_status_map_.insert(std::make_pair(userid, HallLogonStatusType::kNotLogon));
+    auto& iter = hall_logon_status_map_.find(userid);
+    if (iter == hall_logon_status_map_.end()) {
+        return kCommFaild;
     }
 
-    status = hall_logon_status_map_[userid];
+    status = iter->second;
     return kCommSucc;
 }
 
@@ -309,13 +310,14 @@ int RobotHallManager::GetHallRoomData(const RoomID& roomid, HallRoomData& hall_r
     return GetHallRoomDataWithLock(roomid, hall_room_data);
 }
 
-int RobotHallManager::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) {
+int RobotHallManager::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) const {
     CHECK_ROOMID(roomid);
-    if (hall_room_data_map_.find(roomid) == hall_room_data_map_.end()) {
+    auto& iter = hall_room_data_map_.find(roomid);
+    if (iter == hall_room_data_map_.end()) {
         return kCommFaild;
     }
 
-    hall_room_data = hall_room_data_map_[roomid];
+    hall_room_data = iter->second;
     return kCommSucc;
 }
 
@@ -325,7 +327,7 @@ int RobotHallManager::SetHallRoomDataWithLock(const RoomID roomid, HallRoomData*
     return kCommSucc;
 }
 
-int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
+int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) const {
     //filter robots who are not logon on hall
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     HallLogonMap temp_map;

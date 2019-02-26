@@ -60,7 +60,6 @@ int RobotGameManager::GetRobotWithLock(const UserID userid, RobotPtr& robot) con
     CHECK_USERID(userid);
     auto& iter = robot_map_.find(userid);
     if (iter == robot_map_.end()) {
-        assert(false);
         return kCommFaild;
     }
     robot = iter->second;

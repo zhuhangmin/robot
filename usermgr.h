@@ -2,16 +2,18 @@
 #include "user.h"
 #include "robot_define.h"
 
+using UserMap = std::hash_map<UserID, UserPtr>;
+
 class UserMgr : public ISingletion<UserMgr> {
 public:
     // 获取用户的shared_ptr
-    int GetUser(int userid, std::shared_ptr<User>& user);
+    int GetUser(const UserID userid, UserPtr& user) const;
     // 获取所有的用户
-    std::hash_map<int, std::shared_ptr<User>> GetAllUsers();
+    const UserMap& GetAllUsers() const;
     // 删除用户
-    int DelUser(int userid);
+    int DelUser(const UserID userid);
     // 添加用户
-    int AddUser(int userid, const std::shared_ptr<User> &user);
+    int AddUser(const UserID userid, const UserPtr &user);
 
 public:
     int Reset();
@@ -20,7 +22,8 @@ protected:
     SINGLETION_CONSTRUCTOR(UserMgr);
 
 private:
-    std::mutex users_mutex;
-    std::hash_map<int, std::shared_ptr<User>> users_;
+    mutable std::mutex users_mutex;
+    std::hash_map<UserID, std::shared_ptr<User>> users_;
 };
+
 

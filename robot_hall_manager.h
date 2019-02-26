@@ -28,7 +28,7 @@ public:
     int GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data);
 
     // 随机选择没有登陆大厅的机器人
-    int GetRandomNotLogonUserID(UserID& random_userid);
+    int GetRandomNotLogonUserID(UserID& random_userid) const;
 
 protected:
     SINGLETION_CONSTRUCTOR(RobotHallManager);
@@ -44,10 +44,10 @@ private:
     int ThreadHallNotify();
 
     // 大厅 消息处理
-    int OnHallNotify(RequestID requestid, void* ntf_data_ptr, int data_size);
+    int OnHallNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size);
 
     // 大厅 断开链接
-    int OnDisconnHall(RequestID requestid, void* data_ptr, int data_size);
+    int OnDisconnHall(const RequestID requestid, void* data_ptr, const int data_size);
 
     // 大厅 定时心跳
     int ThreadHallPluse();
@@ -55,17 +55,17 @@ private:
 private:
     //辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
 
-    int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status);
+    int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) const;
 
     int SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status);
 
-    int GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data);
+    int GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) const;
 
     int SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
 
 private:
     //大厅 数据锁
-    std::mutex hall_connection_mutex_;
+    mutable std::mutex hall_connection_mutex_;
     //大厅 连接
     CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};
     //大厅 登陆状态

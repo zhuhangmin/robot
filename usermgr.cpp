@@ -2,7 +2,7 @@
 #include "UserMgr.h"
 #include "robot_utils.h"
 
-int UserMgr::GetUser(int userid, std::shared_ptr<User>& user) {
+int UserMgr::GetUser(UserID userid, UserPtr& user) const {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> users_lock(users_mutex);
     auto itr = users_.find(userid);
@@ -13,12 +13,12 @@ int UserMgr::GetUser(int userid, std::shared_ptr<User>& user) {
     return kCommSucc;
 }
 
-std::hash_map<int, std::shared_ptr<User>> UserMgr::GetAllUsers() {
+const UserMap& UserMgr::GetAllUsers() const {
     std::lock_guard<std::mutex> users_lock(users_mutex);
     return users_;
 }
 
-int UserMgr::DelUser(int userid) {
+int UserMgr::DelUser(const UserID userid) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> users_lock(users_mutex);
     std::shared_ptr<User> user;
@@ -33,7 +33,7 @@ int UserMgr::DelUser(int userid) {
     return kCommSucc;
 }
 
-int UserMgr::AddUser(int userid, const std::shared_ptr<User> &user) {
+int UserMgr::AddUser(const UserID userid, const UserPtr &user) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> users_lock(users_mutex);
     users_[userid] = user;

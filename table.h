@@ -307,3 +307,4 @@ public:
     }
 };
 
+using TablePtr = std::shared_ptr<Table>;

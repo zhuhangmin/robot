@@ -139,3 +139,5 @@ private:
     int total_bout_ = 0;			// ×Ü¾ÖÊı
 };
 
+
+using UserPtr = std::shared_ptr<User>;
