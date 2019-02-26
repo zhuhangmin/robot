@@ -15,7 +15,7 @@ Table::Table(int tableno, int roomid, int chair_count, int min_player_count, INT
 
 Table::~Table() {}
 
-int Table::BindPlayer(const std::shared_ptr<User> &user) {
+int Table::BindPlayer(const UserPtr &user) {
     CHECK_USER(user);
     int userid = user->get_user_id();
     int chairno = user->get_chair_no();
@@ -30,7 +30,7 @@ int Table::BindPlayer(const std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
-int Table::BindLooker(const std::shared_ptr<User> &user) {
+int Table::BindLooker(const UserPtr &user) {
     CHECK_USER(user);
     TableUserInfo userinfo;
     userinfo.set_userid(user->get_user_id());

@@ -21,7 +21,7 @@ const UserMap& UserMgr::GetAllUsers() const {
 int UserMgr::DelUser(const UserID userid) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> users_lock(users_mutex);
-    std::shared_ptr<User> user;
+    UserPtr user;
     if (kCommSucc != GetUser(userid, user)) {
         assert(false);
         return kCommFaild;

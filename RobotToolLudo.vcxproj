@@ -305,7 +305,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="robot_game.cpp" />
     <ClCompile Include="robot_game_manager.cpp" />
     <ClCompile Include="robot_utils.cpp" />
-    <ClCompile Include="roommgr.cpp" />
+    <ClCompile Include="room_manager.cpp" />
     <ClCompile Include="server.cpp" />
     <ClCompile Include="service.cpp" />
     <ClCompile Include="setting_manager.cpp" />
@@ -329,7 +329,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="robot_define.h" />
     <ClInclude Include="robot_game_manager.h" />
     <ClInclude Include="robot_utils.h" />
-    <ClInclude Include="roommgr.h" />
+    <ClInclude Include="room_manager.h" />
     <ClInclude Include="server.h" />
     <ClInclude Include="service.h" />
     <ClInclude Include="setting_manager.h" />

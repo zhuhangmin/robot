@@ -18,34 +18,34 @@ public:
     virtual RoomOptional GetRoomType();
 
     // 玩家进入房间(如果tableno>0，则加入指定桌子。 否则由服务端自动分配)
-    virtual int PlayerEnterGame(const std::shared_ptr<User> &user);
-    int BindPlayer(const std::shared_ptr<User> &user);
+    virtual int PlayerEnterGame(const UserPtr &user);
+    int BindPlayer(const UserPtr &user);
     // 旁观者进入房间
-    virtual int LookerEnterGame(const std::shared_ptr<User> &user);
+    virtual int LookerEnterGame(const UserPtr &user);
     // 玩家离开游戏
-    virtual int UserLeaveGame(int userid, int tableno);
-    int UnbindUser(int userid, int tableno);
+    virtual int UserLeaveGame(const UserID userid, const TableNO tableno);
+    int UnbindUser(const UserID userid, const TableNO tableno);
     // 玩家弃牌
-    virtual int UserGiveUp(int userid, int tableno);
+    virtual int UserGiveUp(const UserID userid, const TableNO tableno);
     // 旁观者转玩家
-    virtual int Looker2Player(std::shared_ptr<User> &user);
+    virtual int Looker2Player(UserPtr &user);
     // 玩家转旁观者
-    virtual int Player2Looker(std::shared_ptr<User> &user);
+    virtual int Player2Looker(UserPtr &user);
 
     // 判断桌子号是否合法
-    virtual bool IsValidTable(int tableno);
+    virtual bool IsValidTable(TableNO tableno) const;
     // 判断银子数是否合法
-    virtual bool IsValidDeposit(INT64 deposit);
+    virtual bool IsValidDeposit(INT64 deposit) const;
 
 public:
-    int AddTable(TableNO tableno, std::shared_ptr<Table> table);
+    int AddTable(const TableNO tableno, const TablePtr& table);
 
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
-    int GetTable(int tableno, std::shared_ptr<Table>& table);
+    int GetTable(const TableNO tableno, TablePtr& table) const;
 
 private:
-    std::array<std::shared_ptr<Table>, kMaxTableCountPerRoom> tables_;
-    int room_id_ = 0;
+    std::array<TablePtr, kMaxTableCountPerRoom> tables_;
+    RoomID room_id_ = 0;
     int options_ = 0;
     int configs_ = 0;
     int manages_ = 0;
@@ -137,3 +137,5 @@ public:
 
 };
 
+
+using RoomPtr = std::shared_ptr<BaseRoom>;

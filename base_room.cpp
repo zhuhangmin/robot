@@ -27,11 +27,11 @@ RoomOptional BaseRoom::GetRoomType() {
     }
 }
 
-int BaseRoom::PlayerEnterGame(const std::shared_ptr<User> &user) {
+int BaseRoom::PlayerEnterGame(const UserPtr &user) {
     CHECK_USER(user);
     auto tableno = user->get_table_no();
 
-    std::shared_ptr<Table> table;
+    TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
@@ -45,11 +45,11 @@ int BaseRoom::PlayerEnterGame(const std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
-int BaseRoom::BindPlayer(const std::shared_ptr<User> &user) {
+int BaseRoom::BindPlayer(const UserPtr &user) {
     CHECK_USER(user);
     //V524 It is odd that the body of 'BindPlayer' function is fully equivalent to the body of 'PlayerEnterGame' function.base_room.cpp 43
     auto tableno = user->get_table_no();
-    std::shared_ptr<Table> table;
+    TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
@@ -62,11 +62,11 @@ int BaseRoom::BindPlayer(const std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
-int BaseRoom::UserLeaveGame(int userid, int tableno) {
+int BaseRoom::UserLeaveGame(const UserID userid, const TableNO tableno) {
     CHECK_USERID(userid);
     CHECK_TABLENO(tableno);
 
-    std::shared_ptr<Table> table;
+    TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
         return kCommFaild;
@@ -84,12 +84,12 @@ int BaseRoom::UserLeaveGame(int userid, int tableno) {
     return kCommSucc;
 }
 
-int BaseRoom::UnbindUser(int userid, int tableno) {
+int BaseRoom::UnbindUser(const UserID userid, const TableNO tableno) {
     CHECK_USERID(userid);
     CHECK_TABLENO(tableno);
 
     //V524 It is odd that the body of 'UnbindUser' function is fully equivalent to the body of 'UserLeaveGame' function.base_room.cpp 91
-    std::shared_ptr<Table> table;
+    TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
         return kCommFaild;
@@ -107,11 +107,11 @@ int BaseRoom::UnbindUser(int userid, int tableno) {
     return kCommSucc;
 }
 
-int BaseRoom::UserGiveUp(int userid, int tableno) {
+int BaseRoom::UserGiveUp(const UserID userid, const TableNO tableno) {
     CHECK_USERID(userid);
     CHECK_TABLENO(tableno);
 
-    std::shared_ptr<Table> table;
+    TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
         return kCommFaild;
@@ -125,7 +125,7 @@ int BaseRoom::UserGiveUp(int userid, int tableno) {
     return kCommSucc;
 }
 
-int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
+int BaseRoom::Looker2Player(UserPtr &user) {
     CHECK_USER(user);
     if (!IsValidDeposit(user->get_deposit())) {
         UWL_WRN("user[%d] deposit[%I64d] invalid.", user->get_user_id(), user->get_deposit());
@@ -133,7 +133,7 @@ int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
     }
 
     auto tableno = user->get_table_no();
-    std::shared_ptr<Table> table;
+    TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
@@ -164,10 +164,10 @@ int BaseRoom::Looker2Player(std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
-int BaseRoom::Player2Looker(std::shared_ptr<User> &user) {
+int BaseRoom::Player2Looker(UserPtr &user) {
     CHECK_USER(user);
     auto tableno = user->get_table_no();
-    std::shared_ptr<Table> table;
+    TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
@@ -196,7 +196,7 @@ int BaseRoom::Player2Looker(std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
-int BaseRoom::LookerEnterGame(const std::shared_ptr<User> &user) {
+int BaseRoom::LookerEnterGame(const UserPtr &user) {
     CHECK_USER(user);
     TableNO target_tableno = user->get_table_no();
     if (false == IsValidTable(target_tableno)) {
@@ -205,7 +205,7 @@ int BaseRoom::LookerEnterGame(const std::shared_ptr<User> &user) {
     }
 
     auto tableno = user->get_table_no();
-    std::shared_ptr<Table> table;
+    TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
@@ -218,28 +218,28 @@ int BaseRoom::LookerEnterGame(const std::shared_ptr<User> &user) {
     return kCommSucc;
 }
 
-bool BaseRoom::IsValidTable(int tableno) {
+bool BaseRoom::IsValidTable(TableNO tableno) const {
     if (tableno <= 0 || tableno > get_max_table_cout()) {
         return false;
     }
     return true;
 }
 
-bool BaseRoom::IsValidDeposit(INT64 deposit) {
+bool BaseRoom::IsValidDeposit(INT64 deposit) const {
     if (deposit >= get_min_deposit() && deposit < get_max_deposit()) {
         return true;
     }
     return false;
 }
 
-int BaseRoom::AddTable(TableNO tableno, std::shared_ptr<Table> table) {
+int BaseRoom::AddTable(const TableNO tableno, const TablePtr& table) {
     CHECK_TABLENO(tableno);
     CHECK_TABLE(table);
     tables_[tableno - 1] = table;
     return kCommSucc;
 }
 
-int BaseRoom::GetTable(int tableno, std::shared_ptr<Table>& table) {
+int BaseRoom::GetTable(const TableNO tableno, TablePtr& table) const {
     CHECK_TABLENO(tableno);
     if (!IsValidTable(tableno)) {
         UWL_WRN("GetTable faild. valid tableno[%d]", tableno);

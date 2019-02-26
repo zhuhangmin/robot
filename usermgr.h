@@ -23,7 +23,7 @@ protected:
 
 private:
     mutable std::mutex users_mutex;
-    std::hash_map<UserID, std::shared_ptr<User>> users_;
+    UserMap users_;
 };
 
 

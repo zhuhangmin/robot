@@ -57,7 +57,6 @@ int RobotHallManager::ConnectHall() {
     return kCommSucc;
 }
 
-
 int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo /*= true*/) {
     CHECK_REQUESTID(requestid);
     if (!hall_connection_) {

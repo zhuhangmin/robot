@@ -1,18 +1,18 @@
 #include "stdafx.h"
-#include "RoomMgr.h"
+#include "room_manager.h"
 #include "robot_utils.h"
 
-int RoomMgr::GetRoom(RoomID roomid, std::shared_ptr<BaseRoom>& room) {
+int RoomManager::GetRoom(const RoomID roomid, RoomPtr& room) const {
     std::lock_guard<std::mutex> lock_g(rooms_mutex_);
-    auto itr = rooms_.find(roomid);
-    if (itr == rooms_.end()) {
+    auto iter = rooms_.find(roomid);
+    if (iter == rooms_.end()) {
         return kCommFaild;
     }
-    room = rooms_[roomid];
+    room = iter->second;
     return kCommSucc;
 }
 
-int RoomMgr::AddRoom(RoomID roomid, const std::shared_ptr<BaseRoom> &room) {
+int RoomManager::AddRoom(const RoomID roomid, const RoomPtr &room) {
     CHECK_ROOMID(roomid);
     CHECK_ROOM(room);
     std::lock_guard<std::mutex> lock_g(rooms_mutex_);
@@ -20,13 +20,15 @@ int RoomMgr::AddRoom(RoomID roomid, const std::shared_ptr<BaseRoom> &room) {
     return kCommSucc;
 }
 
-int RoomMgr::Reset() {
+int RoomManager::Reset() {
     std::lock_guard<std::mutex> lock_g(rooms_mutex_);
     rooms_.clear();
     return kCommSucc;
 }
 
-std::hash_map<int, std::shared_ptr<BaseRoom>> RoomMgr::GetAllRooms() {
+const GameRoomMap& RoomManager::GetAllRooms() const {
     std::lock_guard<std::mutex> lock_g(rooms_mutex_);
     return rooms_;
 }
+
+

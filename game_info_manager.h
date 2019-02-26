@@ -75,7 +75,7 @@ private:
     //int GetUserStatus(UserID userid, UserStatus& user_status);
     int AddRoomPB(const game::base::Room room_pb);
 
-    int AddTablePB(const game::base::Table table_pb, std::shared_ptr<Table> table);
+    int AddTablePB(const game::base::Table table_pb, TablePtr table);
 
     int AddUserPB(const game::base::User user_pb);
 

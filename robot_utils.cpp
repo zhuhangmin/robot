@@ -171,19 +171,19 @@ int RobotUtils::IsValidRequestID(const RequestID requestid) {
     return requestid <= InvalidRequestID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidUser(const std::shared_ptr<User>& user) {
+int RobotUtils::IsValidUser(const UserPtr& user) {
     return user == nullptr ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidTable(const std::shared_ptr<Table>& table) {
+int RobotUtils::IsValidTable(const TablePtr& table) {
     return table == nullptr ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidRoom(const std::shared_ptr<BaseRoom>& room) {
+int RobotUtils::IsValidRoom(const RoomPtr& room) {
     return room == nullptr ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidRobot(const std::shared_ptr<Robot>& robot) {
+int RobotUtils::IsValidRobot(const RobotPtr& robot) {
     return robot == nullptr ? kCommFaild : kCommSucc;
 }
 

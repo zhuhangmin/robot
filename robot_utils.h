@@ -35,13 +35,13 @@ public:
 
     static int IsValidRequestID(const RequestID requestid);
 
-    static int IsValidUser(const std::shared_ptr<User>& user);
+    static int IsValidUser(const UserPtr& user);
 
-    static int IsValidTable(const std::shared_ptr<Table>& table);
+    static int IsValidTable(const TablePtr& table);
 
-    static int IsValidRoom(const std::shared_ptr<BaseRoom>& room);
+    static int IsValidRoom(const RoomPtr& room);
 
-    static int IsValidRobot(const std::shared_ptr<Robot>& robot);
+    static int IsValidRobot(const RobotPtr& robot);
 
     static int IsValidGameIP(const std::string& game_ip);
 
