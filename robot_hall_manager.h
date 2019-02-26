@@ -2,24 +2,23 @@
 #include "robot_define.h"
 class RobotHallManager : public ISingletion<RobotHallManager> {
 public:
-    using HallLogonMap = std::unordered_map<UserID, HallLogonStatusType>;
-    using HallRoomDataMap = std::unordered_map<RoomID, HallRoomData>;
+
 public:
     int Init();
 
-    void Term();
+    int Term();
 
 public:
     // 大厅 业务
 
     // 大厅 登陆
-    int LogonHall(UserID userid);
+    int LogonHall(const UserID userid);
 
     // 大厅 心跳
-    void SendHallPluse();
+    int SendHallPluse();
 
     // 大厅 房间数据
-    int SendGetRoomData(RoomID roomid);
+    int SendGetRoomData(const RoomID roomid);
 
     // 大厅 所有房间数据
     int SendGetAllRoomData();
@@ -36,22 +35,22 @@ protected:
 
 private:
     // 大厅 建立连接
-    int ConnectHall(bool bReconn = false);
+    int ConnectHall();
 
     // 大厅 消息发送
-    int SendHallRequestWithLock(RequestID requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo = true);
+    int SendHallRequestWithLock(const RequestID requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo = true);
 
     // 大厅 消息接收
-    void ThreadHallNotify();
+    int ThreadHallNotify();
 
     // 大厅 消息处理
     int OnHallNotify(RequestID requestid, void* ntf_data_ptr, int data_size);
 
     // 大厅 断开链接
-    void OnDisconnHall(RequestID requestid, void* data_ptr, int data_size);
+    int OnDisconnHall(RequestID requestid, void* data_ptr, int data_size);
 
     // 大厅 定时心跳
-    void ThreadHallPluse();
+    int ThreadHallPluse();
 
 private:
     //辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex

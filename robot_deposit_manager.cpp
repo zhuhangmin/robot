@@ -18,11 +18,12 @@ int RobotDepositManager::Init() {
 }
 
 
-void RobotDepositManager::Term() {
+int RobotDepositManager::Term() {
     deposit_timer_thread_.Release();
+    return kCommSucc;
 }
 
-void RobotDepositManager::ThreadDeposit() {
+int RobotDepositManager::ThreadDeposit() {
     UWL_INF(_T("Hall Deposit thread started. id = %d"), SettingMgr.GetDepositInterval());
 
     while (true) {
@@ -54,11 +55,10 @@ void RobotDepositManager::ThreadDeposit() {
     }
 
     UWL_INF(_T("Hall Deposit thread exiting. id = %d"), GetCurrentThreadId());
-    return;
+    return kCommSucc;
 }
 
-
-int RobotDepositManager::RobotGainDeposit(UserID userid, int amount) {
+int RobotDepositManager::RobotGainDeposit(const UserID userid, const int amount) const {
     CHECK_USERID(userid);
     if (amount <= 0) {
         assert(false);
@@ -103,7 +103,7 @@ int RobotDepositManager::RobotGainDeposit(UserID userid, int amount) {
     return kCommSucc;
 }
 
-int RobotDepositManager::RobotBackDeposit(UserID userid, int amount) {
+int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount) const {
     CHECK_USERID(userid);
     if (amount <= 0) {
         assert(false);
@@ -144,18 +144,21 @@ int RobotDepositManager::RobotBackDeposit(UserID userid, int amount) {
     return kCommSucc;
 }
 
-int RobotDepositManager::GetDepositTypeWithLock(const UserID& userid, DepositType& type) {
+int RobotDepositManager::GetDepositTypeWithLock(const UserID& userid, DepositType& type) const {
     CHECK_USERID(userid);
-    if (deposit_map_.find(userid) == deposit_map_.end()) {
+    std::lock_guard<std::mutex> lock(deposit_map_mutex_);
+    auto& iter = deposit_map_.find(userid);
+    if (iter == deposit_map_.end()) {
         return kCommFaild;
     }
 
-    type = deposit_map_[userid];
+    type = iter->second;
     return kCommSucc;
 }
 
-int RobotDepositManager::SetDepositTypesWithLock(const UserID userid, DepositType type) {
+int RobotDepositManager::SetDepositTypesWithLock(const UserID userid, const DepositType type) {
     CHECK_USERID(userid);
+    std::lock_guard<std::mutex> lock(deposit_map_mutex_);
     deposit_map_[userid] = type;
     return kCommSucc;
 }

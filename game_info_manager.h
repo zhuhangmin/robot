@@ -5,29 +5,29 @@ class GameInfoManager : public ISingletion<GameInfoManager> {
 public:
     int Init(const std::string game_ip, const int game_port);
 
-    void Term();
+    int Term();
 
 protected:
     SINGLETION_CONSTRUCTOR(GameInfoManager);
 
 private:
     // 游戏 建立连接
-    int ConnectInfoGame(std::string game_ip, int game_port);
+    int ConnectInfoGame(const std::string& game_ip, const int game_port);
 
     // 游戏 消息发送
-    int SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true);
+    int SendGameRequest(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool bNeedEcho = true);
 
     // 游戏 消息接收
-    void ThreadGameInfoNotify();
+    int ThreadGameInfoNotify();
 
     // 游戏 消息处理
-    void OnGameInfoNotify(RequestID requestid, const REQUEST &request);
+    int OnGameInfoNotify(const RequestID requestid, const REQUEST &request);
 
     // 游戏 断开连接
-    void OnDisconnGameInfo();
+    int OnDisconnGameInfo();
 
     // 游戏 定时心跳
-    void ThreadSendGamePluse();
+    int ThreadSendGamePluse();
 
 private:
     // 发送业务消息
@@ -73,11 +73,11 @@ private:
 
 private:
     //int GetUserStatus(UserID userid, UserStatus& user_status);
-    int AddRoomPB(game::base::Room room_pb);
+    int AddRoomPB(const game::base::Room room_pb);
 
-    int AddTablePB(game::base::Table table_pb, std::shared_ptr<Table> table);
+    int AddTablePB(const game::base::Table table_pb, std::shared_ptr<Table> table);
 
-    int AddUserPB(game::base::User user_pb);
+    int AddUserPB(const game::base::User user_pb);
 
 private:
     //接收 游戏服务器消息 线程

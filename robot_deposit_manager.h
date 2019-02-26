@@ -1,39 +1,37 @@
 #pragma once
 #include "robot_define.h"
-class RobotDepositManager :public ISingletion<RobotDepositManager> {
-public:
-    using DepositMap = std::unordered_map<UserID, DepositType>;
 
+class RobotDepositManager :public ISingletion<RobotDepositManager> {
 public:
     int Init();
 
-    void Term();
+    int Term();
 
 protected:
     SINGLETION_CONSTRUCTOR(RobotDepositManager);
 
 private:
     // 后台 补银定时器
-    void ThreadDeposit();
+    int ThreadDeposit();
 
 private:
     // 具体业务
 
     // 后台 补银
-    int RobotGainDeposit(UserID userid, int amount);
+    int RobotGainDeposit(const UserID userid, const int amount) const;
 
     // 后台 还银
-    int RobotBackDeposit(UserID userid, int amount);
+    int RobotBackDeposit(const UserID userid, const int amount) const;
 
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
-    int GetDepositTypeWithLock(const UserID& userid, DepositType& type);
+    int GetDepositTypeWithLock(const UserID& userid, DepositType& type) const;
 
-    int SetDepositTypesWithLock(const UserID userid, DepositType type);
+    int SetDepositTypesWithLock(const UserID userid, const DepositType type);
 
 private:
     // 后台补银 数据锁
-    std::mutex deposit_map_mutex_;
+    mutable std::mutex deposit_map_mutex_;
 
     // 后台补银 任务
     DepositMap deposit_map_;

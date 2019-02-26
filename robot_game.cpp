@@ -11,7 +11,7 @@
 Robot::Robot(UserID userid) {
     userid_ = userid;
 }
-int Robot::ConnectGame(const std::string& game_ip, const int game_port, ThreadID game_notify_thread_id) {
+int Robot::ConnectGame(const std::string& game_ip, const int game_port, const ThreadID game_notify_thread_id) {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     std::lock_guard<std::mutex> lock(mutex_);
@@ -25,17 +25,18 @@ int Robot::ConnectGame(const std::string& game_ip, const int game_port, ThreadID
     return kCommFaild;
 }
 
-void Robot::DisconnectGame() {
+int Robot::DisconnectGame() {
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->DestroyEx();
+    return kCommSucc;
 }
 
-BOOL Robot::IsConnected() {
+BOOL Robot::IsConnected() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return game_connection_->IsConnected();
 }
 
-int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
+int Robot::SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo /*= true*/) {
     CHECK_REQUESTID(requestid);
     if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
@@ -58,7 +59,7 @@ int Robot::SendGameRequestWithLock(RequestID requestid, const google::protobuf::
 }
 
 // 具体业务
-int Robot::SendEnterGame(RoomID roomid) {
+int Robot::SendEnterGame(const RoomID roomid) {
     CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(mutex_);
     TCHAR hard_id[32];
@@ -103,13 +104,13 @@ int Robot::SendGamePulse() {
 
 // 属性接口 
 
-TokenID Robot::GetTokenID() {
+TokenID Robot::GetTokenID() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return game_connection_->GetTokenID();
 }
 
 // 配置机器人ID 初始化后不在改变,不需要锁保护
-UserID Robot::GetUserID() {
+UserID Robot::GetUserID() const {
     return userid_;
 }
 

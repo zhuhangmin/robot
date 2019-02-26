@@ -140,7 +140,7 @@ int RobotUtils::GetGamePort() {
         return kCommFaild;
     }
 
-    return hall_room_data.room.nPort;
+    return hall_room_data.room.nGamePort;
 }
 
 int RobotUtils::IsValidGameID(const GameID game_id) {

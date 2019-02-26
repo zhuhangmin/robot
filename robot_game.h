@@ -9,39 +9,39 @@ public:
 
 public:
     // 游戏 连接
-    int ConnectGame(const std::string& game_ip, const int game_port, ThreadID game_notify_thread_id);
+    int ConnectGame(const std::string& game_ip, const int game_port, const ThreadID game_notify_thread_id);
 
     // 游戏 断开
-    void DisconnectGame();
+    int DisconnectGame();
 
     // 游戏 连接状态
-    BOOL IsConnected();
+    BOOL IsConnected() const;
 
 public:
     // 具体业务
 
     // 进入游戏
-    int SendEnterGame(RoomID roomid);
+    int SendEnterGame(const RoomID roomid);
 
     // 发送心跳
     int SendGamePulse();
 
 public:
     // 属性接口
-    UserID GetUserID();
+    UserID GetUserID() const;
 
-    TokenID	GetTokenID();
+    TokenID GetTokenID() const;
 
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
-    int SendGameRequestWithLock(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
+    int SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo = true);
 
 private:
     // 配置机器人ID 初始化后不在改变,不需要锁保护
     UserID userid_{0};
 
     // 游戏连接
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     CDefSocketClientPtr game_connection_{std::make_shared<CDefSocketClient>()};
 
 };

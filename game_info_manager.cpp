@@ -39,12 +39,13 @@ int GameInfoManager::Init(const std::string game_ip, const int game_port) {
     return kCommSucc;
 }
 
-void GameInfoManager::Term() {
+int GameInfoManager::Term() {
     game_info_notify_thread_.Release();
     heart_timer_thread_.Release();
+    return kCommSucc;
 }
 
-int GameInfoManager::ConnectInfoGame(std::string game_ip, int game_port) {
+int GameInfoManager::ConnectInfoGame(const std::string& game_ip, const int game_port) {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
@@ -59,13 +60,13 @@ int GameInfoManager::ConnectInfoGame(std::string game_ip, int game_port) {
     return kCommSucc;
 }
 
-int GameInfoManager::SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) {
+int GameInfoManager::SendGameRequest(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool bNeedEcho /*= true*/) {
     CHECK_REQUESTID(requestid);
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
     return RobotUtils::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
 }
 
-void GameInfoManager::ThreadGameInfoNotify() {
+int GameInfoManager::ThreadGameInfoNotify() {
     UWL_INF(_T("GameNotify thread started. id = %d"), GetCurrentThreadId());
 
     MSG msg = {};
@@ -88,10 +89,10 @@ void GameInfoManager::ThreadGameInfoNotify() {
         }
     }
     UWL_INF(_T("GameNotify thread exiting. id = %d"), GetCurrentThreadId());
-    return;
+    return kCommSucc;
 }
 
-void GameInfoManager::OnGameInfoNotify(RequestID requestid, const REQUEST &request) {
+int GameInfoManager::OnGameInfoNotify(const RequestID requestid, const REQUEST &request) {
     switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
@@ -128,16 +129,19 @@ void GameInfoManager::OnGameInfoNotify(RequestID requestid, const REQUEST &reque
             break;
 
     }
+
+    return kCommSucc;
 }
 
-void GameInfoManager::OnDisconnGameInfo() {
+int GameInfoManager::OnDisconnGameInfo() {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
     if (game_info_connection_) {
         game_info_connection_->DestroyEx();
     }
+    return kCommSucc;
 }
 
-void GameInfoManager::ThreadSendGamePluse() {
+int GameInfoManager::ThreadSendGamePluse() {
     UWL_INF(_T("Game KeepAlive thread started. id = %d"), GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
@@ -150,7 +154,7 @@ void GameInfoManager::ThreadSendGamePluse() {
         }
     }
     UWL_INF(_T("Game KeepAlive thread exiting. id = %d"), GetCurrentThreadId());
-    return;
+    return kCommSucc;
 }
 
 // 具体业务
@@ -608,7 +612,7 @@ int GameInfoManager::OnSwitchTable(const REQUEST &request) {
 //    return kCommFaild;
 //}
 //
-int GameInfoManager::AddRoomPB(game::base::Room room_pb) {
+int GameInfoManager::AddRoomPB(const game::base::Room room_pb) {
     game::base::RoomData room_data_pb = room_pb.room_data();
     RoomID roomid = room_data_pb.roomid();
 
@@ -636,7 +640,7 @@ int GameInfoManager::AddRoomPB(game::base::Room room_pb) {
     return kCommSucc;
 }
 
-int GameInfoManager::AddTablePB(game::base::Table table_pb, std::shared_ptr<Table> table) {
+int GameInfoManager::AddTablePB(const game::base::Table table_pb, std::shared_ptr<Table> table) {
     TableNO tableno = table_pb.tableno();
     table->set_table_no(table_pb.tableno()); // tableno start from 1
     table->set_room_id(table_pb.roomid());
@@ -670,7 +674,7 @@ int GameInfoManager::AddTablePB(game::base::Table table_pb, std::shared_ptr<Tabl
     return kCommSucc;
 }
 
-int GameInfoManager::AddUserPB(game::base::User user_pb) {
+int GameInfoManager::AddUserPB(const game::base::User user_pb) {
     UserID userid = user_pb.userid();
     auto user = std::make_shared<User>();
     user->set_user_id(user_pb.userid());

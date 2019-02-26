@@ -55,8 +55,6 @@ using RequestID = uint32_t;
 
 using ThreadID = uint32_t;
 
-using CDefSocketClientPtr = std::shared_ptr <CDefSocketClient>;
-
 // 机器人控制模式
 enum class EnterGameMode {
     kModeBeg = -1,
@@ -162,3 +160,15 @@ protected:
     ThreadID		m_nThrd{0};
     HANDLE			m_hThrd{nullptr};
 };
+
+using CDefSocketClientPtr = std::shared_ptr <CDefSocketClient>;
+
+using RoomSettingMap = std::unordered_map<RoomID, RoomSetiing>;
+
+using RobotSettingMap = std::unordered_map<UserID, RobotSetting>;
+
+using HallLogonMap = std::unordered_map<UserID, HallLogonStatusType>;
+
+using HallRoomDataMap = std::unordered_map<RoomID, HallRoomData>;
+
+using DepositMap = std::unordered_map<UserID, DepositType>;

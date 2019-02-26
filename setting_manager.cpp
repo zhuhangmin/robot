@@ -14,8 +14,9 @@ int SettingManager::Init() {
     return kCommSucc;
 }
 
-void SettingManager::Term() {
+int SettingManager::Term() {
 
+    return kCommSucc;
 }
 
 int SettingManager::InitSetting() {
@@ -86,24 +87,21 @@ int SettingManager::InitSetting() {
     return kCommSucc;
 }
 
-int SettingManager::GetRobotSetting(UserID userid, RobotSetting& robot_setting_) {
-    CHECK_USERID(userid);
-    auto it = robot_setting_map_.find(userid);
-    if (it == robot_setting_map_.end()) {
-        assert(false);
-        return kCommFaild;
-    }
-
-    robot_setting_ = it->second;
-    return kCommSucc;
-}
-
-SettingManager::RobotSettingMap& SettingManager::GetRobotSettingMap() {
+const RobotSettingMap& SettingManager::GetRobotSettingMap() const {
     return robot_setting_map_;
 }
 
-SettingManager::RoomSettingMap& SettingManager::GetRoomSettingMap() {
+const RoomSettingMap& SettingManager::GetRoomSettingMap() const {
     return room_setting_map_;
+}
+
+int SettingManager::GetRobotSetting(const UserID userid, RobotSetting& robot_setting) const {
+    auto& iter = robot_setting_map_.find(userid);
+    if (iter == robot_setting_map_.end()) {
+        return kCommFaild;
+    }
+    robot_setting = iter->second;
+    return kCommSucc;
 }
 
 int SettingManager::GetMainsInterval() const {
@@ -125,4 +123,6 @@ int SettingManager::GetBackAmount() const {
 GameID SettingManager::GetGameID() const {
     return game_id_;
 }
+
+
 

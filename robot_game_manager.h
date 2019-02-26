@@ -6,7 +6,6 @@
 class RobotGameManager : public ISingletion<RobotGameManager> {
 public:
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
-
 public:
     int Init();
 
@@ -14,7 +13,7 @@ public:
 
 public:
     // 获得（不存在创建）指定机器人
-    int GetRobotWithCreate(UserID userid, RobotPtr& robot);
+    int GetRobotWithCreate(const UserID userid, RobotPtr& robot);
 
     // 获得所有机器人接收消息的线程
     ThreadID GetRobotNotifyThreadID();
@@ -30,7 +29,7 @@ private:
     int ThreadRobotNotify();
 
     // 机器人 消息处理
-    int OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id);
+    int OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id);
 
     // 机器人 发送心跳
     int SendGamePluse();
@@ -38,15 +37,15 @@ private:
 private:
     //辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
 
-    int GetRobotWithLock(UserID userid, RobotPtr& robot);
+    int GetRobotWithLock(const UserID userid, RobotPtr& robot) const;
 
     int SetRobotWithLock(RobotPtr robot);
 
-    int GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot);
+    int GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) const;
 
 private:
     //机器人 数据锁
-    std::mutex robot_map_mutex_;
+    mutable std::mutex robot_map_mutex_;
 
     //机器人 游戏服务器连接集合
     RobotMap robot_map_;

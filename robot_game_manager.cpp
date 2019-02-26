@@ -24,7 +24,7 @@ int RobotGameManager::Term() {
     return kCommSucc;
 }
 
-int RobotGameManager::GetRobotWithCreate(UserID userid, RobotPtr& robot) {
+int RobotGameManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     if (kCommSucc != GetRobotWithLock(userid, robot)) {
@@ -56,13 +56,14 @@ int RobotGameManager::SendGamePluse() {
     return kCommSucc;
 }
 
-int RobotGameManager::GetRobotWithLock(UserID userid, RobotPtr& robot) {
+int RobotGameManager::GetRobotWithLock(const UserID userid, RobotPtr& robot) const {
     CHECK_USERID(userid);
-    if (robot_map_.find(userid) == robot_map_.end()) {
+    auto& iter = robot_map_.find(userid);
+    if (iter == robot_map_.end()) {
         assert(false);
         return kCommFaild;
     }
-    robot = robot_map_[userid];
+    robot = iter->second;
     return kCommSucc;
 }
 
@@ -72,7 +73,7 @@ int RobotGameManager::SetRobotWithLock(RobotPtr robot) {
     return kCommSucc;
 }
 
-int RobotGameManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) {
+int RobotGameManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) const {
     CHECK_TOKENID(token_id);
     auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& it) {
         return it.second->GetTokenID() == token_id;
@@ -126,7 +127,7 @@ int RobotGameManager::ThreadRobotNotify() {
     return kCommSucc;
 }
 
-int RobotGameManager::OnRobotNotify(RequestID requestid, void* ntf_data_ptr, int data_size, TokenID token_id) {
+int RobotGameManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id) {
     RobotPtr robot;
     {
         std::lock_guard<std::mutex> lock(robot_map_mutex_);

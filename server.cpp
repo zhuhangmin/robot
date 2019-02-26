@@ -69,13 +69,13 @@ int MainServer::Init() {
     }
 
     // 游戏服务数据管理类
-    auto game_port = RobotUtils::GetGamePort();
+    /*auto game_port = RobotUtils::GetGamePort();
     auto game_ip = RobotUtils::GetGameIP();
     if (kCommFaild == GameMgr.Init(game_ip, game_port)) {
-        UWL_ERR(_T("RobotGameInfoManager Init Failed"));
-        assert(false);
-        return kCommFaild;
-    }
+    UWL_ERR(_T("RobotGameInfoManager Init Failed"));
+    assert(false);
+    return kCommFaild;
+    }*/
 
     // 机器人游戏管理类
     if (kCommFaild == RobotMgr.Init()) {

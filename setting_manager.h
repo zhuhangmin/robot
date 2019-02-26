@@ -2,25 +2,22 @@
 #include "robot_define.h"
 class SettingManager : public ISingletion<SettingManager> {
 public:
-    using RoomSettingMap = std::unordered_map<RoomID, RoomSetiing>;
-    using RobotSettingMap = std::unordered_map<UserID, RobotSetting>;
-public:
     int Init();
 
-    void Term();
+    int Term();
 
 public:
     // 游戏ID
     GameID GetGameID() const;
 
     // 机器人账号配置
-    RobotSettingMap& GetRobotSettingMap();
+    const RobotSettingMap& GetRobotSettingMap() const;
 
     // 机器人房间配置
-    RoomSettingMap& GetRoomSettingMap();
+    const RoomSettingMap& GetRoomSettingMap() const;
 
     // 获得指定机器人配置
-    int GetRobotSetting(UserID userid, RobotSetting& robot_setting_);
+    int GetRobotSetting(const UserID userid, RobotSetting& robot_setting) const;
 
     // 主业务定时器间隔
     int GetMainsInterval() const;
@@ -41,7 +38,7 @@ private:
     int InitSetting();
 
 private:
-    RobotSettingMap	robot_setting_map_;
+    RobotSettingMap robot_setting_map_;
 
     RoomSettingMap room_setting_map_;
 
