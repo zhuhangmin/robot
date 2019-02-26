@@ -31,7 +31,7 @@ int Robot::DisconnectGame() {
     return kCommSucc;
 }
 
-BOOL Robot::IsConnected() const {
+BOOL Robot::IsConnected() {
     std::lock_guard<std::mutex> lock(mutex_);
     return game_connection_->IsConnected();
 }
@@ -104,7 +104,7 @@ int Robot::SendGamePulse() {
 
 // ÊôÐÔ½Ó¿Ú 
 
-TokenID Robot::GetTokenID() const {
+TokenID Robot::GetTokenID() {
     std::lock_guard<std::mutex> lock(mutex_);
     return game_connection_->GetTokenID();
 }

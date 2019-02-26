@@ -15,7 +15,7 @@ public:
     int DisconnectGame();
 
     // 游戏 连接状态
-    BOOL IsConnected() const;
+    BOOL IsConnected();
 
 public:
     // 具体业务
@@ -30,7 +30,7 @@ public:
     // 属性接口
     UserID GetUserID() const;
 
-    TokenID GetTokenID() const;
+    TokenID GetTokenID();
 
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
@@ -41,7 +41,7 @@ private:
     UserID userid_{0};
 
     // 游戏连接
-    mutable std::mutex mutex_;
+    std::mutex mutex_;
     CDefSocketClientPtr game_connection_{std::make_shared<CDefSocketClient>()};
 
 };

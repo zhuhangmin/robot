@@ -28,8 +28,8 @@ int RobotGameManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     if (kCommSucc != GetRobotWithLock(userid, robot)) {
-        robot_map_[userid] = std::make_shared<Robot>(userid);
-        return kCommSucc;
+        robot = std::make_shared<Robot>(userid);
+        SetRobotWithLock(robot);
     }
 
     if (kCommSucc != GetRobotWithLock(userid, robot)) {
