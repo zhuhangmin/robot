@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "main.h"
 #include "common_func.h"
-#include "game_info_manager.h"
+#include "game_net_manager.h"
 #include "robot_utils.h"
 #include "base_room.h"
 #include "user.h"

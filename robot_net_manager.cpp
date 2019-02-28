@@ -1,5 +1,5 @@
 ﻿#include "stdafx.h"
-#include "robot_game_manager.h"
+#include "robot_net_manager.h"
 #include "main.h"
 #include "common_func.h"
 #include "robot_utils.h"

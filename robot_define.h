@@ -1,6 +1,6 @@
 #pragma once
 
-//#define  STRICT_ASSERT
+#define  STRICT_ASSERT
 
 #ifdef STRICT_ASSERT
 #define  ASSERT_FALSE_RETURN  assert(false); return kCommFaild;

@@ -1,6 +1,6 @@
 #pragma once
 #include "robot_define.h"
-#include "robot_game.h"
+#include "robot_net.h"
 
 // 机器人管理器
 class RobotGameManager : public ISingletion<RobotGameManager> {

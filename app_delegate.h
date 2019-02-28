@@ -16,8 +16,11 @@ protected:
     int InitLanuch();
 
 private:
-    // 业务主流程
+    // 业务线程函数 
     int ThreadMainProc();
+
+    // 业务主流程
+    int MainProcess();
 
     // 机器人流程 登入大厅 进入游戏
     int RobotProcess(UserID userid, RoomID roomid);

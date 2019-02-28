@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "app_delegate.h"
 #include "main.h"
-#include "robot_game_manager.h"
+#include "robot_net_manager.h"
 #include "setting_manager.h"
-#include "game_info_manager.h"
+#include "game_net_manager.h"
 #include "robot_deposit_manager.h"
 #include "robot_hall_manager.h"
 #include "robot_utils.h"
@@ -116,45 +116,14 @@ int AppDelegate::Term() {
 
 int AppDelegate::ThreadMainProc() {
     LOG_INFO("[START ROUTINE] main timer thread [%d] started", GetCurrentThreadId());
+
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetMainsInterval());
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
-        if (WAIT_TIMEOUT == dwRet) { // timeout
-
-            // 获得此时需要多少机器人进入各个房间
-            RoomNeedCountMap room_need_count_map;
-            if (kCommSucc != GetRoomNeedCountMap(room_need_count_map)) {
-                ASSERT_FALSE_RETURN; continue;
-
-            }
-            if (room_need_count_map.size() == 0) {
-                continue;
-            }
-
-            // 所有房间机器人开始依次同步阻塞进入
-            for (auto& kv : room_need_count_map) {
-                auto roomid = kv.first;
-                auto need_count = kv.second;
-                for (auto index = 0; index < need_count; index++) {
-                    // 随机选一个没有进入游戏的userid
-                    auto random_userid = InvalidUserID;
-                    if (kCommSucc != GetRandomUserIDNotInGame(random_userid)) {
-                        continue;
-                    }
-                    if (random_userid == InvalidUserID) {
-                        ASSERT_FALSE_RETURN; continue;
-                    }
-
-                    // 机器人流程
-                    if (kCommSucc != RobotProcess(random_userid, roomid)) {
-                        ASSERT_FALSE_RETURN; continue;
-                    }
-                }
-            }
-
-            // END
+        if (WAIT_TIMEOUT == dwRet) {
+            MainProcess();
         }
     }
 
@@ -162,7 +131,42 @@ int AppDelegate::ThreadMainProc() {
     return kCommSucc;
 }
 
+int AppDelegate::MainProcess() {
+    // 获得此时需要多少机器人进入各个房间
+    RoomNeedCountMap room_need_count_map;
+    if (kCommSucc != GetRoomNeedCountMap(room_need_count_map)) {
+        ASSERT_FALSE_RETURN;
+    }
+    if (room_need_count_map.size() == 0) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    // 所有房间机器人开始依次同步阻塞进入
+    for (auto& kv : room_need_count_map) {
+        auto roomid = kv.first;
+        auto need_count = kv.second;
+        for (auto index = 0; index < need_count; index++) {
+            // 随机选一个没有进入游戏的userid
+            auto random_userid = InvalidUserID;
+            if (kCommSucc != GetRandomUserIDNotInGame(random_userid)) {
+                continue;
+            }
+            if (random_userid == InvalidUserID) {
+                ASSERT_FALSE_RETURN;
+            }
+
+            // 机器人流程
+            if (kCommSucc != RobotProcess(random_userid, roomid)) {
+                ASSERT_FALSE_RETURN;
+            }
+        }
+    }
+    return kCommSucc;
+}
+
 int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
+    CHECK_USERID(userid);
+    CHECK_ROOMID(roomid);
     // 登陆大厅
     if (kCommSucc != HallMgr.LogonHall(userid)) {
         ASSERT_FALSE_RETURN;
@@ -173,6 +177,7 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
         ASSERT_FALSE_RETURN;
     }
 
+    // 创建游戏机器人网络部分
     RobotPtr robot;
     if (kCommSucc != RobotMgr.GetRobotWithCreate(userid, robot)) {
         ASSERT_FALSE_RETURN;
