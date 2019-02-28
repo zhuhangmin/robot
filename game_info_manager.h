@@ -79,6 +79,10 @@ private:
 
     int AddUserPB(const game::base::User user_pb);
 
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
+
 private:
     //接收 游戏服务器消息 线程
     YQThread	game_info_notify_thread_;
@@ -87,7 +91,7 @@ private:
     YQThread	heart_timer_thread_;
 
     //游戏服务器连接
-    std::mutex game_info_connection_mutex_;
+    mutable std::mutex game_info_connection_mutex_;
     CDefSocketClientPtr game_info_connection_{std::make_shared<CDefSocketClient>()};
 
 };

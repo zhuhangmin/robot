@@ -1,5 +1,5 @@
 #pragma once
-#include "server.h"
+#include "main_server.h"
 
 class CMainService : public CNTService {
 public:

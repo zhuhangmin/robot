@@ -29,6 +29,10 @@ private:
 
     int SetDepositTypesWithLock(const UserID userid, const DepositType type);
 
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
+
 private:
     // 后台补银 数据锁
     mutable std::mutex deposit_map_mutex_;

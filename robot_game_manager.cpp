@@ -12,6 +12,7 @@
 
 
 int RobotGameManager::Init() {
+    LOG_FUNC("[START ROUTINE]");
     robot_heart_timer_thread_.Initial(std::thread([this] {this->ThreadRobotPluse(); }));
     robot_notify_thread_.Initial(std::thread([this] {this->ThreadRobotNotify(); }));
     UWL_INF("RobotGameManager::Init Sucessed.");
@@ -21,6 +22,7 @@ int RobotGameManager::Init() {
 int RobotGameManager::Term() {
     robot_heart_timer_thread_.Release();
     robot_notify_thread_.Release();
+    LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
@@ -50,7 +52,9 @@ int RobotGameManager::SendGamePluse() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     for (auto& kv : robot_map_) {
         auto robot = kv.second;
-        robot->SendGamePulse();
+        if (robot->IsConnected()) {
+            robot->SendGamePulse();
+        }
     }
 
     return kCommSucc;
@@ -81,9 +85,8 @@ int RobotGameManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& 
     return kCommSucc;
 }
 
-
 int RobotGameManager::ThreadRobotPluse() {
-    UWL_INF(_T("Robot KeepAlive thread started. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[START ROUTINE] RobotGameManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -91,17 +94,15 @@ int RobotGameManager::ThreadRobotPluse() {
         }
 
         if (WAIT_TIMEOUT == dwRet) {
-
             SendGamePluse();
-
         }
     }
-    UWL_INF(_T("Robot KeepAlive thread exiting. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[EXIT ROUTINE] RobotGameManager KeepAlive thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
 int RobotGameManager::ThreadRobotNotify() {
-    UWL_INF(_T("Robot Notify thread started. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[START ROUTINE] RobotGameManager Notify thread [%d] started", GetCurrentThreadId());
 
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
@@ -122,7 +123,7 @@ int RobotGameManager::ThreadRobotNotify() {
             DispatchMessage(&msg);
         }
     }
-    UWL_INF(_T("Robot Notify thread exiting. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[EXIT ROUTINE] RobotGameManager Notify thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -144,3 +145,35 @@ int RobotGameManager::OnRobotNotify(const RequestID requestid, void* ntf_data_pt
     }
     return kCommSucc;
 }
+
+int RobotGameManager::SnapShotObjectStatus() {
+    std::lock_guard<std::mutex> lock(robot_map_mutex_);
+    LOG_FUNC("[SNAPSHOT] BEG");
+
+    LOG_INFO("OBJECT ADDRESS [%x]", this);
+    LOG_INFO("robot_notify_thread_ [%d]", robot_notify_thread_.ThreadId());
+    LOG_INFO("robot_heart_timer_thread_ [%d]", robot_heart_timer_thread_.ThreadId());
+
+    LOG_INFO("robot_map_ size [%d]", robot_map_.size());
+    std::string str = "{";
+    for (auto& kv : robot_map_) {
+        auto userid = kv.first;
+        auto robot = kv.second;
+        auto token = robot->GetTokenID();
+        str += "userid";
+        str += "[";
+        str += std::to_string(userid);
+        str += "]";
+        str += "token";
+        str += "[";
+        str += std::to_string(token);
+        str += "], ";
+    }
+    str += "}";
+
+    LOG_INFO("%s", str.c_str());
+    LOG_FUNC("[SNAPSHOT] END");
+    return kCommSucc;
+}
+
+

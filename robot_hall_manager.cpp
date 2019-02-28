@@ -9,7 +9,7 @@
 #endif
 
 int RobotHallManager::Init() {
-
+    LOG_FUNC("[START ROUTINE]");
     auto setting = SettingMgr.GetRobotSettingMap();
     for (auto& kv : setting) {
         auto userid = kv.first;
@@ -27,14 +27,13 @@ int RobotHallManager::Init() {
     }
 
     SendGetAllRoomData();
-
-    UWL_INF("HallManager::Init Sucessed.");
     return kCommSucc;
 }
 
 int RobotHallManager::Term() {
     hall_notify_thread_.Release();
     hall_heart_timer_thread_.Release();
+    LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
@@ -108,7 +107,7 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
 
 
 int RobotHallManager::ThreadHallNotify() {
-    UWL_INF(_T("HallNotify thread started. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[START ROUTINE] RobotHallManager Notify thread [%d] started", GetCurrentThreadId());
 
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
@@ -129,7 +128,7 @@ int RobotHallManager::ThreadHallNotify() {
             DispatchMessage(&msg);
         }
     }
-    UWL_INF(_T("HallNotify thread exiting. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[EXIT ROUTINE] RobotHallManager Notify thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -160,7 +159,7 @@ int RobotHallManager::OnDisconnHall(const RequestID requestid, void* data_ptr, c
 }
 
 int RobotHallManager::ThreadHallPluse() {
-    UWL_INF(_T("Hall KeepAlive thread started. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[START ROUTINE] RobotHallManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -175,7 +174,7 @@ int RobotHallManager::ThreadHallPluse() {
 
         }
     }
-    UWL_INF(_T("Hall KeepAlive thread exiting. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[EXIT ROUTINE] RobotHallManager KeepAlive thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -183,6 +182,13 @@ int RobotHallManager::ThreadHallPluse() {
 int RobotHallManager::LogonHall(const UserID userid) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+
+    HallLogonStatusType status;
+    if (kCommSucc == GetLogonStatusWithLock(userid, status)) {
+        if (status ==HallLogonStatusType::kLogon) {
+            return kCommSucc;
+        }
+    }
 
     RobotSetting setting;
     if (kCommFaild == SettingMgr.GetRobotSetting(userid, setting)) {
@@ -323,6 +329,56 @@ int RobotHallManager::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData
 int RobotHallManager::SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data) {
     CHECK_ROOMID(roomid);
     hall_room_data_map_[roomid] = *hall_room_data;
+    return kCommSucc;
+}
+
+int RobotHallManager::SnapShotObjectStatus() {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    LOG_FUNC("[SNAPSHOT] BEG");
+
+    LOG_INFO("OBJECT ADDRESS [%x]", this);
+    LOG_INFO("hall_notify_thread_ [%d]", hall_notify_thread_.ThreadId());
+    LOG_INFO("hall_heart_timer_thread_ [%d]", hall_heart_timer_thread_.ThreadId());
+    LOG_INFO("token [%d]", hall_connection_->GetTokenID());
+
+    LOG_INFO("hall_room_data_map_ size [%d]", hall_room_data_map_.size());
+    for (auto& kv : hall_room_data_map_) {
+        auto roomid = kv.first;
+        auto room = kv.second.room;
+        LOG_INFO("roomid [%d] ip [%s] port [%d]", roomid, room.szGameIP, room.nGamePort);
+    }
+
+    LOG_INFO("hall_logon_status_map_ size [%d]", hall_logon_status_map_.size());
+    auto status_on_count = 0;
+    auto status_off_count = 0;
+    auto status_unknow_count = 0;
+    std::string str = "{";
+    for (auto& kv : hall_logon_status_map_) {
+        auto userid = kv.first;
+        auto status = kv.second;
+        if (status == HallLogonStatusType::kLogon)
+            status_on_count++;
+        else if (status == HallLogonStatusType::kNotLogon)
+            status_off_count++;
+        else
+            status_unknow_count++;
+
+        str += "userid ";
+        str += "[";
+        str += std::to_string(userid);
+        str += "] ";
+        str += "status ";
+        str += "[";
+        str += std::to_string((int) status);
+        str += "]";
+        str += ", ";
+    }
+    str += "}";
+
+    LOG_INFO("on [%d] off [%d] unknow [%d]", status_on_count, status_off_count, status_unknow_count);
+    LOG_INFO("%s", str.c_str());
+
+    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }
 

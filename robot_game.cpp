@@ -15,6 +15,7 @@ int Robot::ConnectGame(const std::string& game_ip, const int game_port, const Th
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     std::lock_guard<std::mutex> lock(mutex_);
+    game_connection_ = std::make_shared<CDefSocketClient>();
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!game_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_notify_thread_id, 0, GetHelloData(), GetHelloLength())) {
         UWL_ERR("ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
@@ -33,6 +34,11 @@ int Robot::DisconnectGame() {
 
 BOOL Robot::IsConnected() {
     std::lock_guard<std::mutex> lock(mutex_);
+    if (!game_connection_) {
+        UWL_ERR("m_ConnGame is nil");
+        assert(false);
+        return kCommFaild;
+    }
     return game_connection_->IsConnected();
 }
 
@@ -114,4 +120,14 @@ UserID Robot::GetUserID() const {
     return userid_;
 }
 
+int Robot::SnapShotObjectStatus() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG_FUNC("[SNAPSHOT] BEG");
 
+    LOG_INFO("OBJECT ADDRESS = %x", this);
+    LOG_INFO("userid [%d]", userid_);
+    LOG_INFO("token [%d]", game_connection_->GetTokenID());
+
+    LOG_FUNC("[SNAPSHOT] END");
+    return kCommSucc;
+}

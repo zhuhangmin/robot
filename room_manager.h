@@ -15,6 +15,10 @@ public:
 public:
     int Reset();
 
+public:
+    // ¶ÔÏó×´Ì¬¿ìÕÕ
+    int SnapShotObjectStatus();
+
 private:
     mutable std::mutex rooms_mutex_;
     GameRoomMap rooms_;

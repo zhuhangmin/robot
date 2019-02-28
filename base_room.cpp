@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "base_room.h"
-#include "usermgr.h"
+#include "user_manager.h"
 #include "robot_utils.h"
 
 BaseRoom::BaseRoom() {}
@@ -248,5 +248,25 @@ int BaseRoom::GetTable(const TableNO tableno, TablePtr& table) const {
 
     // 桌号从1开始，下标从0开始
     table = tables_.at(tableno - 1);
+    return kCommSucc;
+}
+
+int BaseRoom::SnapShotObjectStatus() {
+    LOG_FUNC("[SNAPSHOT] BEG");
+
+    LOG_INFO("OBJECT ADDRESS [%x]", this);
+
+    LOG_INFO("room_id_ [%d]", room_id_);
+    LOG_INFO("options_ [%d]", options_);
+    LOG_INFO("min_playercount_per_table_ [%d]", min_playercount_per_table_);
+    LOG_INFO("chaircount_per_table_ [%d]", chaircount_per_table_);
+
+    LOG_INFO("tables_ size [%d]", tables_.size());
+    for (auto& table : tables_) {
+        table->SnapShotObjectStatus();
+    }
+
+    LOG_FUNC("[SNAPSHOT] END");
+
     return kCommSucc;
 }

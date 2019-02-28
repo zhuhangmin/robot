@@ -21,6 +21,7 @@
 #include <dbghelp.h> 
 #include "google/protobuf/text_format.h" 
 
+#include "tclog.h"
 #include <xyapi.h>
 #include <DefSocketClient.h>
 #include <CommonData.h>

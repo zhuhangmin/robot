@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "server.h"
+#include "main_server.h"
 #include "main.h"
 #include "robot_game_manager.h"
 #include "setting_manager.h"
@@ -7,6 +7,7 @@
 #include "robot_deposit_manager.h"
 #include "robot_hall_manager.h"
 #include "robot_utils.h"
+#include "user_manager.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -18,6 +19,7 @@ MainServer::MainServer() {
 MainServer::~MainServer() {}
 
 int MainServer::InitLanuch() {
+    LOG_FUNC("[START ROUTINE]");
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     TCHAR szFullName[MAX_PATH];
@@ -33,18 +35,18 @@ int MainServer::InitLanuch() {
 
     g_nClientID = GetPrivateProfileInt(_T("listen"), _T("clientid"), 0, g_szIniFile);
     if (0 == g_nClientID) {
-        UwlLogFile(_T("invalid clientid 0!"));
+        LOG_ERROR("[START ROUTINE] invalid clientid 0!");
+        assert(false);
         return kCommFaild;
 
     } else {
-        UwlLogFile(_T("clientid = %d!"), g_nClientID);
+        LOG_INFO("[START ROUTINE] clientid = [%d]", g_nClientID);
     }
     return kCommSucc;
 }
 
 int MainServer::Init() {
-    UwlLogFile(_T("server starting..."));
-
+    LOG_FUNC("[START ROUTINE]");
     if (S_FALSE == ::CoInitialize(NULL))
         return kCommFaild;;
 
@@ -94,12 +96,10 @@ int MainServer::Init() {
     // 主流程
     main_timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
 
-    UwlTrace(_T("Server start up OK."));
-    UwlLogFile(_T("Server start up OK."));
     return kCommSucc;
 }
 
-void MainServer::Term() {
+int MainServer::Term() {
     SetEvent(g_hExitServer);
 
     DepositMgr.Term();
@@ -113,12 +113,14 @@ void MainServer::Term() {
     if (g_hExitServer) { CloseHandle(g_hExitServer); g_hExitServer = NULL; }
 
     ::CoUninitialize();
-    UwlLogFile(_T("server exited."));
+    LOG_FUNC("[EXIT ROUTINE]");
+    LOG_INFO("\n ===================================SERVER EXIT=================================== \n");
+    return kCommSucc;
 
 }
 
-void MainServer::ThreadMainProc() {
-    UwlTrace(_T("timer thread started. id = %d"), GetCurrentThreadId());
+int MainServer::ThreadMainProc() {
+    LOG_INFO("[START ROUTINE] main timer thread [%d] started", GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetMainsInterval());
         if (WAIT_OBJECT_0 == dwRet) {
@@ -130,24 +132,18 @@ void MainServer::ThreadMainProc() {
 
             //TODO 随机选一个没有进入游戏的robot
             //FixMe：
-            UserID random_userid = InvalidUserID;
-            if (kCommFaild == HallMgr.GetRandomNotLogonUserID(random_userid))
-                continue;
-
-            if (InvalidUserID == random_userid)
-                continue;
-
-            if (kCommFaild == HallMgr.LogonHall(random_userid))
-                continue;
-
-            if (random_userid <= InvalidUserID)
-                continue;
-
-            RobotPtr robot;
-            if (kCommSucc != RobotMgr.GetRobotWithCreate(random_userid, robot)) {
-                assert(false);
+            auto random_userid = InvalidUserID;
+            if (kCommSucc != FindRandomUserIDNotInGame(random_userid)) {
                 continue;
             }
+
+            if (random_userid == InvalidUserID)
+                continue;
+
+            if (kCommSucc != HallMgr.LogonHall(random_userid))
+                continue;
+
+
 
             //TODO designed roomid
             RoomID designed_roomid = 7846; //FixMe: hard code
@@ -159,6 +155,18 @@ void MainServer::ThreadMainProc() {
             auto game_ip = RobotUtils::GetGameIP();
             auto game_port = RobotUtils::GetGamePort();
             auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
+
+            RobotPtr robot;
+            if (kCommSucc != RobotMgr.GetRobotWithCreate(random_userid, robot)) {
+                assert(false);
+                continue;
+            }
+
+            if (!robot) {
+                assert(false);
+                continue;
+            }
+
             if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id))
                 continue;
 
@@ -172,6 +180,36 @@ void MainServer::ThreadMainProc() {
         }
     }
 
-    UwlLogFile(_T("timer thread exiting. id = %d"), GetCurrentThreadId());
-    return;
+    LOG_INFO("[EXIT ROUTINE] main timer thread [%d] exiting", GetCurrentThreadId());
+    return kCommSucc;
+}
+
+int MainServer::FindRandomUserIDNotInGame(UserID& random_userid) {
+    // 过滤出没有登入游戏服务器的userid集合
+    std::hash_map<UserID, UserID> not_logon_game_temp;
+    auto enter_game_map = UserMgr.GetAllEnterUserID();
+    auto robot_setting = SettingMgr.GetRobotSettingMap();
+    for (auto& kv : robot_setting) {
+        auto userid = kv.first;
+        if (enter_game_map.find(userid) == enter_game_map.end()) {
+            not_logon_game_temp[userid] = userid;
+        }
+    }
+
+    if (not_logon_game_temp.size() == 0) {
+        LOG_WARN("no more robot !");
+        assert(false);
+        return kCommFaild;
+    }
+
+    // 随机选取
+    auto random_pos = 0;
+    if (kCommFaild == RobotUtils::GenRandInRange(0, not_logon_game_temp.size() - 1, random_pos)) {
+        assert(false);
+        return kCommFaild;
+    }
+    auto random_it = std::next(std::begin(not_logon_game_temp), random_pos);
+    random_userid = random_it->first;
+
+    return kCommSucc;
 }

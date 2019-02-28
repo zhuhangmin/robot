@@ -11,6 +11,12 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
         assert(false);
         return kCommFaild;
     }
+
+    if (connection->IsConnected()) {
+        assert(false);
+        return kCommFaild;
+    }
+
     CHECK_REQUESTID(requestid);
     CONTEXT_HEAD	context_head = {};
     context_head.hSocket = connection->GetSocket();
@@ -194,4 +200,6 @@ int RobotUtils::IsValidGameIP(const std::string& game_ip) {
 int RobotUtils::IsValidGamePort(const int32_t game_port) {
     return game_port <= 0 ? kCommFaild : kCommSucc;
 }
+
+
 

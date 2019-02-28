@@ -46,6 +46,10 @@
 * 1 game notify recv (visiable to all client)
 
 同步 svn  305
+同步 svn  305
+同步 svn  305
+同步 svn  305
+同步 svn  305
 # DESIGN
 * 一些关键信息的变化会触发CheckCondition，进一步触发Robot的行为，注意全局锁
 * 单独补银线程，因为补银为http请求阻塞较慢，不适合放在Robot中

@@ -32,6 +32,10 @@ public:
 
     TokenID GetTokenID();
 
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
+
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
     int SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo = true);
@@ -42,7 +46,7 @@ private:
 
     // 游戏连接
     std::mutex mutex_;
-    CDefSocketClientPtr game_connection_{std::make_shared<CDefSocketClient>()};
+    CDefSocketClientPtr game_connection_;
 
 };
 

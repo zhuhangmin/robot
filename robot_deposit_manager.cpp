@@ -10,7 +10,7 @@
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 int RobotDepositManager::Init() {
-
+    LOG_FUNC("[START ROUTINE]");
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
 
     UWL_INF("RobotDepositManager::Init Sucessed.");
@@ -20,11 +20,12 @@ int RobotDepositManager::Init() {
 
 int RobotDepositManager::Term() {
     deposit_timer_thread_.Release();
+    LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
 int RobotDepositManager::ThreadDeposit() {
-    UWL_INF(_T("Hall Deposit thread started. id = %d"), SettingMgr.GetDepositInterval());
+    LOG_INFO("[START ROUTINE] RobotDepositManager Deposit thread [%d] started", GetCurrentThreadId());
 
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, DepositInterval);
@@ -54,7 +55,7 @@ int RobotDepositManager::ThreadDeposit() {
         }
     }
 
-    UWL_INF(_T("Hall Deposit thread exiting. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[EXIT ROUTINE] RobotDepositManager Deposit thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -160,5 +161,22 @@ int RobotDepositManager::SetDepositTypesWithLock(const UserID userid, const Depo
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(deposit_map_mutex_);
     deposit_map_[userid] = type;
+    return kCommSucc;
+}
+
+int RobotDepositManager::SnapShotObjectStatus() {
+    std::lock_guard<std::mutex> lock(deposit_map_mutex_);
+    LOG_FUNC("[SNAPSHOT] BEG");
+
+    LOG_INFO("OBJECT ADDRESS [%x]", this);
+    LOG_INFO("deposit_timer_thread_ [%d]", deposit_timer_thread_.ThreadId());
+    LOG_INFO("deposit_map_ size [%d]", deposit_map_.size());
+    for (auto& kv : deposit_map_) {
+        auto userid = kv.first;
+        auto status = kv.second;
+        LOG_INFO("robot userid [%d] status [%d]", userid, status);
+    }
+
+    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }

@@ -74,3 +74,5 @@ public:
 #define CHECK_GAMEIP(x)  if(kCommSucc != RobotUtils::IsValidGameIP(x))  {assert(false); return kCommFaild;}
 
 #define CHECK_GAMEPORT(x)  if(kCommSucc != RobotUtils::IsValidGamePort(x))  {assert(false); return kCommFaild;}
+
+#define LOG_FUNC(x) LOG_INFO("%s %s", x, __FUNCTION__);

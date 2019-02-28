@@ -43,6 +43,10 @@ private:
 
     int GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) const;
 
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
+
 private:
     //机器人 数据锁
     mutable std::mutex robot_map_mutex_;

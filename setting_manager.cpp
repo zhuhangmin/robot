@@ -4,6 +4,7 @@
 #include "robot_utils.h"
 
 int SettingManager::Init() {
+    LOG_FUNC("[START ROUTINE]");
     if (kCommSucc != InitSetting()) {
         UWL_ERR("InitSetting() failed");
         assert(false);
@@ -15,11 +16,12 @@ int SettingManager::Init() {
 }
 
 int SettingManager::Term() {
-
+    LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
 int SettingManager::InitSetting() {
+    LOG_FUNC("[START ROUTINE]");
     std::string filename = g_curExePath + _T("robot.setting");
     Json::Value root;
     Json::Reader reader;
@@ -45,6 +47,7 @@ int SettingManager::InitSetting() {
         int count = rooms[n]["count"].asInt();
         room_setting_map_[roomid] = RoomSetiing{roomid, mode, count};
     }
+
 
     auto robots = root["robots"];
     size = robots.size();
@@ -122,6 +125,36 @@ int SettingManager::GetBackAmount() const {
 
 GameID SettingManager::GetGameID() const {
     return game_id_;
+}
+
+int SettingManager::SnapShotObjectStatus() const {
+    LOG_FUNC("[SNAPSHOT] BEG");
+
+    LOG_INFO("OBJECT ADDRESS = %x", this);
+    LOG_INFO("game_id_ [%d]", game_id_);
+    LOG_INFO("main_interval_ [%d]", main_interval_);
+    LOG_INFO("deposit_interval_ [%d]", deposit_interval_);
+    LOG_INFO("gain_amount_ [%d]", gain_amount_);
+    LOG_INFO("back_amount_ [%d]", back_amount_);
+
+    LOG_INFO("robot_setting_map_ size [%d]", robot_setting_map_.size());
+    std::string userid_str;
+    for (auto& kv : robot_setting_map_) {
+        auto userid = kv.first;
+        userid_str += std::to_string(userid);
+        userid_str += ", ";
+    }
+    LOG_INFO("robot userid [%s]", userid_str.c_str());
+
+    LOG_INFO("room_setting_map_ size [%d]", room_setting_map_.size());
+    for (auto& kv : room_setting_map_) {
+        auto roomid = kv.first;
+        auto setting = kv.second;
+        LOG_INFO("roomid [%d] mode [%d] count [%d]", roomid, setting.mode, setting.count);
+    }
+
+    LOG_FUNC("[SNAPSHOT] END");
+    return kCommSucc;
 }
 
 

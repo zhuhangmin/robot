@@ -43,6 +43,10 @@ public:
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
     int GetTable(const TableNO tableno, TablePtr& table) const;
 
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
+
 private:
     std::array<TablePtr, kMaxTableCountPerRoom> tables_;
     RoomID room_id_ = 0;

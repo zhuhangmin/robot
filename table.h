@@ -208,6 +208,11 @@ public:
     int AddChair(ChairNO chairno, ChairInfo info);
     int AddTableUserInfo(UserID userid, TableUserInfo table_user_info);
     std::array<ChairInfo, kMaxChairCountPerTable>& GetChairs() { return chairs_; }
+
+public:
+    // ¶ÔÏó×´Ì¬¿ìÕÕ
+    int SnapShotObjectStatus();
+
 private:
 
     int table_no_ = 0;

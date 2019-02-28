@@ -93,8 +93,8 @@
     <IntDir>.\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)D</TargetName>
-    <IncludePath>F:\SEA\NEW_GAME\pb;$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)xyGamePb;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)librabbitmq\Debug;$(VS_CTLibPath_Sea)librabbit;F:\SEA\SEA_VC12\protobuf3.5.0;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\SEA\NEW_GAME\pb;$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)xyGamePb;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)tcLog\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;F:\SEA\SEA_VC12\protobuf3.5.0;$(VS_CTLibPath_Sea)tcLog\lib\Win32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseS|Win32'">
     <ClCompile>
@@ -281,7 +281,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>tcns-vc12d.lib;uwl-vc12d.lib;uwlnt-vc12d.lib;uwltrace-vc12d.lib;xyapi-vc12d.lib;TcyCommon-vc12d.lib;jsoncpp-vc12d.lib;librabbitmqd.4.lib;libRabbit-vc12d.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tcns-vc12d.lib;uwl-vc12d.lib;uwlnt-vc12d.lib;uwltrace-vc12d.lib;xyapi-vc12d.lib;TcyCommon-vc12d.lib;jsoncpp-vc12d.lib;tcLogD.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
@@ -299,6 +299,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="base_room.cpp" />
     <ClCompile Include="common_func.cpp" />
     <ClCompile Include="game_info_manager.cpp" />
+    <ClCompile Include="memory_statistic.cpp" />
     <ClCompile Include="robot_hall_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="robot_deposit_manager.cpp" />
@@ -306,13 +307,13 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="robot_game_manager.cpp" />
     <ClCompile Include="robot_utils.cpp" />
     <ClCompile Include="room_manager.cpp" />
-    <ClCompile Include="server.cpp" />
+    <ClCompile Include="main_server.cpp" />
     <ClCompile Include="service.cpp" />
     <ClCompile Include="setting_manager.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="table.cpp" />
     <ClCompile Include="user.cpp" />
-    <ClCompile Include="usermgr.cpp" />
+    <ClCompile Include="user_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SEA\NEW_GAME\pb\game_base.pb.h" />
@@ -321,6 +322,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="common_func.h" />
     <ClInclude Include="gamedef.h" />
     <ClInclude Include="game_info_manager.h" />
+    <ClInclude Include="memory_statistic.h" />
     <ClInclude Include="robot_hall_manager.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Resource.h" />
@@ -330,13 +332,13 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="robot_game_manager.h" />
     <ClInclude Include="robot_utils.h" />
     <ClInclude Include="room_manager.h" />
-    <ClInclude Include="server.h" />
+    <ClInclude Include="main_server.h" />
     <ClInclude Include="service.h" />
     <ClInclude Include="setting_manager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="table.h" />
     <ClInclude Include="user.h" />
-    <ClInclude Include="usermgr.h" />
+    <ClInclude Include="user_manager.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RobotToolLudo.rc" />

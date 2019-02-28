@@ -220,3 +220,26 @@ int Table::RefreshGameResult(int userid) {
 
     return kCommSucc;
 }
+
+int Table::SnapShotObjectStatus() {
+    LOG_FUNC("[SNAPSHOT] BEG");
+
+    LOG_INFO("OBJECT ADDRESS [%x]", this);
+    LOG_INFO("table_no_ [%d] table_status_ [%d] chair_count_ [%d] banker_chair_ [%d] base_deposit_ [%d] room_id_ [%d] ", table_no_, table_status_, chair_count_, banker_chair_, base_deposit_, room_id_);
+
+    LOG_INFO("chairs_ size [%d]", chairs_.size());
+    for (auto& chairinfo : chairs_) {
+        LOG_INFO("chair userid [%d] status [%d]", chairinfo.get_userid(), chairinfo.get_chair_status());
+    }
+
+    LOG_INFO("table_users_ size [%d]", table_users_.size());
+    for (auto& kv: table_users_) {
+        auto userid = kv.first;
+        auto tableinfo = kv.second;
+        LOG_INFO("table userid [%d] user_type_ [%d] bind_timestamp_ [%d]", tableinfo.get_userid(), tableinfo.get_user_type(), tableinfo.get_bind_timestamp());
+    }
+
+
+    LOG_FUNC("[SNAPSHOT] END");
+    return kCommSucc;
+}

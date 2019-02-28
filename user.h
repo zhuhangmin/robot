@@ -115,6 +115,9 @@ public:
     bool IsPalyer() {
         return get_chair_no() > 0;
     }
+public:
+    // ¶ÔÏó×´Ì¬¿ìÕÕ
+    int SnapShotObjectStatus();
 
 private:
     int token_ = 0;

@@ -31,6 +31,10 @@ public:
     // 每次还银数量
     int GetBackAmount() const;
 
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus() const;
+
 protected:
     SINGLETION_CONSTRUCTOR(SettingManager);
 

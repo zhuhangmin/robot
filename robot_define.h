@@ -26,7 +26,7 @@ const int MS_PER_SECOND = 1000;  // ms
 
 const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间
 
-const int PluseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔
+const int PluseInterval = 1 * MS_PER_SECOND; // 心跳时间间隔
 
 const int HttpTimeOut = 5 * MS_PER_SECOND;
 

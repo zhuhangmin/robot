@@ -6,7 +6,7 @@
 #include "base_room.h"
 #include "user.h"
 #include "room_manager.h"
-#include "usermgr.h"
+#include "user_manager.h"
 
 
 int GameInfoManager::Init(const std::string game_ip, const int game_port) {
@@ -42,6 +42,7 @@ int GameInfoManager::Init(const std::string game_ip, const int game_port) {
 int GameInfoManager::Term() {
     game_info_notify_thread_.Release();
     heart_timer_thread_.Release();
+    LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
@@ -67,8 +68,7 @@ int GameInfoManager::SendGameRequest(const RequestID requestid, const google::pr
 }
 
 int GameInfoManager::ThreadGameInfoNotify() {
-    UWL_INF(_T("GameNotify thread started. id = %d"), GetCurrentThreadId());
-
+    LOG_INFO("[START ROUTINE] GameNotify thread [%d] started", GetCurrentThreadId());
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
@@ -88,7 +88,7 @@ int GameInfoManager::ThreadGameInfoNotify() {
             DispatchMessage(&msg);
         }
     }
-    UWL_INF(_T("GameNotify thread exiting. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[EXIT ROUTINE] GameNotify thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -142,7 +142,7 @@ int GameInfoManager::OnDisconnGameInfo() {
 }
 
 int GameInfoManager::ThreadSendGamePluse() {
-    UWL_INF(_T("Game KeepAlive thread started. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[START ROUTINE] Game KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -153,7 +153,7 @@ int GameInfoManager::ThreadSendGamePluse() {
             SendPulse();
         }
     }
-    UWL_INF(_T("Game KeepAlive thread exiting. id = %d"), GetCurrentThreadId());
+    LOG_INFO("[EXIT ROUTINE] Game KeepAlive thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -214,7 +214,7 @@ int GameInfoManager::SendGetGameInfo() {
         AddRoomPB(room_pb);
     }
 
-    UserMgr::Instance().Reset();
+    UserManager::Instance().Reset();
     for (int user_index = 0; user_index < resp.users_size(); user_index++) {
         game::base::User user_pb = resp.users(user_index);
         AddUserPB(user_pb);
@@ -274,7 +274,7 @@ int GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
         return kCommFaild;
     }
 
-    if (kCommSucc != UserMgr::Instance().AddUser(user->get_user_id(), user)) {
+    if (kCommSucc != UserManager::Instance().AddUser(user->get_user_id(), user)) {
         assert(false);
         return kCommFaild;
     }
@@ -315,7 +315,7 @@ int GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
         return kCommFaild;
     }
 
-    if (kCommSucc != UserMgr::Instance().AddUser(user->get_user_id(), user)) {
+    if (kCommSucc != UserManager::Instance().AddUser(user->get_user_id(), user)) {
         assert(false);
         return kCommFaild;
     }
@@ -344,7 +344,7 @@ int GameInfoManager::OnLooker2Player(const REQUEST &request) {
     }
 
     UserPtr user;
-    if (kCommSucc != UserMgr::Instance().GetUser(userid, user)) {
+    if (kCommSucc != UserManager::Instance().GetUser(userid, user)) {
         assert(false);
         return kCommFaild;
     }
@@ -383,7 +383,7 @@ int GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
     }
 
     UserPtr user;
-    if (kCommSucc != UserMgr::Instance().GetUser(userid, user)) {
+    if (kCommSucc != UserManager::Instance().GetUser(userid, user)) {
         assert(false);
         return kCommFaild;
     }
@@ -522,7 +522,7 @@ int GameInfoManager::OnLeaveGame(const REQUEST &request) {
 
     base_room->UserLeaveGame(userid, tableno);
 
-    if (kCommFaild != UserMgr::Instance().DelUser(userid)) {
+    if (kCommFaild != UserManager::Instance().DelUser(userid)) {
         assert(false);
         return kCommFaild;
     }
@@ -546,7 +546,7 @@ int GameInfoManager::OnSwitchTable(const REQUEST &request) {
     auto new_chairno = ntf.new_chairno();
 
     UserPtr user;
-    if (kCommSucc != UserMgr::Instance().GetUser(userid, user)) {
+    if (kCommSucc != UserManager::Instance().GetUser(userid, user)) {
         assert(false);
         return kCommFaild;
     }
@@ -686,11 +686,23 @@ int GameInfoManager::AddUserPB(const game::base::User user_pb) {
     user->set_total_bout(user_pb.total_bout());
     user->set_offline_count(user_pb.offline_count());
     user->set_enter_timestamp(user_pb.enter_timestamp());
-    if (kCommSucc != UserMgr::Instance().AddUser(user->get_user_id(), user)) {
+    if (kCommSucc != UserManager::Instance().AddUser(user->get_user_id(), user)) {
         assert(false);
         return kCommFaild;
     }
     return kCommSucc;
 }
 
+int GameInfoManager::SnapShotObjectStatus() {
+    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+    LOG_FUNC("[SNAPSHOT] BEG");
+
+    LOG_INFO("OBJECT ADDRESS = %x", this);
+    LOG_INFO("game_info_notify_thread_ [%d]", game_info_notify_thread_.ThreadId());
+    LOG_INFO("heart_timer_thread_ [%d]", heart_timer_thread_.ThreadId());
+    LOG_INFO("token [%d]", game_info_connection_->GetTokenID());
+
+    LOG_FUNC("[SNAPSHOT] END");
+    return kCommSucc;
+}
 

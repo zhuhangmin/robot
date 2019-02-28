@@ -63,6 +63,10 @@ private:
 
     int SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
 
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
+
 private:
     //大厅 数据锁
     mutable std::mutex hall_connection_mutex_;
