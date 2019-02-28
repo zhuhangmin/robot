@@ -8,10 +8,10 @@
 #define new DEBUG_NEW
 #endif
 
-Robot::Robot(UserID userid) {
+RobotNet::RobotNet(UserID userid) {
     userid_ = userid;
 }
-int Robot::ConnectGame(const std::string& game_ip, const int game_port, const ThreadID game_notify_thread_id) {
+int RobotNet::ConnectGame(const std::string& game_ip, const int game_port, const ThreadID game_notify_thread_id) {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     std::lock_guard<std::mutex> lock(mutex_);
@@ -25,13 +25,13 @@ int Robot::ConnectGame(const std::string& game_ip, const int game_port, const Th
     return kCommFaild;
 }
 
-int Robot::DisconnectGame() {
+int RobotNet::DisconnectGame() {
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->DestroyEx();
     return kCommSucc;
 }
 
-BOOL Robot::IsConnected() {
+BOOL RobotNet::IsConnected() {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
@@ -40,7 +40,7 @@ BOOL Robot::IsConnected() {
     return game_connection_->IsConnected();
 }
 
-int Robot::SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo /*= true*/) {
+int RobotNet::SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo /*= true*/) {
     CHECK_REQUESTID(requestid);
     if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
@@ -62,7 +62,7 @@ int Robot::SendGameRequestWithLock(const RequestID requestid, const google::prot
 }
 
 // 具体业务
-int Robot::SendEnterGame(const RoomID roomid) {
+int RobotNet::SendEnterGame(const RoomID roomid) {
     CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(mutex_);
     TCHAR hard_id[32];
@@ -97,7 +97,7 @@ int Robot::SendEnterGame(const RoomID roomid) {
     return kCommSucc;
 }
 
-int Robot::SendGamePulse() {
+int RobotNet::SendGamePulse() {
     std::lock_guard<std::mutex> lock(mutex_);
     game::base::PulseReq val;
     val.set_id(userid_);
@@ -107,17 +107,17 @@ int Robot::SendGamePulse() {
 
 // 属性接口 
 
-TokenID Robot::GetTokenID() {
+TokenID RobotNet::GetTokenID() {
     std::lock_guard<std::mutex> lock(mutex_);
     return game_connection_->GetTokenID();
 }
 
 // 配置机器人ID 初始化后不在改变,不需要锁保护
-UserID Robot::GetUserID() const {
+UserID RobotNet::GetUserID() const {
     return userid_;
 }
 
-int Robot::SnapShotObjectStatus() {
+int RobotNet::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_FUNC("[SNAPSHOT] BEG");
 

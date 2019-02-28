@@ -11,7 +11,7 @@
 #endif
 
 
-int RobotGameManager::Init() {
+int RobotNetManager::Init() {
     LOG_FUNC("[START ROUTINE]");
     robot_heart_timer_thread_.Initial(std::thread([this] {this->ThreadRobotPluse(); }));
     robot_notify_thread_.Initial(std::thread([this] {this->ThreadRobotNotify(); }));
@@ -19,18 +19,18 @@ int RobotGameManager::Init() {
     return kCommSucc;
 }
 
-int RobotGameManager::Term() {
+int RobotNetManager::Term() {
     robot_heart_timer_thread_.Release();
     robot_notify_thread_.Release();
     LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
-int RobotGameManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
+int RobotNetManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     if (kCommSucc != GetRobotWithLock(userid, robot)) {
-        robot = std::make_shared<Robot>(userid);
+        robot = std::make_shared<RobotNet>(userid);
         SetRobotWithLock(robot);
     }
 
@@ -40,14 +40,14 @@ int RobotGameManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
     return kCommSucc;
 }
 
-ThreadID RobotGameManager::GetRobotNotifyThreadID() {
+ThreadID RobotNetManager::GetRobotNotifyThreadID() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     return robot_notify_thread_.ThreadId();
 }
 
 // 具体业务
 
-int RobotGameManager::SendGamePluse() {
+int RobotNetManager::SendGamePluse() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     for (auto& kv : robot_map_) {
         auto robot = kv.second;
@@ -59,7 +59,7 @@ int RobotGameManager::SendGamePluse() {
     return kCommSucc;
 }
 
-int RobotGameManager::GetRobotWithLock(const UserID userid, RobotPtr& robot) const {
+int RobotNetManager::GetRobotWithLock(const UserID userid, RobotPtr& robot) const {
     CHECK_USERID(userid);
     auto& iter = robot_map_.find(userid);
     if (iter == robot_map_.end()) {
@@ -69,13 +69,13 @@ int RobotGameManager::GetRobotWithLock(const UserID userid, RobotPtr& robot) con
     return kCommSucc;
 }
 
-int RobotGameManager::SetRobotWithLock(RobotPtr robot) {
+int RobotNetManager::SetRobotWithLock(RobotPtr robot) {
     CHECK_ROBOT(robot);
     robot_map_.insert(std::make_pair(robot->GetUserID(), robot));
     return kCommSucc;
 }
 
-int RobotGameManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) const {
+int RobotNetManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) const {
     CHECK_TOKENID(token_id);
     auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& it) {
         return it.second->GetTokenID() == token_id;
@@ -84,7 +84,7 @@ int RobotGameManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& 
     return kCommSucc;
 }
 
-int RobotGameManager::ThreadRobotPluse() {
+int RobotNetManager::ThreadRobotPluse() {
     LOG_INFO("[START ROUTINE] RobotGameManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
@@ -100,7 +100,7 @@ int RobotGameManager::ThreadRobotPluse() {
     return kCommSucc;
 }
 
-int RobotGameManager::ThreadRobotNotify() {
+int RobotNetManager::ThreadRobotNotify() {
     LOG_INFO("[START ROUTINE] RobotGameManager Notify thread [%d] started", GetCurrentThreadId());
 
     MSG msg = {};
@@ -126,7 +126,7 @@ int RobotGameManager::ThreadRobotNotify() {
     return kCommSucc;
 }
 
-int RobotGameManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id) {
+int RobotNetManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id) {
     RobotPtr robot;
     {
         std::lock_guard<std::mutex> lock(robot_map_mutex_);
@@ -145,7 +145,7 @@ int RobotGameManager::OnRobotNotify(const RequestID requestid, void* ntf_data_pt
     return kCommSucc;
 }
 
-int RobotGameManager::SnapShotObjectStatus() {
+int RobotNetManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     LOG_FUNC("[SNAPSHOT] BEG");
 

@@ -1,14 +1,14 @@
 #pragma once
 #include "robot_define.h"
 #include "table.h"
-class GameInfoManager : public ISingletion<GameInfoManager> {
+class GameNetManager : public ISingletion<GameNetManager> {
 public:
     int Init(const std::string game_ip, const int game_port);
 
     int Term();
 
 protected:
-    SINGLETION_CONSTRUCTOR(GameInfoManager);
+    SINGLETION_CONSTRUCTOR(GameNetManager);
 
 private:
     // 游戏 建立连接
@@ -98,4 +98,4 @@ private:
 
 };
 
-#define GameMgr GameInfoManager::Instance()
+#define GameMgr GameNetManager::Instance()

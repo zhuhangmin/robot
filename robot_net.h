@@ -3,9 +3,9 @@
 
 
 
-class Robot {
+class RobotNet {
 public:
-    Robot(UserID userid);
+    RobotNet(UserID userid);
 
 public:
     // сно╥ а╛╫с
@@ -50,4 +50,4 @@ private:
 
 };
 
-using RobotPtr = std::shared_ptr<Robot>;
+using RobotPtr = std::shared_ptr<RobotNet>;

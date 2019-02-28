@@ -299,7 +299,6 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="base_room.cpp" />
     <ClCompile Include="common_func.cpp" />
     <ClCompile Include="game_net_manager.cpp" />
-    <ClCompile Include="memory_statistic.cpp" />
     <ClCompile Include="robot_hall_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="robot_deposit_manager.cpp" />
@@ -322,7 +321,6 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="common_func.h" />
     <ClInclude Include="gamedef.h" />
     <ClInclude Include="game_net_manager.h" />
-    <ClInclude Include="memory_statistic.h" />
     <ClInclude Include="robot_hall_manager.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Resource.h" />

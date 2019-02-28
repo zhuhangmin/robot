@@ -3,7 +3,7 @@
 #include "robot_net.h"
 
 // 机器人管理器
-class RobotGameManager : public ISingletion<RobotGameManager> {
+class RobotNetManager : public ISingletion<RobotNetManager> {
 public:
     using RobotMap = std::unordered_map<UserID, RobotPtr>;
 public:
@@ -19,7 +19,7 @@ public:
     ThreadID GetRobotNotifyThreadID();
 
 protected:
-    SINGLETION_CONSTRUCTOR(RobotGameManager);
+    SINGLETION_CONSTRUCTOR(RobotNetManager);
 
 private:
     // 机器人 定时心跳
@@ -62,4 +62,4 @@ private:
 
 };
 
-#define RobotMgr RobotGameManager::Instance()
+#define RobotMgr RobotNetManager::Instance()

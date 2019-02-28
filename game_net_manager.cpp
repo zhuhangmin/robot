@@ -9,7 +9,7 @@
 #include "user_manager.h"
 
 
-int GameInfoManager::Init(const std::string game_ip, const int game_port) {
+int GameNetManager::Init(const std::string game_ip, const int game_port) {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     // 同步过程
@@ -36,14 +36,14 @@ int GameInfoManager::Init(const std::string game_ip, const int game_port) {
     return kCommSucc;
 }
 
-int GameInfoManager::Term() {
+int GameNetManager::Term() {
     game_info_notify_thread_.Release();
     heart_timer_thread_.Release();
     LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
-int GameInfoManager::ConnectInfoGame(const std::string& game_ip, const int game_port) {
+int GameNetManager::ConnectInfoGame(const std::string& game_ip, const int game_port) {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
@@ -57,13 +57,13 @@ int GameInfoManager::ConnectInfoGame(const std::string& game_ip, const int game_
     return kCommSucc;
 }
 
-int GameInfoManager::SendGameRequest(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool bNeedEcho /*= true*/) {
+int GameNetManager::SendGameRequest(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool bNeedEcho /*= true*/) {
     CHECK_REQUESTID(requestid);
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
     return RobotUtils::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
 }
 
-int GameInfoManager::ThreadGameInfoNotify() {
+int GameNetManager::ThreadGameInfoNotify() {
     LOG_INFO("[START ROUTINE] GameNotify thread [%d] started", GetCurrentThreadId());
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
@@ -88,7 +88,7 @@ int GameInfoManager::ThreadGameInfoNotify() {
     return kCommSucc;
 }
 
-int GameInfoManager::OnGameInfoNotify(const RequestID requestid, const REQUEST &request) {
+int GameNetManager::OnGameInfoNotify(const RequestID requestid, const REQUEST &request) {
     switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
@@ -129,7 +129,7 @@ int GameInfoManager::OnGameInfoNotify(const RequestID requestid, const REQUEST &
     return kCommSucc;
 }
 
-int GameInfoManager::OnDisconnGameInfo() {
+int GameNetManager::OnDisconnGameInfo() {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
     if (game_info_connection_) {
         game_info_connection_->DestroyEx();
@@ -137,7 +137,7 @@ int GameInfoManager::OnDisconnGameInfo() {
     return kCommSucc;
 }
 
-int GameInfoManager::ThreadSendGamePluse() {
+int GameNetManager::ThreadSendGamePluse() {
     LOG_INFO("[START ROUTINE] Game KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
@@ -154,7 +154,7 @@ int GameInfoManager::ThreadSendGamePluse() {
 }
 
 // 具体业务
-int GameInfoManager::SendValidateReq() {
+int GameNetManager::SendValidateReq() {
 
     game::base::RobotSvrValidateReq val;
     val.set_client_id(g_nClientID);
@@ -181,7 +181,7 @@ int GameInfoManager::SendValidateReq() {
     return kCommSucc;
 }
 
-int GameInfoManager::SendGetGameInfo() {
+int GameNetManager::SendGetGameInfo() {
     game::base::GetGameUsersReq val;
     val.set_clientid(g_nClientID);
     val.set_roomid(0);
@@ -219,7 +219,7 @@ int GameInfoManager::SendGetGameInfo() {
     return kCommSucc;
 }
 
-int GameInfoManager::SendPulse() {
+int GameNetManager::SendPulse() {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
 
     game::base::PulseReq val;
@@ -235,7 +235,7 @@ int GameInfoManager::SendPulse() {
     return result;
 }
 
-int GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
+int GameNetManager::OnPlayerEnterGame(const REQUEST &request) {
     game::base::RS_UserEnterGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -273,7 +273,7 @@ int GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
     return kCommSucc;
 }
 
-int GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
+int GameNetManager::OnLookerEnterGame(const REQUEST &request) {
     game::base::RS_UserEnterGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -311,7 +311,7 @@ int GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
     return kCommSucc;
 }
 
-int GameInfoManager::OnLooker2Player(const REQUEST &request) {
+int GameNetManager::OnLooker2Player(const REQUEST &request) {
     game::base::RS_SwitchLookerPlayerNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -346,7 +346,7 @@ int GameInfoManager::OnLooker2Player(const REQUEST &request) {
     return kCommSucc;
 }
 
-int GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
+int GameNetManager::OnPlayer2Looker(const REQUEST &request) {
     game::base::RS_SwitchLookerPlayerNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -381,7 +381,7 @@ int GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
     return kCommSucc;
 }
 
-int GameInfoManager::OnStartGame(const REQUEST &request) {
+int GameNetManager::OnStartGame(const REQUEST &request) {
     game::base::RS_StartGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -421,7 +421,7 @@ int GameInfoManager::OnStartGame(const REQUEST &request) {
     return kCommSucc;
 }
 
-int GameInfoManager::OnUserFreshResult(const REQUEST &request) {
+int GameNetManager::OnUserFreshResult(const REQUEST &request) {
     game::base::RS_UserRefreshResultNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -449,7 +449,7 @@ int GameInfoManager::OnUserFreshResult(const REQUEST &request) {
     return kCommSucc;
 }
 
-int GameInfoManager::OnFreshResult(const REQUEST &request) {
+int GameNetManager::OnFreshResult(const REQUEST &request) {
     game::base::RS_RefreshResultNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -475,7 +475,7 @@ int GameInfoManager::OnFreshResult(const REQUEST &request) {
     return kCommSucc;
 }
 
-int GameInfoManager::OnLeaveGame(const REQUEST &request) {
+int GameNetManager::OnLeaveGame(const REQUEST &request) {
     game::base::RS_UserLeaveGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -501,7 +501,7 @@ int GameInfoManager::OnLeaveGame(const REQUEST &request) {
     return kCommSucc;
 }
 
-int GameInfoManager::OnSwitchTable(const REQUEST &request) {
+int GameNetManager::OnSwitchTable(const REQUEST &request) {
     game::base::RS_SwitchTableNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -579,7 +579,7 @@ int GameInfoManager::OnSwitchTable(const REQUEST &request) {
 //    return kCommFaild;
 //}
 //
-int GameInfoManager::AddRoomPB(const game::base::Room room_pb) {
+int GameNetManager::AddRoomPB(const game::base::Room room_pb) {
     game::base::RoomData room_data_pb = room_pb.room_data();
     RoomID roomid = room_data_pb.roomid();
 
@@ -607,7 +607,7 @@ int GameInfoManager::AddRoomPB(const game::base::Room room_pb) {
     return kCommSucc;
 }
 
-int GameInfoManager::AddTablePB(const game::base::Table table_pb, TablePtr table) {
+int GameNetManager::AddTablePB(const game::base::Table table_pb, TablePtr table) {
     TableNO tableno = table_pb.tableno();
     table->set_table_no(table_pb.tableno()); // tableno start from 1
     table->set_room_id(table_pb.roomid());
@@ -641,7 +641,7 @@ int GameInfoManager::AddTablePB(const game::base::Table table_pb, TablePtr table
     return kCommSucc;
 }
 
-int GameInfoManager::AddUserPB(const game::base::User user_pb) {
+int GameNetManager::AddUserPB(const game::base::User user_pb) {
     UserID userid = user_pb.userid();
     auto user = std::make_shared<User>();
     user->set_user_id(user_pb.userid());
@@ -659,7 +659,7 @@ int GameInfoManager::AddUserPB(const game::base::User user_pb) {
     return kCommSucc;
 }
 
-int GameInfoManager::SnapShotObjectStatus() {
+int GameNetManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
     LOG_FUNC("[SNAPSHOT] BEG");
 
