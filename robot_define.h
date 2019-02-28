@@ -55,6 +55,8 @@ using RequestID = uint32_t;
 
 using ThreadID = uint32_t;
 
+using NeedCount = uint32_t;
+
 // 机器人控制模式
 enum class EnterGameMode {
     kModeBeg = -1,
@@ -172,3 +174,5 @@ using HallLogonMap = std::unordered_map<UserID, HallLogonStatusType>;
 using HallRoomDataMap = std::unordered_map<RoomID, HallRoomData>;
 
 using DepositMap = std::unordered_map<UserID, DepositType>;
+
+using RoomCountMap = std::unordered_map<RoomID, NeedCount>;

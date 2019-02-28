@@ -20,7 +20,10 @@ private:
 
 private:
     // 随机选一个没有进入游戏的userid
-    int FindRandomUserIDNotInGame(UserID& random_userid);
+    int GetRandomUserIDNotInGame(UserID& random_userid);
+
+    // 获得游戏业务算法指定的房间需要的机器人
+    int GetRoomCountMap(RoomCountMap& room_count_map);
 
 private:
     //主流程 线程 （单线程 无业务锁需求, 若有高并发需求，请先让机器人进游戏预备）

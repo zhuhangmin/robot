@@ -130,20 +130,22 @@ int MainServer::ThreadMainProc() {
             //UWL_DBG(_T("[interval] ---------------------- timer thread triggered. do something. interval = %ld ms."), DEF_TIMER_INTERVAL);
             //UWL_DBG("[interval] TimerThreadProc = %I32u", time(nullptr));
 
-            //TODO 随机选一个没有进入游戏的robot
-            //FixMe：
+            //随机选一个没有进入游戏的userid
             auto random_userid = InvalidUserID;
-            if (kCommSucc != FindRandomUserIDNotInGame(random_userid)) {
+            if (kCommSucc != GetRandomUserIDNotInGame(random_userid)) {
                 continue;
             }
 
-            if (random_userid == InvalidUserID)
+            if (random_userid == InvalidUserID) {
+                assert(false);
                 continue;
+            }
 
-            if (kCommSucc != HallMgr.LogonHall(random_userid))
+            //登陆大厅
+            if (kCommSucc != HallMgr.LogonHall(random_userid)) {
+                assert(false);
                 continue;
-
-
+            }
 
             //TODO designed roomid
             RoomID designed_roomid = 7846; //FixMe: hard code
@@ -184,7 +186,7 @@ int MainServer::ThreadMainProc() {
     return kCommSucc;
 }
 
-int MainServer::FindRandomUserIDNotInGame(UserID& random_userid) {
+int MainServer::GetRandomUserIDNotInGame(UserID& random_userid) {
     // 过滤出没有登入游戏服务器的userid集合
     std::hash_map<UserID, UserID> not_logon_game_temp;
     auto enter_game_map = UserMgr.GetAllEnterUserID();
@@ -213,3 +215,20 @@ int MainServer::FindRandomUserIDNotInGame(UserID& random_userid) {
 
     return kCommSucc;
 }
+
+int MainServer::GetRoomCountMap(RoomCountMap& room_count_map) {
+    //过滤有需要上机器人的房间
+    auto room_setting_map = SettingMgr.GetRoomSettingMap();
+    for (auto& kv: room_setting_map) {
+        auto roomid = kv.first;
+        auto room_setting = kv.second;
+        //RoomMgr.GetRoom(roomid)
+    }
+
+
+
+
+
+    return kCommSucc;
+}
+
