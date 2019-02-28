@@ -19,8 +19,7 @@ int Robot::ConnectGame(const std::string& game_ip, const int game_port, const Th
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!game_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_notify_thread_id, 0, GetHelloData(), GetHelloLength())) {
         UWL_ERR("ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     return kCommFaild;
@@ -36,8 +35,7 @@ BOOL Robot::IsConnected() {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return game_connection_->IsConnected();
 }
@@ -46,8 +44,7 @@ int Robot::SendGameRequestWithLock(const RequestID requestid, const google::prot
     CHECK_REQUESTID(requestid);
     if (!game_connection_) {
         UWL_ERR("m_ConnGame is nil");
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (!game_connection_->IsConnected()) {
@@ -59,7 +56,7 @@ int Robot::SendGameRequestWithLock(const RequestID requestid, const google::prot
     int result = RobotUtils::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
     if (result != kCommSucc) {
         UWL_ERR("game send quest fail");
-        ASSERT_FALSE;
+        ASSERT_FALSE_RETURN;
     }
     return result;
 }

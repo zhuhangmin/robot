@@ -18,8 +18,7 @@ int UserManager::DelUser(const UserID userid) {
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     UserPtr user;
     if (kCommSucc != GetUser(userid, user)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (user && user->get_user_id() != InvalidUserID) {

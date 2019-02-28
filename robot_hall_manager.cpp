@@ -22,8 +22,7 @@ int RobotHallManager::Init() {
 
     if (kCommFaild == ConnectHall()) {
         UWL_ERR("ConnectHall() return failed");
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     SendGetAllRoomData();
@@ -48,8 +47,7 @@ int RobotHallManager::ConnectHall() {
 
         if (!hall_connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, hall_notify_thread_.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
             UWL_ERR("[ROUTE] ConnectHall Faild! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
-            ASSERT_FALSE;
-            return kCommFaild;
+            ASSERT_FALSE_RETURN;
         }
     }
     UWL_INF("ConnectHall OK! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
@@ -60,14 +58,12 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
     CHECK_REQUESTID(requestid);
     if (!hall_connection_) {
         UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", requestid);
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (!hall_connection_->IsConnected()) {
         UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", requestid);
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     CONTEXT_HEAD	Context = {};
@@ -87,8 +83,7 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
     if (!bResult)///if timeout or disconnect 
     {
         UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", bTimeOut, requestid);
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
         //TODO
         //std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
     }
@@ -99,8 +94,7 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
 
     if (response_id == GR_ERROR_INFOMATION) {
         UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail responseid GR_ERROR_INFOMATION nReqId = %d", requestid);
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }
@@ -250,8 +244,8 @@ int RobotHallManager::SendGetAllRoomData() {
     for (auto& kv : setting) {
         auto roomid = kv.first;
         if (kCommFaild == SendGetRoomData(roomid)) {
-            ASSERT_FALSE;
             UWL_ERR("cannnot get hall room data = %d", roomid);
+            ASSERT_FALSE_RETURN;
         }
     }
 
@@ -284,8 +278,7 @@ int RobotHallManager::SendGetRoomData(const RoomID roomid) {
 
     if (nRespID != UR_FETCH_SUCCEEDED) {
         UWL_ERR("SendHallRequest GR_GET_ROOM fail nRoomId = %d, nResponse = %d", roomid, nRespID);
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     SetHallRoomDataWithLock(roomid, (HallRoomData*) pRetData.get());

@@ -78,8 +78,7 @@ int BaseRoom::UserLeaveGame(const UserID userid, const TableNO tableno) {
     }
 
     if (kCommSucc != table->UnbindUser(userid)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }
@@ -101,8 +100,7 @@ int BaseRoom::UnbindUser(const UserID userid, const TableNO tableno) {
     }
 
     if (kCommSucc != table->UnbindUser(userid)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }
@@ -189,8 +187,7 @@ int BaseRoom::Player2Looker(UserPtr &user) {
 
 
     if (kCommSucc != table->UnbindPlayer(user->get_user_id())) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     return kCommSucc;
@@ -211,8 +208,7 @@ int BaseRoom::LookerEnterGame(const UserPtr &user) {
         return kCommFaild;
     }
     if (kCommSucc != table->BindLooker(user)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     return kCommSucc;

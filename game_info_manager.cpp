@@ -15,20 +15,17 @@ int GameInfoManager::Init(const std::string game_ip, const int game_port) {
     // 同步过程
     if (kCommFaild == ConnectInfoGame(game_ip, game_port)) {
         UWL_ERR("ConnectGame failed");
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (kCommFaild == SendValidateReq()) {
         UWL_ERR("SendValidateReq failed");
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (kCommFaild == SendGetGameInfo()) {
         UWL_ERR("SendGetGameInfo failed");
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     // @zhuhangmin 20190225 不可颠倒同步过程和接收消息顺序。不然前置通知消息会被SendGetGameInfo覆盖
@@ -53,8 +50,7 @@ int GameInfoManager::ConnectInfoGame(const std::string& game_ip, const int game_
     game_info_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!game_info_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_info_notify_thread_.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
         UWL_ERR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     UWL_INF("ConnectGame OK! IP:%s Port:%d", game_ip.c_str(), game_port);
@@ -243,9 +239,8 @@ int GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
     game::base::RS_UserEnterGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     game::base::RoomData room_data = ntf.room_data();
@@ -262,21 +257,18 @@ int GameInfoManager::OnPlayerEnterGame(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     int ret = base_room->PlayerEnterGame(user); //Add User Manager
     if (ret != kCommSucc) {
-        ASSERT_FALSE;
         UWL_WRN("PlayerEnterGame failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (kCommSucc != UserManager::Instance().AddUser(user->get_user_id(), user)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }
@@ -285,9 +277,8 @@ int GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
     game::base::RS_UserEnterGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     game::base::RoomData room_data = ntf.room_data();
@@ -304,20 +295,18 @@ int GameInfoManager::OnLookerEnterGame(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     int ret = base_room->LookerEnterGame(user); //Add User To User Manager
     if (ret != kCommSucc) {
         UWL_WRN("PlayerEnterGame failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (kCommSucc != UserManager::Instance().AddUser(user->get_user_id(), user)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }
@@ -326,9 +315,8 @@ int GameInfoManager::OnLooker2Player(const REQUEST &request) {
     game::base::RS_SwitchLookerPlayerNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     auto userid = ntf.userid();
@@ -338,15 +326,13 @@ int GameInfoManager::OnLooker2Player(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     UserPtr user;
     if (kCommSucc != UserManager::Instance().GetUser(userid, user)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     user->set_room_id(roomid);
     user->set_table_no(tableno);
@@ -354,9 +340,8 @@ int GameInfoManager::OnLooker2Player(const REQUEST &request) {
 
     int ret = base_room->Looker2Player(user);
     if (ret != kCommSucc) {
-        ASSERT_FALSE;
         UWL_WRN("Looker2Player failed");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }
@@ -365,9 +350,8 @@ int GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
     game::base::RS_SwitchLookerPlayerNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     auto userid = ntf.userid();
@@ -377,15 +361,13 @@ int GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     UserPtr user;
     if (kCommSucc != UserManager::Instance().GetUser(userid, user)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     user->set_room_id(roomid);
     user->set_table_no(tableno);
@@ -393,9 +375,8 @@ int GameInfoManager::OnPlayer2Looker(const REQUEST &request) {
 
     int ret = base_room->Player2Looker(user);
     if (ret != kCommSucc) {
-        ASSERT_FALSE;
         UWL_WRN("Player2Looker failed");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }
@@ -404,9 +385,8 @@ int GameInfoManager::OnStartGame(const REQUEST &request) {
     game::base::RS_StartGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     auto roomid = ntf.roomid();
@@ -421,15 +401,14 @@ int GameInfoManager::OnStartGame(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     TablePtr table;
     if (kCommSucc != base_room->GetTable(tableno, table)) {
         UWL_WRN("GetTable faild tableno=%d", tableno);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     auto chairs = table->GetChairs();
@@ -446,9 +425,8 @@ int GameInfoManager::OnUserFreshResult(const REQUEST &request) {
     game::base::RS_UserRefreshResultNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     auto userid = ntf.userid();
@@ -458,14 +436,13 @@ int GameInfoManager::OnUserFreshResult(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     TablePtr table;
     if (kCommSucc != base_room->GetTable(tableno, table)) {
         UWL_WRN("GetTable faild. tableno=%d", tableno);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     table->RefreshGameResult(userid);
@@ -476,9 +453,8 @@ int GameInfoManager::OnFreshResult(const REQUEST &request) {
     game::base::RS_RefreshResultNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     auto roomid = ntf.roomid();
@@ -486,15 +462,14 @@ int GameInfoManager::OnFreshResult(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     TablePtr table;
     if (kCommSucc != base_room->GetTable(tableno, table)) {
         UWL_WRN("GetTable faild.  tableno=%d", tableno);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     table->RefreshGameResult();
     return kCommSucc;
@@ -504,9 +479,8 @@ int GameInfoManager::OnLeaveGame(const REQUEST &request) {
     game::base::RS_UserLeaveGameNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     auto userid = ntf.userid();
@@ -515,16 +489,14 @@ int GameInfoManager::OnLeaveGame(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     base_room->UserLeaveGame(userid, tableno);
 
     if (kCommFaild != UserManager::Instance().DelUser(userid)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }
@@ -533,10 +505,8 @@ int GameInfoManager::OnSwitchTable(const REQUEST &request) {
     game::base::RS_SwitchTableNotify ntf;
     int parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
-        ASSERT_FALSE;
         UWL_WRN("ParseFromRequest failed.");
-        return kCommFaild;
-
+        ASSERT_FALSE_RETURN;
     }
 
     auto userid = ntf.userid();
@@ -547,8 +517,7 @@ int GameInfoManager::OnSwitchTable(const REQUEST &request) {
 
     UserPtr user;
     if (kCommSucc != UserManager::Instance().GetUser(userid, user)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     user->set_room_id(roomid);
     user->set_table_no(new_tableno);
@@ -556,10 +525,8 @@ int GameInfoManager::OnSwitchTable(const REQUEST &request) {
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        ASSERT_FALSE;
         UWL_WRN("GetRoom failed room");
-        return kCommFaild;
-
+        ASSERT_FALSE_RETURN;
     }
 
     base_room->UnbindUser(userid, old_tableno);
@@ -687,8 +654,7 @@ int GameInfoManager::AddUserPB(const game::base::User user_pb) {
     user->set_offline_count(user_pb.offline_count());
     user->set_enter_timestamp(user_pb.enter_timestamp());
     if (kCommSucc != UserManager::Instance().AddUser(user->get_user_id(), user)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
 }

@@ -37,8 +37,7 @@ int AppDelegate::InitLanuch() {
     g_nClientID = GetPrivateProfileInt(_T("listen"), _T("clientid"), 0, g_szIniFile);
     if (0 == g_nClientID) {
         LOG_ERROR("[START ROUTINE] invalid clientid 0!");
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
 
     } else {
         LOG_INFO("[START ROUTINE] clientid = [%d]", g_nClientID);
@@ -53,22 +52,19 @@ int AppDelegate::Init() {
 
     if (kCommFaild == InitLanuch()) {
         UWL_ERR(_T("InitBase() return failed"));
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     // 配置数据类
     if (kCommFaild == SettingMgr.Init()) {
         UWL_ERR(_T("SettingManager Init Failed"));
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     // 机器人大厅管理类
     if (kCommFaild == HallMgr.Init()) {
         UWL_ERR(_T("RobotHallManager Init Failed"));
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     // 游戏服务数据管理类
@@ -83,15 +79,13 @@ int AppDelegate::Init() {
     // 机器人游戏管理类
     if (kCommFaild == RobotMgr.Init()) {
         UWL_ERR(_T("RobotGameManager Init Failed"));
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     // 机器人补银管理类
     if (kCommFaild == DepositMgr.Init()) {
         UWL_ERR(_T("RobotDepositManager Init Failed"));
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     // 主流程
@@ -132,10 +126,9 @@ int AppDelegate::ThreadMainProc() {
             // 获得此时需要多少机器人进入各个房间
             RoomNeedCountMap room_need_count_map;
             if (kCommSucc != GetRoomNeedCountMap(room_need_count_map)) {
-                ASSERT_FALSE;
-                continue;
-            }
+                ASSERT_FALSE_RETURN; continue;
 
+            }
             if (room_need_count_map.size() == 0) {
                 continue;
             }
@@ -144,23 +137,24 @@ int AppDelegate::ThreadMainProc() {
             for (auto& kv : room_need_count_map) {
                 auto roomid = kv.first;
                 auto need_count = kv.second;
+                for (auto index = 0; index < need_count; index++) {
+                    // 随机选一个没有进入游戏的userid
+                    auto random_userid = InvalidUserID;
+                    if (kCommSucc != GetRandomUserIDNotInGame(random_userid)) {
+                        continue;
+                    }
+                    if (random_userid == InvalidUserID) {
+                        ASSERT_FALSE_RETURN; continue;
+                    }
 
-                // 随机选一个没有进入游戏的userid
-                auto random_userid = InvalidUserID;
-                if (kCommSucc != GetRandomUserIDNotInGame(random_userid)) {
-                    continue;
+                    // 机器人流程
+                    if (kCommSucc != RobotProcess(random_userid, roomid)) {
+                        ASSERT_FALSE_RETURN; continue;
+                    }
                 }
-
-                if (random_userid == InvalidUserID) {
-                    ASSERT_FALSE;
-                    continue;
-                }
-
-                if (kCommSucc != RobotProcess(random_userid, roomid)) {
-                    continue;
-                }
-
             }
+
+            // END
         }
     }
 
@@ -171,25 +165,20 @@ int AppDelegate::ThreadMainProc() {
 int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
     // 登陆大厅
     if (kCommSucc != HallMgr.LogonHall(userid)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     HallRoomData hall_room_data;
     if (kCommFaild == HallMgr.GetHallRoomData(roomid, hall_room_data)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     RobotPtr robot;
     if (kCommSucc != RobotMgr.GetRobotWithCreate(userid, robot)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
-
     if (!robot) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     //@zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
@@ -197,13 +186,11 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
     auto game_port = RobotUtils::GetGamePort();
     auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
     if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (kCommFaild == robot->SendEnterGame(roomid)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     //TODO 
@@ -227,15 +214,13 @@ int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) {
 
     if (not_logon_game_temp.size() == 0) {
         LOG_WARN("no more robot !");
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     // 随机选取userid
     auto random_pos = 0;
     if (kCommFaild == RobotUtils::GenRandInRange(0, not_logon_game_temp.size() - 1, random_pos)) {
-        ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     auto random_it = std::next(std::begin(not_logon_game_temp), random_pos);
     random_userid = random_it->first;
@@ -252,19 +237,16 @@ int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
 
         RoomPtr room;
         if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
-            ASSERT_FALSE;
-            continue;
+            ASSERT_FALSE_RETURN; continue;
         }
 
         int inroom_count = InvalidCount;
         if (kCommSucc != UserMgr.GetRobotCountInRoom(roomid, inroom_count)) {
-            ASSERT_FALSE;
-            continue;
+            ASSERT_FALSE_RETURN; continue;
         }
 
         if (InvalidCount == inroom_count) {
-            ASSERT_FALSE;
-            continue;
+            ASSERT_FALSE_RETURN; continue;
         }
 
         auto need_count = designed_count - inroom_count;

@@ -3,9 +3,9 @@
 //#define  STRICT_ASSERT
 
 #ifdef STRICT_ASSERT
-#define  ASSERT_FALSE  assert(false)
+#define  ASSERT_FALSE_RETURN  assert(false); return kCommFaild;
 #else
-#define  ASSERT_FALSE  
+#define  ASSERT_FALSE_RETURN   return kCommFaild;
 #endif
 
 
