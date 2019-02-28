@@ -1,5 +1,5 @@
 #pragma once
-#include "main_server.h"
+#include "app_delegate.h"
 
 class CMainService : public CNTService {
 public:
@@ -17,6 +17,6 @@ public:
 
     int m_iState;
 
-    MainServer	m_MainServer;
+    AppDelegate	m_AppDelegate;
     DWORD		m_dwThreadId;
 };

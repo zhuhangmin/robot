@@ -83,6 +83,8 @@ public:
     // 对象状态快照
     int SnapShotObjectStatus();
 
+    // 获得房间内特定状态人数
+
 private:
     //接收 游戏服务器消息 线程
     YQThread	game_info_notify_thread_;

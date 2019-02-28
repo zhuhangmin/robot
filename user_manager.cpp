@@ -62,6 +62,43 @@ const UserFilterMap UserManager::GetAllEnterUserID() const {
 }
 
 
+int UserManager::GetUserCountInRoom(const RoomID roomid, int& count) const {
+    for (auto& kv : user_map_) {
+        auto userid = kv.first;
+        auto user = kv.second;
+        if (user->get_room_id() == roomid) {
+            count++;
+        }
+    }
+    return kCommSucc;
+}
+
+int UserManager::GetRobotCountInRoom(const RoomID roomid, int& count) const {
+    for (auto& kv : user_map_) {
+        auto userid = kv.first;
+        auto user = kv.second;
+        if (user->get_room_id() == roomid) {
+            if (user->get_user_type() == kUserRobot) {
+                count++;
+            }
+        }
+    }
+    return kCommSucc;
+}
+
+int UserManager::GetNormalUserCountInRoom(const RoomID roomid, int& count) const {
+    for (auto& kv : user_map_) {
+        auto userid = kv.first;
+        auto user = kv.second;
+        if (user->get_room_id() == roomid) {
+            if (user->get_user_type() == kUserNormal) {
+                count++;
+            }
+        }
+    }
+    return kCommSucc;
+}
+
 int UserManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     LOG_FUNC("[SNAPSHOT] BEG");

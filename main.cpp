@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "main.h"
-#include "main_server.h"
+#include "app_delegate.h"
 #include "robot_define.h"
 #include "memory_statistic.h"
 #include "setting_manager.h"
@@ -143,7 +143,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
 #else
     LOG_INFO("[START ROUTINE] MainServer BEG");
-    MainServer MainServer;
+    AppDelegate MainServer;
 
     if (kCommFaild == MainServer.Init()) {
         UwlTrace(_T("server initialize failed!"));

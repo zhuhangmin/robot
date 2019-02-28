@@ -18,10 +18,10 @@
     "deposit_back_amount": 200000,
     
     "rooms":[
-        {"roomid":7846,"mode":0,"count":1},
-        {"roomid":7948,"mode":0,"count":3},
-        {"roomid":7965,"mode":0,"count":1},
-        {"roomid":7969,"mode":0,"count":3}
+        {"roomid":7846, "count":1},
+        {"roomid":7948, "count":3},
+        {"roomid":7965, "count":1},
+        {"roomid":7969, "count":3}
     ],
     
     "robots":[

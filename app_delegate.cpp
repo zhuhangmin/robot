@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "main_server.h"
+#include "app_delegate.h"
 #include "main.h"
 #include "robot_game_manager.h"
 #include "setting_manager.h"
@@ -8,17 +8,18 @@
 #include "robot_hall_manager.h"
 #include "robot_utils.h"
 #include "user_manager.h"
+#include "room_manager.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-MainServer::MainServer() {
+AppDelegate::AppDelegate() {
     g_hExitServer = NULL;
 }
 
-MainServer::~MainServer() {}
+AppDelegate::~AppDelegate() {}
 
-int MainServer::InitLanuch() {
+int AppDelegate::InitLanuch() {
     LOG_FUNC("[START ROUTINE]");
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -45,7 +46,7 @@ int MainServer::InitLanuch() {
     return kCommSucc;
 }
 
-int MainServer::Init() {
+int AppDelegate::Init() {
     LOG_FUNC("[START ROUTINE]");
     if (S_FALSE == ::CoInitialize(NULL))
         return kCommFaild;;
@@ -99,7 +100,7 @@ int MainServer::Init() {
     return kCommSucc;
 }
 
-int MainServer::Term() {
+int AppDelegate::Term() {
     SetEvent(g_hExitServer);
 
     DepositMgr.Term();
@@ -119,7 +120,7 @@ int MainServer::Term() {
 
 }
 
-int MainServer::ThreadMainProc() {
+int AppDelegate::ThreadMainProc() {
     LOG_INFO("[START ROUTINE] main timer thread [%d] started", GetCurrentThreadId());
     while (true) {
         DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetMainsInterval());
@@ -127,58 +128,39 @@ int MainServer::ThreadMainProc() {
             break;
         }
         if (WAIT_TIMEOUT == dwRet) { // timeout
-            //UWL_DBG(_T("[interval] ---------------------- timer thread triggered. do something. interval = %ld ms."), DEF_TIMER_INTERVAL);
-            //UWL_DBG("[interval] TimerThreadProc = %I32u", time(nullptr));
 
-            //随机选一个没有进入游戏的userid
-            auto random_userid = InvalidUserID;
-            if (kCommSucc != GetRandomUserIDNotInGame(random_userid)) {
-                continue;
-            }
-
-            if (random_userid == InvalidUserID) {
+            // 获得此时需要多少机器人进入各个房间
+            RoomNeedCountMap room_need_count_map;
+            if (kCommSucc != GetRoomNeedCountMap(room_need_count_map)) {
                 assert(false);
                 continue;
             }
 
-            //登陆大厅
-            if (kCommSucc != HallMgr.LogonHall(random_userid)) {
-                assert(false);
+            if (room_need_count_map.size() == 0) {
                 continue;
             }
 
-            //TODO designed roomid
-            RoomID designed_roomid = 7846; //FixMe: hard code
-            HallRoomData hall_room_data;
-            if (kCommFaild == HallMgr.GetHallRoomData(designed_roomid, hall_room_data))
-                continue;
+            // 所有房间机器人开始依次同步阻塞进入
+            for (auto& kv : room_need_count_map) {
+                auto roomid = kv.first;
+                auto need_count = kv.second;
 
-            //@zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
-            auto game_ip = RobotUtils::GetGameIP();
-            auto game_port = RobotUtils::GetGamePort();
-            auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
+                // 随机选一个没有进入游戏的userid
+                auto random_userid = InvalidUserID;
+                if (kCommSucc != GetRandomUserIDNotInGame(random_userid)) {
+                    continue;
+                }
 
-            RobotPtr robot;
-            if (kCommSucc != RobotMgr.GetRobotWithCreate(random_userid, robot)) {
-                assert(false);
-                continue;
+                if (random_userid == InvalidUserID) {
+                    assert(false);
+                    continue;
+                }
+
+                if (kCommSucc != RobotProcess(random_userid, roomid)) {
+                    continue;
+                }
+
             }
-
-            if (!robot) {
-                assert(false);
-                continue;
-            }
-
-            if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id))
-                continue;
-
-            if (kCommFaild == robot->SendEnterGame(designed_roomid))
-                continue;
-
-            //TODO 
-            // HANDLE EXCEPTION
-            // DEPOSIT OVERFLOW UNDERFLOW
-
         }
     }
 
@@ -186,7 +168,52 @@ int MainServer::ThreadMainProc() {
     return kCommSucc;
 }
 
-int MainServer::GetRandomUserIDNotInGame(UserID& random_userid) {
+int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
+    // 登陆大厅
+    if (kCommSucc != HallMgr.LogonHall(userid)) {
+        assert(false);
+        return kCommFaild;
+    }
+
+    HallRoomData hall_room_data;
+    if (kCommFaild == HallMgr.GetHallRoomData(roomid, hall_room_data)) {
+        assert(false);
+        return kCommFaild;
+    }
+
+    RobotPtr robot;
+    if (kCommSucc != RobotMgr.GetRobotWithCreate(userid, robot)) {
+        assert(false);
+        return kCommFaild;
+    }
+
+    if (!robot) {
+        assert(false);
+        return kCommFaild;
+    }
+
+    //@zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
+    auto game_ip = RobotUtils::GetGameIP();
+    auto game_port = RobotUtils::GetGamePort();
+    auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
+    if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id)) {
+        assert(false);
+        return kCommFaild;
+    }
+
+    if (kCommFaild == robot->SendEnterGame(roomid)) {
+        assert(false);
+        return kCommFaild;
+    }
+
+    //TODO 
+    // HANDLE EXCEPTION
+    // DEPOSIT OVERFLOW UNDERFLOW
+
+    return kCommSucc;
+}
+
+int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) {
     // 过滤出没有登入游戏服务器的userid集合
     std::hash_map<UserID, UserID> not_logon_game_temp;
     auto enter_game_map = UserMgr.GetAllEnterUserID();
@@ -204,7 +231,7 @@ int MainServer::GetRandomUserIDNotInGame(UserID& random_userid) {
         return kCommFaild;
     }
 
-    // 随机选取
+    // 随机选取userid
     auto random_pos = 0;
     if (kCommFaild == RobotUtils::GenRandInRange(0, not_logon_game_temp.size() - 1, random_pos)) {
         assert(false);
@@ -216,19 +243,38 @@ int MainServer::GetRandomUserIDNotInGame(UserID& random_userid) {
     return kCommSucc;
 }
 
-int MainServer::GetRoomCountMap(RoomCountMap& room_count_map) {
-    //过滤有需要上机器人的房间
+int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
     auto room_setting_map = SettingMgr.GetRoomSettingMap();
     for (auto& kv: room_setting_map) {
         auto roomid = kv.first;
-        auto room_setting = kv.second;
-        //RoomMgr.GetRoom(roomid)
+        auto setting = kv.second;
+        auto designed_count = setting.count;
+
+        RoomPtr room;
+        if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+            ASSERRT_FALSE;
+            continue;
+        }
+
+        int inroom_count = InvalidCount;
+        if (kCommSucc != UserMgr.GetRobotCountInRoom(roomid, inroom_count)) {
+            assert(false);
+            continue;
+        }
+
+        if (InvalidCount == inroom_count) {
+            assert(false);
+            continue;
+        }
+
+        auto need_count = designed_count - inroom_count;
+        if (need_count > 0) {
+            // @zhuhangmin 20190228 每次主循环每个房间只进一个机器人
+            room_need_count_map[roomid] = 1;
+            // 需要一次上多个机器人使用：
+            // room_need_count_map[roomid] = need_count;
+        }
     }
-
-
-
-
 
     return kCommSucc;
 }
-

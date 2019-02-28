@@ -1,5 +1,14 @@
 #pragma once
-// 默认参数
+
+//#define  STRICT_ASSERT
+
+#ifdef STRICT_ASSERT
+#define  ASSERRT_FALSE  assert(false)
+#else
+#define  ASSERRT_FALSE  
+#endif
+
+
 #define SERVICE_NAME _T("robot_tool_xxx")
 
 #define DISPLAY_NAME _T("robot_tool_xxx")
@@ -21,6 +30,8 @@ const int InvalidChairNO = 0;
 const int InvalidTokenID = 0;
 
 const int InvalidRequestID = 0;
+
+const int InvalidCount = -1;
 
 const int MS_PER_SECOND = 1000;  // ms
 
@@ -56,14 +67,6 @@ using RequestID = uint32_t;
 using ThreadID = uint32_t;
 
 using NeedCount = uint32_t;
-
-// 机器人控制模式
-enum class EnterGameMode {
-    kModeBeg = -1,
-    kConstantCount = 0, // 房间内机器人总是维持固定的数量
-    kScaleCount = 1,// 房间内机器人数据量总是房间内正常玩家的固定比例
-    kModeEnd = 2,
-};
 
 enum ERROR_CODE {
     kConnectionNotExist = -1000, // "与服务器连接不存在"
@@ -103,7 +106,6 @@ public:
 
 struct RoomSetiing {
     RoomID roomid;
-    EnterGameMode mode;
     int count;
 };
 
@@ -175,4 +177,6 @@ using HallRoomDataMap = std::unordered_map<RoomID, HallRoomData>;
 
 using DepositMap = std::unordered_map<UserID, DepositType>;
 
-using RoomCountMap = std::unordered_map<RoomID, NeedCount>;
+using RoomNeedCountMap = std::unordered_map<RoomID, NeedCount>;
+
+

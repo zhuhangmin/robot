@@ -43,9 +43,8 @@ int SettingManager::InitSetting() {
 
     for (int n = 0; n < size; ++n) {
         RoomID roomid = rooms[n]["roomid"].asInt();
-        EnterGameMode mode = (EnterGameMode) rooms[n]["mode"].asInt();
         int count = rooms[n]["count"].asInt();
-        room_setting_map_[roomid] = RoomSetiing{roomid, mode, count};
+        room_setting_map_[roomid] = RoomSetiing{roomid, count};
     }
 
 
@@ -150,7 +149,7 @@ int SettingManager::SnapShotObjectStatus() const {
     for (auto& kv : room_setting_map_) {
         auto roomid = kv.first;
         auto setting = kv.second;
-        LOG_INFO("roomid [%d] mode [%d] count [%d]", roomid, setting.mode, setting.count);
+        LOG_INFO("roomid [%d]  count [%d]", roomid, setting.count);
     }
 
     LOG_FUNC("[SNAPSHOT] END");
