@@ -7,7 +7,7 @@ int SettingManager::Init() {
     LOG_FUNC("[START ROUTINE]");
     if (kCommSucc != InitSetting()) {
         UWL_ERR("InitSetting() failed");
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
     UWL_INF("InitSetting robot Count = %d", robot_setting_map_.size());
@@ -82,7 +82,7 @@ int SettingManager::InitSetting() {
     // check
     if (InvalidGameID == game_id_) {
         UWL_ERR("game_id_ = %d", InvalidGameID);
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 

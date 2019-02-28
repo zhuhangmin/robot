@@ -42,12 +42,12 @@ int Table::BindLooker(const UserPtr &user) {
 int Table::UnbindUser(int userid) {
     CHECK_USERID(userid);
     if (kCommSucc != UnbindPlayer(userid)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     if (kCommSucc != UnbindLooker(userid)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -146,7 +146,7 @@ int Table::GetChairInfoByUserid(int userid, ChairInfo& info) {
     CHECK_USERID(userid);
     int chairno = GetUserChair(userid);
     if (kCommSucc != GetChairInfoByChairno(chairno, info)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
     return kCommSucc;

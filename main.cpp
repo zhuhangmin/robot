@@ -126,7 +126,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     if (strcmp(szExeName, serviceName) != 0) {
         UWL_ERR("szExeName[%s] != serviceName[%s]", szExeName, serviceName);
-        assert(false);
+        ASSERT_FALSE;
         nRetCode = -1;
         return nRetCode;
     }

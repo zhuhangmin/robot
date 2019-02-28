@@ -35,7 +35,7 @@ int RobotGameManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
     }
 
     if (kCommSucc != GetRobotWithLock(userid, robot)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
     return kCommSucc;

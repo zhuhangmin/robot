@@ -37,7 +37,7 @@ int AppDelegate::InitLanuch() {
     g_nClientID = GetPrivateProfileInt(_T("listen"), _T("clientid"), 0, g_szIniFile);
     if (0 == g_nClientID) {
         LOG_ERROR("[START ROUTINE] invalid clientid 0!");
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
 
     } else {
@@ -53,21 +53,21 @@ int AppDelegate::Init() {
 
     if (kCommFaild == InitLanuch()) {
         UWL_ERR(_T("InitBase() return failed"));
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     // 配置数据类
     if (kCommFaild == SettingMgr.Init()) {
         UWL_ERR(_T("SettingManager Init Failed"));
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     // 机器人大厅管理类
     if (kCommFaild == HallMgr.Init()) {
         UWL_ERR(_T("RobotHallManager Init Failed"));
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -76,21 +76,21 @@ int AppDelegate::Init() {
     auto game_ip = RobotUtils::GetGameIP();
     if (kCommFaild == GameMgr.Init(game_ip, game_port)) {
     UWL_ERR(_T("RobotGameInfoManager Init Failed"));
-    assert(false);
+    ASSERT_FALSE;
     return kCommFaild;
     }*/
 
     // 机器人游戏管理类
     if (kCommFaild == RobotMgr.Init()) {
         UWL_ERR(_T("RobotGameManager Init Failed"));
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     // 机器人补银管理类
     if (kCommFaild == DepositMgr.Init()) {
         UWL_ERR(_T("RobotDepositManager Init Failed"));
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -132,7 +132,7 @@ int AppDelegate::ThreadMainProc() {
             // 获得此时需要多少机器人进入各个房间
             RoomNeedCountMap room_need_count_map;
             if (kCommSucc != GetRoomNeedCountMap(room_need_count_map)) {
-                assert(false);
+                ASSERT_FALSE;
                 continue;
             }
 
@@ -152,7 +152,7 @@ int AppDelegate::ThreadMainProc() {
                 }
 
                 if (random_userid == InvalidUserID) {
-                    assert(false);
+                    ASSERT_FALSE;
                     continue;
                 }
 
@@ -171,24 +171,24 @@ int AppDelegate::ThreadMainProc() {
 int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
     // 登陆大厅
     if (kCommSucc != HallMgr.LogonHall(userid)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     HallRoomData hall_room_data;
     if (kCommFaild == HallMgr.GetHallRoomData(roomid, hall_room_data)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     RobotPtr robot;
     if (kCommSucc != RobotMgr.GetRobotWithCreate(userid, robot)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     if (!robot) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -197,12 +197,12 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
     auto game_port = RobotUtils::GetGamePort();
     auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
     if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     if (kCommFaild == robot->SendEnterGame(roomid)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -227,14 +227,14 @@ int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) {
 
     if (not_logon_game_temp.size() == 0) {
         LOG_WARN("no more robot !");
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     // 随机选取userid
     auto random_pos = 0;
     if (kCommFaild == RobotUtils::GenRandInRange(0, not_logon_game_temp.size() - 1, random_pos)) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
     auto random_it = std::next(std::begin(not_logon_game_temp), random_pos);
@@ -252,18 +252,18 @@ int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
 
         RoomPtr room;
         if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
-            ASSERRT_FALSE;
+            ASSERT_FALSE;
             continue;
         }
 
         int inroom_count = InvalidCount;
         if (kCommSucc != UserMgr.GetRobotCountInRoom(roomid, inroom_count)) {
-            assert(false);
+            ASSERT_FALSE;
             continue;
         }
 
         if (InvalidCount == inroom_count) {
-            assert(false);
+            ASSERT_FALSE;
             continue;
         }
 

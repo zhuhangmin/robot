@@ -8,12 +8,12 @@
 
 int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
     if (!connection) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     if (connection->IsConnected()) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -38,14 +38,14 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
     if (!result)///if timeout or disconnect 
     {
         UWL_ERR("send request fail");
-        assert(false);
+        ASSERT_FALSE;
         return timeout ? ERROR_CODE::kConnectionDisable : ERROR_CODE::kOperationFailed;
     }
 
     auto responseid = response.head.nRequest;
 
     if (0 == responseid) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
     return kCommSucc;
@@ -53,7 +53,7 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
 
 CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& params) {
     if (!url) {
-        assert(false);
+        ASSERT_FALSE;
         return "";
     }
 
@@ -86,7 +86,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
     } catch (...) {
         UwlTrace(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), url, retcode, GetLastError());
         UwlLogFile(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), url, retcode, GetLastError());
-        assert(false);
+        ASSERT_FALSE;
     };
 
     if (pHTTPFile) { pHTTPFile->Close(); delete  pHTTPFile;  pHTTPFile = NULL; }
@@ -96,7 +96,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
     if (result_str == "") {
         UwlTrace(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), url, retcode, GetLastError());
         UwlLogFile(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), url, retcode, GetLastError());
-        assert(false);
+        ASSERT_FALSE;
 
     } else {
         UwlLogFile(_T("ExecHttpRequestPost strResult:%s "), result_str);
@@ -129,7 +129,7 @@ int RobotUtils::GetGamePort() {
     auto room_setting_map = SettingMgr.GetRoomSettingMap();
     if (room_setting_map.size() == 0) {
         UWL_ERR(_T("room_setting_map empty"));
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -142,7 +142,7 @@ int RobotUtils::GetGamePort() {
     HallRoomData hall_room_data;
     if (kCommFaild == HallMgr.GetHallRoomData(room_id, hall_room_data)) {
         UWL_ERR("GetHallRoomData room id = %d failed", room_id);
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 

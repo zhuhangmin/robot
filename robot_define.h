@@ -3,9 +3,9 @@
 //#define  STRICT_ASSERT
 
 #ifdef STRICT_ASSERT
-#define  ASSERRT_FALSE  assert(false)
+#define  ASSERT_FALSE  assert(false)
 #else
-#define  ASSERRT_FALSE  
+#define  ASSERT_FALSE  
 #endif
 
 

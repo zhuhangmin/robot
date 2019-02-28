@@ -62,7 +62,7 @@ int RobotDepositManager::ThreadDeposit() {
 int RobotDepositManager::RobotGainDeposit(const UserID userid, const int amount) const {
     CHECK_USERID(userid);
     if (amount <= 0) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
     static TCHAR szHttpUrl[128];
@@ -97,7 +97,7 @@ int RobotDepositManager::RobotGainDeposit(const UserID userid, const int amount)
         return kCommFaild;
     if (_root["Code"].asInt() != 0) {
         UWL_ERR("userid = %d gain deposit fail, code = %d, strResult = %s", userid, _root["Code"].asInt(), strResult);
-        //assert(false);
+        //ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -107,7 +107,7 @@ int RobotDepositManager::RobotGainDeposit(const UserID userid, const int amount)
 int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount) const {
     CHECK_USERID(userid);
     if (amount <= 0) {
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
     static TCHAR szHttpUrl[128];

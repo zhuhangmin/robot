@@ -22,7 +22,7 @@ int RobotHallManager::Init() {
 
     if (kCommFaild == ConnectHall()) {
         UWL_ERR("ConnectHall() return failed");
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -48,7 +48,7 @@ int RobotHallManager::ConnectHall() {
 
         if (!hall_connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, hall_notify_thread_.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
             UWL_ERR("[ROUTE] ConnectHall Faild! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
-            assert(false);
+            ASSERT_FALSE;
             return kCommFaild;
         }
     }
@@ -60,13 +60,13 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
     CHECK_REQUESTID(requestid);
     if (!hall_connection_) {
         UWL_ERR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", requestid);
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
     if (!hall_connection_->IsConnected()) {
         UWL_ERR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", requestid);
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
@@ -87,7 +87,7 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
     if (!bResult)///if timeout or disconnect 
     {
         UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", bTimeOut, requestid);
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
         //TODO
         //std::make_tuple(false, (bTimeOut ? ERR_SENDREQUEST_TIMEOUT : ERR_OPERATE_FAILED));
@@ -99,7 +99,7 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
 
     if (response_id == GR_ERROR_INFOMATION) {
         UWL_ERR("SendHallRequest m_ConnHall->SendRequest fail responseid GR_ERROR_INFOMATION nReqId = %d", requestid);
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
     return kCommSucc;
@@ -250,7 +250,7 @@ int RobotHallManager::SendGetAllRoomData() {
     for (auto& kv : setting) {
         auto roomid = kv.first;
         if (kCommFaild == SendGetRoomData(roomid)) {
-            assert(false);
+            ASSERT_FALSE;
             UWL_ERR("cannnot get hall room data = %d", roomid);
         }
     }
@@ -261,7 +261,7 @@ int RobotHallManager::SendGetAllRoomData() {
 int RobotHallManager::SendGetRoomData(const RoomID roomid) {
     CHECK_ROOMID(roomid);
     /*if (kCommSucc != RobotUtils::IsValidRoomID(roomid)) {
-        assert(false); return kCommFaild;
+        ASSERT_FALSE; return kCommFaild;
         }
         return kCommSucc;*/
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
@@ -284,7 +284,7 @@ int RobotHallManager::SendGetRoomData(const RoomID roomid) {
 
     if (nRespID != UR_FETCH_SUCCEEDED) {
         UWL_ERR("SendHallRequest GR_GET_ROOM fail nRoomId = %d, nResponse = %d", roomid, nRespID);
-        assert(false);
+        ASSERT_FALSE;
         return kCommFaild;
     }
 
