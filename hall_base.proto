@@ -1,0 +1,80 @@
+syntax = "proto2";
+
+import "game_base.proto";
+
+package hall.base;
+
+// 进游戏
+message AdditinalData
+{
+	optional int32 original_req		= 1;
+	optional bytes data 			= 2;
+	optional int32 data_len			= 3;
+}
+
+message EnterGameReq
+{
+	optional game.base.EnterNormalGameReq	entergame_req	= 1;
+	optional AdditinalData additinal_data					= 2;	// 进游戏附加数据，在返回结果的时候带回给gamesvr
+}
+
+message EnterGameResp
+{
+	optional int32 code								= 1;
+	optional int32 userid							= 2;
+	optional int64 deposit							= 3;
+	optional int32 user_type						= 4;
+	optional int32 total_bout						= 5;
+	optional int32 win_bout							= 6;
+	optional int32 lose_bout						= 7;
+	optional string hardid							= 8;
+	optional string head_url						= 9;
+	optional string nick_name						= 10;
+	optional AdditinalData additinal_data			= 11;	// 进游戏附加数据
+	optional game.base.RoomData roomdata			= 12;
+}
+
+// 进游戏成功通知
+message EnterGameOkNotify
+{
+	optional int32 userid							= 1;
+	optional int32 roomid							= 2;
+	optional int64 tableno							= 3;
+	optional int32 chairno							= 4;
+}
+
+// 进游戏成功通知
+message LeaveGameNotify
+{
+	optional int32 userid							= 1;
+	optional int32 roomid							= 2;
+	optional int64 tableno							= 3;
+	optional int32 chairno							= 4;
+}
+
+// 结算
+message UserGameResult
+{
+	optional int32 userid							= 1;
+	optional int32 chairno							= 2;
+	optional int64 base_deposit						= 3;	// 基础银
+	optional int64 old_deposit						= 4;	// 原来的银子数
+	optional int64 diff_deposit						= 5;	// 银子变化值
+	optional int64 cut								= 6;	// 逃跑扣银（确认海外有没有）
+	optional int64 fee								= 7;	// 手续费（确认海外有没有）
+	optional int64 extra							= 8;	// 额外银子（确认海外有没有）
+	optional int32 timecost							= 9;	// 游戏耗时（秒）
+	optional int32 bout_count						= 10;	// 本次结算 总局数
+	optional int32 win_count						= 11;	// 本次结算 赢的局数
+	optional int32 loss_count						= 12;	// 本次结算 输的局数
+	optional int32 standoff_count					= 13;	// 本次结算 和的局数
+	optional int32 offline_count					= 14;	// 掉线次数
+}
+
+message RefreshGameResult
+{
+	optional int32 roomid							= 1;
+	optional int64 tableno							= 2;
+	optional int32 flag								= 3;	// 结算flag
+	repeated UserGameResult user_result				= 4;	
+}

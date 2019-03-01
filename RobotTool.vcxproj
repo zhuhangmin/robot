@@ -23,7 +23,7 @@
     <SccLocalPath />
     <Keyword>MFCProj</Keyword>
     <ProjectGuid>{41F0ADD0-E1C2-4440-AD20-DAFB98771A1E}</ProjectGuid>
-    <ProjectName>RobotToolLudo</ProjectName>
+    <ProjectName>RobotTool</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -93,8 +93,8 @@
     <IntDir>.\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)D</TargetName>
-    <IncludePath>F:\SEA\NEW_GAME\pb;$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)xyGamePb;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)tcLog\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;F:\SEA\SEA_VC12\protobuf3.5.0;$(VS_CTLibPath_Sea)tcLog\lib\Win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)xyGamePb;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)tcLog\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)tcLog\lib\Win32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseS|Win32'">
     <ClCompile>
@@ -294,11 +294,11 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\SEA\NEW_GAME\pb\game_base.pb.cc" />
-    <ClCompile Include="..\SEA\NEW_GAME\pb\hall_base.pb.cc" />
     <ClCompile Include="base_room.cpp" />
     <ClCompile Include="common_func.cpp" />
+    <ClCompile Include="game_base.pb.cc" />
     <ClCompile Include="game_net_manager.cpp" />
+    <ClCompile Include="hall_base.pb.cc" />
     <ClCompile Include="robot_hall_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="robot_deposit_manager.cpp" />
@@ -315,12 +315,12 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="user_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\SEA\NEW_GAME\pb\game_base.pb.h" />
-    <ClInclude Include="..\SEA\NEW_GAME\pb\hall_base.pb.h" />
     <ClInclude Include="base_room.h" />
     <ClInclude Include="common_func.h" />
     <ClInclude Include="gamedef.h" />
+    <ClInclude Include="game_base.pb.h" />
     <ClInclude Include="game_net_manager.h" />
+    <ClInclude Include="hall_base.pb.h" />
     <ClInclude Include="robot_hall_manager.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Resource.h" />
@@ -339,11 +339,8 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="user_manager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="RobotToolLudo.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\SEA\NEW_GAME\pb\game_base.proto" />
-    <None Include="..\SEA\NEW_GAME\pb\hall_base.proto" />
+    <None Include="game_base.proto" />
+    <None Include="hall_base.proto" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
