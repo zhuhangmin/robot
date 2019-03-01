@@ -229,7 +229,7 @@ int GameNetManager::ResetDataWithLock() {
         //@zhuhanmin 20190228 socket建立后发消息时如果连接已断失效，销毁
         game_info_connection_->DestroyEx();
     }
-
+    pulse_timeout_count_ = 0;
     UserMgr.Reset();
     RoomMgr.Reset();
     return kCommSucc;
@@ -261,7 +261,13 @@ int GameNetManager::SendPulse() {
     auto result = RobotUtils::SendRequestWithLock(game_info_connection_, GR_GAME_PLUSE, val, response, false);
 
     if (kCommSucc != result) {
-        LOG_ERROR("Send game pulse failed");
+        if (result == RobotErrorCode::kConnectionTimeOut) {
+            pulse_timeout_count_++;
+            if (pulse_timeout_count_ == MaxPluseTimeOutCount) {
+                ResetInitDataWithLock();
+            }
+            return RobotErrorCode::kConnectionTimeOut;
+        }
     }
 
     return result;

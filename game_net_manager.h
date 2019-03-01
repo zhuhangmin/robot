@@ -114,13 +114,12 @@ private:
     int game_port_;
 
     //游戏服务器连接
-    mutable std::mutex game_info_connection_mutex_;
-    CDefSocketClientPtr game_info_connection_{std::make_shared<CDefSocketClient>()};
     // 管理的数据层为 room_manager 和 user_manager 
     // 只用来接收网络消息形成数据层，逻辑业务层[不能修改] room_manager 和 user_manager
     // 可以认为整个room_manager 和 user_manager 为游戏服务器数据层[只读]快照
-
-
+    mutable std::mutex game_info_connection_mutex_;
+    CDefSocketClientPtr game_info_connection_{std::make_shared<CDefSocketClient>()};
+    int pulse_timeout_count_{0};
 };
 
 #define GameMgr GameNetManager::Instance()

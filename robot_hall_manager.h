@@ -60,14 +60,12 @@ private:
     int SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
 
     // 大厅 初始化连接和数据
-    // LEVEL 1
     int InitDataWithLock();
 
     // 大厅 重置连接和数据
-    // LEVEL 1
     int ResetDataWithLock();
 
-    // LEVEL 2 : ResetDataWithLock + InitDataWithLock
+    // ResetDataWithLock + InitDataWithLock
     int ResetInitDataWithLock();
 
     // 大厅 所有房间数据

@@ -12,22 +12,21 @@ RobotNet::RobotNet(UserID userid) {
     userid_ = userid;
 }
 int RobotNet::ConnectGame(const std::string& game_ip, const int game_port, const ThreadID game_notify_thread_id) {
+    std::lock_guard<std::mutex> lock(mutex_);
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
-    std::lock_guard<std::mutex> lock(mutex_);
-    game_connection_ = std::make_shared<CDefSocketClient>();
-    game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
-    if (!game_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_notify_thread_id, 0, GetHelloData(), GetHelloLength())) {
-        LOG_ERROR("ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
+    game_ip_ = game_ip;
+    game_port_ = game_port_;
+    game_notify_thread_id_ = game_notify_thread_id;
+    if (kCommSucc !=InitDataWithLock()) {
         ASSERT_FALSE_RETURN;
     }
-
     return kCommFaild;
 }
 
 int RobotNet::OnDisconnGame() {
     std::lock_guard<std::mutex> lock(mutex_);
-    game_connection_->DestroyEx();
+    ResetInitDataWithLock();
     return kCommSucc;
 }
 
@@ -49,22 +48,64 @@ int RobotNet::SendGameRequestWithLock(const RequestID requestid, const google::p
 
     if (!game_connection_->IsConnected()) {
         UWL_WRN("m_ConnGame not connected"); // invalid socket handle.
-        //ASSERT_FALSE;
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     int result = RobotUtils::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
     if (result != kCommSucc) {
         LOG_ERROR("game send quest fail");
         if (result == RobotErrorCode::kOperationFailed) {
-
+            ResetInitDataWithLock();
+            return RobotErrorCode::kOperationFailed;
         }
 
-        ASSERT_FALSE_RETURN;
+        if (result == RobotErrorCode::kConnectionTimeOut) {
+            pulse_timeout_count_++;
+            if (pulse_timeout_count_ == MaxPluseTimeOutCount) {
+                ResetInitDataWithLock();
+            }
+            return RobotErrorCode::kConnectionTimeOut;
+        }
+
+        ASSERT_FALSE;
+        return result;
     }
     return result;
 }
 
+int RobotNet::ResetDataWithLock() {
+    if (game_connection_) {
+        game_connection_->DestroyEx();
+    }
+    pulse_timeout_count_ = 0;
+    return kCommSucc;
+}
+
+int RobotNet::InitDataWithLock() {
+    game_connection_ = std::make_shared<CDefSocketClient>();
+    game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
+    if (!game_connection_->Create(game_ip_.c_str(), game_port_, 5, 0, game_notify_thread_id_, 0, GetHelloData(), GetHelloLength())) {
+        LOG_ERROR("ConnectGame Faild! IP:%s Port:%d", game_ip_.c_str(), game_port_);
+        ASSERT_FALSE_RETURN;
+    }
+
+    return kCommFaild;
+}
+
+int RobotNet::ResetInitDataWithLock() {
+    // 重置
+    if (kCommSucc != ResetDataWithLock()) {
+        ASSERT_FALSE_RETURN;
+        return kCommFaild;
+    }
+
+    // 重新初始化
+    if (kCommSucc != InitDataWithLock()) {
+        ASSERT_FALSE_RETURN;
+        return kCommFaild;
+    }
+    return kCommSucc;
+}
 // 具体业务
 
 // TODO 多个机器人服务器用了同个账号 踢人警告

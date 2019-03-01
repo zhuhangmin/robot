@@ -37,6 +37,13 @@ private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
     int SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo = true);
 
+    int ResetDataWithLock();
+
+    int InitDataWithLock();
+
+    // ResetDataWithLock + InitDataWithLock
+    int ResetInitDataWithLock();
+
 private:
     // 配置机器人ID 初始化后不在改变,不需要锁保护
     UserID userid_{0};
@@ -44,6 +51,10 @@ private:
     // 游戏连接
     std::mutex mutex_;
     CDefSocketClientPtr game_connection_;
+    std::string game_ip_;
+    int game_port_;
+    ThreadID game_notify_thread_id_;
+    int pulse_timeout_count_{0};
 
 };
 
