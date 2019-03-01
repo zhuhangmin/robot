@@ -47,7 +47,7 @@ int RobotNet::SendGameRequestWithLock(const RequestID requestid, const google::p
     }
 
     if (!game_connection_->IsConnected()) {
-        UWL_WRN("m_ConnGame not connected"); // invalid socket handle.
+        LOG_WARN("m_ConnGame not connected"); // invalid socket handle.
         ASSERT_FALSE_RETURN;
     }
 

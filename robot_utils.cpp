@@ -130,7 +130,7 @@ std::string RobotUtils::GetGameIP() {
 int RobotUtils::GetGamePort() {
     auto room_setting_map = SettingMgr.GetRoomSettingMap();
     if (room_setting_map.size() == 0) {
-        UWL_ERR(_T("room_setting_map empty"));
+        LOG_ERROR(_T("room_setting_map empty"));
         ASSERT_FALSE_RETURN;
     }
 

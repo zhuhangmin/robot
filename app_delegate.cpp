@@ -51,19 +51,19 @@ int AppDelegate::Init() {
         return kCommFaild;;
 
     if (kCommFaild == InitLanuch()) {
-        UWL_ERR(_T("InitBase() return failed"));
+        LOG_ERROR(_T("InitBase() return failed"));
         ASSERT_FALSE_RETURN;
     }
 
     // 配置数据类
     if (kCommFaild == SettingMgr.Init()) {
-        UWL_ERR(_T("SettingManager Init Failed"));
+        LOG_ERROR(_T("SettingManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
 
     // 机器人大厅管理类
     if (kCommFaild == HallMgr.Init()) {
-        UWL_ERR(_T("RobotHallManager Init Failed"));
+        LOG_ERROR(_T("RobotHallManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
 
@@ -71,20 +71,20 @@ int AppDelegate::Init() {
     /*auto game_port = RobotUtils::GetGamePort();
     auto game_ip = RobotUtils::GetGameIP();
     if (kCommFaild == GameMgr.Init(game_ip, game_port)) {
-    UWL_ERR(_T("RobotGameInfoManager Init Failed"));
+    LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
     ASSERT_FALSE;
     return kCommFaild;
     }*/
 
     // 机器人游戏管理类
     if (kCommFaild == RobotMgr.Init()) {
-        UWL_ERR(_T("RobotGameManager Init Failed"));
+        LOG_ERROR(_T("RobotGameManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
 
     // 机器人补银管理类
     if (kCommFaild == DepositMgr.Init()) {
-        UWL_ERR(_T("RobotDepositManager Init Failed"));
+        LOG_ERROR(_T("RobotDepositManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
 

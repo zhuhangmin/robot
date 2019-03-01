@@ -96,7 +96,7 @@ int RobotHallManager::OnHallNotify(const RequestID requestid, void* ntf_data_ptr
 }
 
 int RobotHallManager::OnDisconnHall() {
-    UWL_ERR(_T("与大厅服务断开连接"));
+    LOG_ERROR(_T("与大厅服务断开连接"));
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     ResetInitDataWithLock();
     return kCommSucc;
@@ -147,7 +147,7 @@ int RobotHallManager::LogonHall(const UserID userid) {
 
     SetLogonStatusWithLock(userid, HallLogonStatusType::kLogon);
 
-    UWL_INF("userid:%d logon hall ok.", userid);
+    LOG_INFO("userid:%d logon hall ok.", userid);
     return kCommSucc;
 }
 
@@ -267,7 +267,7 @@ int RobotHallManager::ConnectHallWithLock() {
         LOG_ERROR("[ROUTE] ConnectHall Faild! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
         ASSERT_FALSE_RETURN;
     }
-    UWL_INF("ConnectHall OK! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
+    LOG_INFO("ConnectHall OK! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
     return kCommSucc;
 }
 

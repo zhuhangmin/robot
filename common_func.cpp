@@ -21,13 +21,13 @@ int ParseFromRequest(const REQUEST &req, google::protobuf::Message &val) {
     int repeated = req.head.nRepeated;
     int len = req.nDataLen - repeated * sizeof(CONTEXT_HEAD);
     if (len <= 0) {
-        UWL_WRN("Invalid req. repeated = %d, datalen = %d", repeated, req.nDataLen);
+        LOG_WARN("Invalid req. repeated = %d, datalen = %d", repeated, req.nDataLen);
         return kCommFaild;
     }
 
     char *data = (char *) (req.pDataPtr) + repeated * sizeof(CONTEXT_HEAD);
     if (true != val.ParseFromArray(data, len)) {
-        UWL_WRN("ParseArray faild. req=%d");
+        LOG_WARN("ParseArray faild. req=%d");
         return kCommFaild;
     }
 
@@ -38,7 +38,7 @@ std::string GetStringFromPb(const google::protobuf::Message& val) {
     std::string msg;
     bool is_true = google::protobuf::TextFormat::PrintToString(val, &msg);
     if (false == is_true) {
-        UWL_WRN("PrintToString return false.");
+        LOG_WARN("PrintToString return false.");
         return msg;
     }
 

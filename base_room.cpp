@@ -33,12 +33,12 @@ int BaseRoom::PlayerEnterGame(const UserPtr &user) {
 
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
     if (kCommSucc != table->BindPlayer(user)) {
-        UWL_WRN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
@@ -51,12 +51,12 @@ int BaseRoom::BindPlayer(const UserPtr &user) {
     auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
     if (kCommSucc != table->BindPlayer(user)) {
-        UWL_WRN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
     return kCommSucc;
@@ -68,12 +68,12 @@ int BaseRoom::UserLeaveGame(const UserID userid, const TableNO tableno) {
 
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        UWL_WRN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
+        LOG_WARN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
         return kCommFaild;
     }
 
     if (!IsValidTable(table->get_table_no())) {
-        UWL_WRN("Get table[%d] faild", tableno);
+        LOG_WARN("Get table[%d] faild", tableno);
         return kCommFaild;
     }
 
@@ -90,12 +90,12 @@ int BaseRoom::UnbindUser(const UserID userid, const TableNO tableno) {
     //V524 It is odd that the body of 'UnbindUser' function is fully equivalent to the body of 'UserLeaveGame' function.base_room.cpp 91
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        UWL_WRN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
+        LOG_WARN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
         return kCommFaild;
     }
 
     if (!IsValidTable(table->get_table_no())) {
-        UWL_WRN("Get table[%d] faild", tableno);
+        LOG_WARN("Get table[%d] faild", tableno);
         return kCommFaild;
     }
 
@@ -111,12 +111,12 @@ int BaseRoom::UserGiveUp(const UserID userid, const TableNO tableno) {
 
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        UWL_WRN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
+        LOG_WARN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
         return kCommFaild;
     }
 
     if (!IsValidTable(table->get_table_no())) {
-        UWL_WRN("Get table[%d] faild", tableno);
+        LOG_WARN("Get table[%d] faild", tableno);
         return kCommFaild;
     }
 
@@ -126,36 +126,36 @@ int BaseRoom::UserGiveUp(const UserID userid, const TableNO tableno) {
 int BaseRoom::Looker2Player(UserPtr &user) {
     CHECK_USER(user);
     if (!IsValidDeposit(user->get_deposit())) {
-        UWL_WRN("user[%d] deposit[%I64d] invalid.", user->get_user_id(), user->get_deposit());
+        LOG_WARN("user[%d] deposit[%I64d] invalid.", user->get_user_id(), user->get_deposit());
         return kInvalidDeposit;
     }
 
     auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
     if (!IsValidTable(table->get_table_no())) {
-        UWL_WRN("Get table[%d] faild", user->get_table_no());
+        LOG_WARN("Get table[%d] faild", user->get_table_no());
         return kCommFaild;
     }
 
     if (!table->IsTableUser(user->get_user_id())) {
-        UWL_WRN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
+        LOG_WARN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
         return kCommFaild;
     }
 
     if (table->IsTablePlayer(user->get_user_id())) {
-        UWL_WRN("Looker2Player succ. but user[%d] is player.", user->get_user_id());
+        LOG_WARN("Looker2Player succ. but user[%d] is player.", user->get_user_id());
         user->set_chair_no(table->GetUserChair(user->get_user_id()));
         return kCommSucc;
     }
 
     int ret = table->BindPlayer(user);
     if (ret != kCommSucc) {
-        UWL_WRN("user[%d] BindPlayer faild. ret=%d", user->get_user_id(), ret);
+        LOG_WARN("user[%d] BindPlayer faild. ret=%d", user->get_user_id(), ret);
         return kCommFaild;
     }
 
@@ -167,17 +167,17 @@ int BaseRoom::Player2Looker(UserPtr &user) {
     auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
     if (!IsValidTable(table->get_table_no())) {
-        UWL_WRN("Get table[%d] faild", user->get_table_no());
+        LOG_WARN("Get table[%d] faild", user->get_table_no());
         return kCommFaild;
     }
 
     if (!table->IsTablePlayer(user->get_user_id())) {
-        UWL_WRN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
+        LOG_WARN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
         return kCommFaild;
     }
 
@@ -197,14 +197,14 @@ int BaseRoom::LookerEnterGame(const UserPtr &user) {
     CHECK_USER(user);
     TableNO target_tableno = user->get_table_no();
     if (false == IsValidTable(target_tableno)) {
-        UWL_WRN("Get table[%d] faild", target_tableno);
+        LOG_WARN("Get table[%d] faild", target_tableno);
         return kCommFaild;
     }
 
     auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        UWL_WRN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
         return kCommFaild;
     }
     if (kCommSucc != table->BindLooker(user)) {
@@ -238,7 +238,7 @@ int BaseRoom::AddTable(const TableNO tableno, const TablePtr& table) {
 int BaseRoom::GetTable(const TableNO tableno, TablePtr& table) const {
     CHECK_TABLENO(tableno);
     if (!IsValidTable(tableno)) {
-        UWL_WRN("GetTable faild. valid tableno[%d]", tableno);
+        LOG_WARN("GetTable faild. valid tableno[%d]", tableno);
         return kCommFaild;
     }
 

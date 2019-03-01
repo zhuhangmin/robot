@@ -9,8 +9,6 @@ int SettingManager::Init() {
         LOG_ERROR("InitSetting() failed");
         ASSERT_FALSE_RETURN;
     }
-    UWL_INF("InitSetting robot Count = %d", robot_setting_map_.size());
-
     return kCommSucc;
 }
 

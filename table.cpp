@@ -185,7 +185,7 @@ int Table::AddTableUserInfo(UserID userid, TableUserInfo table_user_info) {
 int Table::GiveUp(int userid) {
     CHECK_USERID(userid);
     if (!IS_BIT_SET(get_table_status(), kTablePlaying)) {
-        UWL_WRN("user[%d] giveup, but not playing.", userid);
+        LOG_WARN("user[%d] giveup, but not playing.", userid);
         return kCommFaild;
     }
 
@@ -211,7 +211,7 @@ int Table::RefreshGameResult(int userid) {
     CHECK_USERID(userid);
     int chairno = GetUserChair(userid);
     if (!IsValidChairno(chairno)) {
-        UWL_WRN("user[%d] is not player.", userid);
+        LOG_WARN("user[%d] is not player.", userid);
         return kCommFaild;
     }
 

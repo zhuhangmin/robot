@@ -12,8 +12,6 @@
 int RobotDepositManager::Init() {
     LOG_FUNC("[START ROUTINE]");
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
-
-    UWL_INF("RobotDepositManager::Init Sucessed.");
     return kCommSucc;
 }
 

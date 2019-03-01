@@ -15,7 +15,7 @@ int RobotNetManager::Init() {
     LOG_FUNC("[START ROUTINE]");
     robot_heart_timer_thread_.Initial(std::thread([this] {this->ThreadRobotPulse(); }));
     robot_notify_thread_.Initial(std::thread([this] {this->ThreadRobotNotify(); }));
-    UWL_INF("RobotGameManager::Init Sucessed.");
+    LOG_INFO("RobotGameManager::Init Sucessed.");
     return kCommSucc;
 }
 
