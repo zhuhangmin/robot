@@ -5,7 +5,7 @@
 
     "main_interval": 1000,
 
-    "deposit_interval": 1000,
+    "deposit_interval": 10000,
 
     "deposit_active_id" : "33",
 
@@ -16,6 +16,8 @@
     "deposit_gain_amount": 200000,
 
     "deposit_back_amount": 200000,
+
+    "deposit_init_gain": 1,
     
     "rooms":[
         {"roomid":7846, "count":1},

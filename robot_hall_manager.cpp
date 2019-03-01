@@ -232,7 +232,7 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
     BOOL timeout = FALSE;
     BOOL result = hall_connection_->SendRequest(&Context, &Request, &Response, timeout, RequestTimeOut);
 
-    if (kCommSucc != result) {
+    if (!result) {
         LOG_ERROR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", timeout, requestid);
         ASSERT_FALSE;
         if (RobotErrorCode::kOperationFailed == result) {
@@ -299,7 +299,7 @@ int RobotHallManager::SendGetRoomDataWithLock(const RoomID roomid) {
     std::shared_ptr<void> pRetData;
     int nDataLen = sizeof(GET_ROOM);
     auto result = SendHallRequestWithLock(GR_GET_ROOM, nDataLen, &gr, nRespID, pRetData);
-    if (kCommFaild != result) {
+    if (kCommSucc != result) {
         LOG_ERROR("SendHallRequest GR_GET_ROOM fail nRoomId = %d, nResponse = %d", roomid, nRespID);
         ASSERT_FALSE_RETURN;
     }
