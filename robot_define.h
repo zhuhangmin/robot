@@ -1,10 +1,12 @@
 #pragma once
 
-#define  STRICT_ASSERT
+//#define  STRICT_ASSERT
 
 #ifdef STRICT_ASSERT
-#define  ASSERT_FALSE_RETURN  assert(false); return kCommFaild;
+#define  ASSERT_FALSE assert(false);
+#define  ASSERT_FALSE_RETURN assert(false); return kCommFaild;
 #else
+#define  ASSERT_FALSE
 #define  ASSERT_FALSE_RETURN   return kCommFaild;
 #endif
 
@@ -35,19 +37,23 @@ const int InvalidCount = -1;
 
 const int MS_PER_SECOND = 1000;  // ms
 
-const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间
+const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间 4
 
-const int PluseInterval = 1 * MS_PER_SECOND; // 心跳时间间隔
+const int PulseInterval = 1 * MS_PER_SECOND; // 心跳时间间隔 60
 
-const int HttpTimeOut = 5 * MS_PER_SECOND;
+const int HttpTimeOut = 5 * MS_PER_SECOND; // 5
 
-const int MainInterval = 10 * MS_PER_SECOND; // 主循环时间间隔
+const int MainInterval = 10 * MS_PER_SECOND; // 主循环时间间隔 10
 
-const int DepositInterval = 10 * MS_PER_SECOND; // 补银时间间隔
+const int DepositInterval = 10 * MS_PER_SECOND; // 补银时间间隔  10
 
 const int GainAmount = 200000;
 
 const int BackAmount = 200000;
+
+const int InitGainFlag = 1;
+
+const int MaxPluseTimeOutCount = 3;
 
 // 业务类型定义
 using UserID = int32_t;
@@ -68,8 +74,8 @@ using ThreadID = uint32_t;
 
 using NeedCount = uint32_t;
 
-enum ERROR_CODE {
-    kConnectionNotExist = -1000, // "与服务器连接不存在"
+enum RobotErrorCode {
+    kConnectionNotExist = -6666, // "与服务器连接不存在"
     kConnectionDisable, // "ROOM_SOCKET_ERROR"
     kConnectionTimeOut, // "ROOM_REQUEST_TIEM_OUT"
     kOperationFailed, // "操作失败"

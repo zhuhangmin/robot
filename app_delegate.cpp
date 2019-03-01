@@ -88,6 +88,9 @@ int AppDelegate::Init() {
         ASSERT_FALSE_RETURN;
     }
 
+    // 是否启动时集体补银
+    DepositGainAll();
+
     // 主流程
     main_timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
 
@@ -194,13 +197,22 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
         ASSERT_FALSE_RETURN;
     }
 
-    if (kCommFaild == robot->SendEnterGame(roomid)) {
-        ASSERT_FALSE_RETURN;
+    //TODO 需要大厅提供错误码
+    auto resp_code = robot->SendEnterGame(roomid);
+    if (kCommSucc !=resp_code) {
+        // 银子不够or太多，设置标签，补银还银线程处理
+        if (kDepositUnderFlow == resp_code) {
+            DepositMgr.SetDepositType(userid, DepositType::kGain);
+
+        } else if (kDepositOverFlow == resp_code) {
+            DepositMgr.SetDepositType(userid, DepositType::kBack);
+
+        } else {
+            ASSERT_FALSE_RETURN;
+
+        }
     }
 
-    //TODO 
-    // HANDLE EXCEPTION
-    // DEPOSIT OVERFLOW UNDERFLOW
 
     return kCommSucc;
 }
@@ -261,6 +273,18 @@ int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
             // 需要一次上多个机器人使用：
             // room_need_count_map[roomid] = need_count;
         }
+    }
+
+    return kCommSucc;
+}
+
+int AppDelegate::DepositGainAll() {
+    if (InitGainFlag  != SettingMgr.GetDeposiInitGainFlag()) return kCommSucc;
+
+    auto robot_setting_map = SettingMgr.GetRobotSettingMap();
+    for (auto& kv : robot_setting_map) {
+        auto userid = kv.first;
+        DepositMgr.SetDepositType(userid, DepositType::kGain);
     }
 
     return kCommSucc;

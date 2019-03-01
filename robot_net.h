@@ -2,7 +2,7 @@
 #include "robot_define.h"
 
 
-
+//TODO 加入机器人独离操作
 class RobotNet {
 public:
     RobotNet(UserID userid);
@@ -12,13 +12,10 @@ public:
     int ConnectGame(const std::string& game_ip, const int game_port, const ThreadID game_notify_thread_id);
 
     // 游戏 断开
-    int DisconnectGame();
+    int OnDisconnGame();
 
     // 游戏 连接状态
     BOOL IsConnected();
-
-public:
-    // 具体业务
 
     // 进入游戏
     int SendEnterGame(const RoomID roomid);

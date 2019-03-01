@@ -7,6 +7,14 @@ public:
 
     int Term();
 
+public:
+    // 设置 补银还银状态
+    int SetDepositType(const UserID userid, const DepositType type);
+
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
+
 protected:
     SINGLETION_CONSTRUCTOR(RobotDepositManager);
 
@@ -14,24 +22,11 @@ private:
     // 后台 补银定时器
     int ThreadDeposit();
 
-private:
-    // 具体业务
-
     // 后台 补银
     int RobotGainDeposit(const UserID userid, const int amount) const;
 
     // 后台 还银
     int RobotBackDeposit(const UserID userid, const int amount) const;
-
-private:
-    // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
-    int GetDepositTypeWithLock(const UserID& userid, DepositType& type) const;
-
-    int SetDepositTypesWithLock(const UserID userid, const DepositType type);
-
-public:
-    // 对象状态快照
-    int SnapShotObjectStatus();
 
 private:
     // 后台补银 数据锁
@@ -42,6 +37,8 @@ private:
 
     // 后台补银 定时器线程
     YQThread	deposit_timer_thread_;
+
+
 
 };
 

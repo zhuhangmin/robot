@@ -248,8 +248,6 @@ int BaseRoom::GetTable(const TableNO tableno, TablePtr& table) const {
 }
 
 int BaseRoom::SnapShotObjectStatus() {
-    LOG_FUNC("[SNAPSHOT] BEG");
-
     LOG_INFO("OBJECT ADDRESS [%x]", this);
 
     LOG_INFO("room_id_ [%d]", room_id_);
@@ -261,8 +259,6 @@ int BaseRoom::SnapShotObjectStatus() {
     for (auto& table : tables_) {
         table->SnapShotObjectStatus();
     }
-
-    LOG_FUNC("[SNAPSHOT] END");
 
     return kCommSucc;
 }

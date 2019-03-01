@@ -100,8 +100,6 @@ int UserManager::GetNormalUserCountInRoom(const RoomID roomid, int& count) const
 
 int UserManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
-    LOG_FUNC("[SNAPSHOT] BEG");
-
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("users_ size [%d]", user_map_.size());
 
@@ -112,15 +110,12 @@ int UserManager::SnapShotObjectStatus() {
         user->SnapShotObjectStatus();
     }
 
-    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }
 
 
 int UserManager::SnapShotUser(UserID userid) {
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
-    LOG_FUNC("[SNAPSHOT] BEG");
-
     UserPtr user;
     if (kCommSucc != GetUserWithLock(userid, user)) {
         return kCommFaild;
@@ -128,7 +123,6 @@ int UserManager::SnapShotUser(UserID userid) {
 
     user->SnapShotObjectStatus();
 
-    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }
 

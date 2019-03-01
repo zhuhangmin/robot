@@ -34,6 +34,9 @@ private:
     // 获得房间此时需要的机器人数量
     int GetRoomNeedCountMap(RoomNeedCountMap& room_count_map);
 
+    // 启动时集体补银
+    int DepositGainAll();
+
 private:
     // @zhuhangmin 20190228
     // 注意： 主流程 单线程

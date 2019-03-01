@@ -28,7 +28,7 @@ int RobotDepositManager::ThreadDeposit() {
     LOG_INFO("[START ROUTINE] RobotDepositManager Deposit thread [%d] started", GetCurrentThreadId());
 
     while (true) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, DepositInterval);
+        DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetDepositInterval());
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
@@ -61,20 +61,18 @@ int RobotDepositManager::ThreadDeposit() {
 
 int RobotDepositManager::RobotGainDeposit(const UserID userid, const int amount) const {
     CHECK_USERID(userid);
-    if (amount <= 0) {
-        ASSERT_FALSE_RETURN;
-    }
-    static TCHAR szHttpUrl[128];
-    static int nResult = GetPrivateProfileString(_T("robot_depoist"), _T("deposit_gain_url"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
-    if (0 == strcmp(szHttpUrl, "null"))
-        return kCommFaild;
+    if (amount <= 0) ASSERT_FALSE_RETURN;
 
     GameID game_id = SettingMgr.GetGameID();
     CHECK_GAMEID(game_id);
-    TCHAR szValue[128] = {};
-    GetPrivateProfileString(_T("robot_depoist"), "deposit_active_id", _T("null"), szValue, sizeof(szValue), g_szIniFile);
-    if (0 == strcmp(szValue, "null"))
-        return kCommFaild;
+
+    auto active_id = SettingMgr.GetDepositActiveID();
+    if (active_id.empty()) ASSERT_FALSE_RETURN;
+    auto szValue = active_id.c_str();
+
+    auto url = SettingMgr.GetDepositGainUrl();
+    if (url.empty()) ASSERT_FALSE_RETURN;
+    auto szHttpUrl = url.c_str();
 
     Json::Value root;
     Json::FastWriter fast_writer;
@@ -92,33 +90,29 @@ int RobotDepositManager::RobotGainDeposit(const UserID userid, const int amount)
     CString strResult = RobotUtils::ExecHttpRequestPost(szHttpUrl, strParam);
     Json::Reader reader;
     Json::Value _root;
-    if (!reader.parse((LPCTSTR) strResult, _root))
-        return kCommFaild;
-    if (_root["Code"].asInt() != 0) {
-        UWL_ERR("userid = %d gain deposit fail, code = %d, strResult = %s", userid, _root["Code"].asInt(), strResult);
-        //ASSERT_FALSE;
-        return kCommFaild;
-    }
+    if (!reader.parse((LPCTSTR) strResult, _root)) ASSERT_FALSE_RETURN;
 
+    if (_root["Code"].asInt() != 0) {
+        LOG_ERROR("userid = %d gain deposit fail, code = %d, strResult = %s", userid, _root["Code"].asInt(), strResult);
+        ASSERT_FALSE_RETURN
+    }
     return kCommSucc;
 }
 
 int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount) const {
     CHECK_USERID(userid);
-    if (amount <= 0) {
-        ASSERT_FALSE_RETURN;
-    }
-    static TCHAR szHttpUrl[128];
-    static int nResult = GetPrivateProfileString(_T("robot_depoist"), _T("deposit_back_url"), _T("null"), szHttpUrl, sizeof(szHttpUrl), g_szIniFile);
-    if (0 == strcmp(szHttpUrl, "null"))
-        return kCommFaild;
+    if (amount <= 0) ASSERT_FALSE_RETURN;
 
     GameID game_id = SettingMgr.GetGameID();
     CHECK_GAMEID(game_id);
-    TCHAR szValue[128] = {};
-    GetPrivateProfileString(_T("robot_depoist"), "deposit_active_id", _T("null"), szValue, sizeof(szValue), g_szIniFile);
-    if (0 == strcmp(szValue, "null"))
-        return kCommFaild;
+
+    auto active_id = SettingMgr.GetDepositActiveID();
+    if (active_id.empty()) ASSERT_FALSE_RETURN;
+    auto szValue = active_id.c_str();
+
+    auto url = SettingMgr.GetDepositBackUrl();
+    if (url.empty()) ASSERT_FALSE_RETURN;
+    auto szHttpUrl = url.c_str();
 
     Json::Value root;
     Json::FastWriter fast_writer;
@@ -136,36 +130,27 @@ int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount)
     CString strResult = RobotUtils::ExecHttpRequestPost(szHttpUrl, strParam);
     Json::Reader reader;
     Json::Value _root;
-    if (!reader.parse((LPCTSTR) strResult, _root))
-        return kCommFaild;
-    if (!_root["Status"].asBool())
-        return kCommFaild;
+    if (!reader.parse((LPCTSTR) strResult, _root)) ASSERT_FALSE_RETURN;
+
+    if (_root["Code"].asInt() != 0) {
+        LOG_ERROR("userid = %d gain deposit fail, code = %d, strResult = %s", userid, _root["Code"].asInt(), strResult);
+        ASSERT_FALSE_RETURN
+    }
     return kCommSucc;
 }
 
-int RobotDepositManager::GetDepositTypeWithLock(const UserID& userid, DepositType& type) const {
+int RobotDepositManager::SetDepositType(const UserID userid, const DepositType type) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(deposit_map_mutex_);
-    auto& iter = deposit_map_.find(userid);
-    if (iter == deposit_map_.end()) {
-        return kCommFaild;
+    if (deposit_map_.find(userid) == deposit_map_.end()) {
+        deposit_map_[userid] = type;
     }
 
-    type = iter->second;
-    return kCommSucc;
-}
-
-int RobotDepositManager::SetDepositTypesWithLock(const UserID userid, const DepositType type) {
-    CHECK_USERID(userid);
-    std::lock_guard<std::mutex> lock(deposit_map_mutex_);
-    deposit_map_[userid] = type;
     return kCommSucc;
 }
 
 int RobotDepositManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(deposit_map_mutex_);
-    LOG_FUNC("[SNAPSHOT] BEG");
-
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("deposit_timer_thread_ [%d]", deposit_timer_thread_.ThreadId());
     LOG_INFO("deposit_map_ size [%d]", deposit_map_.size());
@@ -175,6 +160,5 @@ int RobotDepositManager::SnapShotObjectStatus() {
         LOG_INFO("robot userid [%d] status [%d]", userid, status);
     }
 
-    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }

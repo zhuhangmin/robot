@@ -6,7 +6,7 @@
 int SettingManager::Init() {
     LOG_FUNC("[START ROUTINE]");
     if (kCommSucc != InitSetting()) {
-        UWL_ERR("InitSetting() failed");
+        LOG_ERROR("InitSetting() failed");
         ASSERT_FALSE_RETURN;
     }
     UWL_INF("InitSetting robot Count = %d", robot_setting_map_.size());
@@ -17,6 +17,10 @@ int SettingManager::Init() {
 int SettingManager::Term() {
     LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
+}
+
+std::string& SettingManager::GetDepositActiveID() {
+    return deposit_active_id_;
 }
 
 int SettingManager::InitSetting() {
@@ -71,16 +75,27 @@ int SettingManager::InitSetting() {
     if (root.isMember("deposit_interval"))
         deposit_interval_ = root["deposit_interval"].asInt();
 
+    if (root.isMember("deposit_active_id"))
+        deposit_active_id_ = root["deposit_active_id"].asString();
+
     if (root.isMember("gain_amount"))
         gain_amount_ = root["gain_amount"].asInt();
 
     if (root.isMember("back_amount"))
         back_amount_ = root["back_amount"].asInt();
 
+    if (root.isMember("deposit_gain_url"))
+        deposit_gain_url_ = root["deposit_gain_url"].asString();
+
+    if (root.isMember("deposit_back_url"))
+        deposit_back_url_ = root["deposit_back_url"].asString();
+
+    if (root.isMember("deposit_init_gain"))
+        deposit_init_gain_ = root["deposit_init_gain"].asInt();
 
     // check
     if (InvalidGameID == game_id_) {
-        UWL_ERR("game_id_ = %d", InvalidGameID);
+        LOG_ERROR("game_id_ = %d", InvalidGameID);
         ASSERT_FALSE_RETURN;
     }
 
@@ -124,9 +139,15 @@ GameID SettingManager::GetGameID() const {
     return game_id_;
 }
 
-int SettingManager::SnapShotObjectStatus() const {
-    LOG_FUNC("[SNAPSHOT] BEG");
+std::string& SettingManager::GetDepositGainUrl() {
+    return deposit_gain_url_;
+}
 
+std::string& SettingManager::GetDepositBackUrl() {
+    return deposit_back_url_;
+}
+
+int SettingManager::SnapShotObjectStatus() const {
     LOG_INFO("OBJECT ADDRESS = %x", this);
     LOG_INFO("game_id_ [%d]", game_id_);
     LOG_INFO("main_interval_ [%d]", main_interval_);
@@ -150,9 +171,21 @@ int SettingManager::SnapShotObjectStatus() const {
         LOG_INFO("roomid [%d]  count [%d]", roomid, setting.count);
     }
 
-    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }
 
+int SettingManager::GetRandomUserID(UserID& random_userid) const {
+    // Ëæ»úÑ¡È¡userid
+    auto random_pos = 0;
+    if (kCommFaild == RobotUtils::GenRandInRange(0, robot_setting_map_.size() - 1, random_pos)) {
+        ASSERT_FALSE_RETURN;
+    }
+    auto random_it = std::next(std::begin(robot_setting_map_), random_pos);
+    random_userid = random_it->first;
+    return kCommSucc;
+}
 
+int SettingManager::GetDeposiInitGainFlag() const {
+    return deposit_init_gain_;
+}
 

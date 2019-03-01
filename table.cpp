@@ -132,7 +132,7 @@ int Table::GetUserChair(int userid) {
 int Table::GetChairInfoByChairno(int chairno, ChairInfo& info) {
     CHECK_CHAIRNO(chairno);
     if (!IsValidChairno(chairno)) {
-        UWL_ERR("Invalid chairno[%d]", chairno);
+        LOG_ERROR("Invalid chairno[%d]", chairno);
         return kCommFaild;
     }
 
@@ -219,8 +219,6 @@ int Table::RefreshGameResult(int userid) {
 }
 
 int Table::SnapShotObjectStatus() {
-    LOG_FUNC("[SNAPSHOT] BEG");
-
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("table_no_ [%d] table_status_ [%d] chair_count_ [%d] banker_chair_ [%d] base_deposit_ [%d] room_id_ [%d] ", table_no_, table_status_, chair_count_, banker_chair_, base_deposit_, room_id_);
 
@@ -236,7 +234,5 @@ int Table::SnapShotObjectStatus() {
         LOG_INFO("table userid [%d] user_type_ [%d] bind_timestamp_ [%d]", tableinfo.get_userid(), tableinfo.get_user_type(), tableinfo.get_bind_timestamp());
     }
 
-
-    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }

@@ -24,7 +24,7 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
     std::unique_ptr<char[]> data(new char[val.ByteSize()]);
     bool is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
     if (false == is_succ) {
-        UWL_ERR("SerializePartialToArray failed.");
+        LOG_ERROR("SerializePartialToArray failed.");
         return kCommFaild;
     }
 
@@ -33,11 +33,14 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
     BOOL timeout = false;
     BOOL result = connection->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
 
-    if (!result)///if timeout or disconnect 
-    {
-        UWL_ERR("send request fail");
-        assert(false);
-        return timeout ? ERROR_CODE::kConnectionDisable : ERROR_CODE::kOperationFailed;
+    if (!result) {
+        LOG_ERROR("send request fail");
+        ASSERT_FALSE;
+        if (timeout) {
+            LOG_WARN("connection addr [%x] time out requestid = [%d]", connection, requestid);
+            return RobotErrorCode::kConnectionTimeOut;
+        }
+        return RobotErrorCode::kOperationFailed;
     }
 
     auto responseid = response.head.nRequest;
@@ -105,7 +108,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
 
 int RobotUtils::GenRandInRange(int min_value, int max_value, int& random_result) {
     if (max_value < min_value) {
-        UWL_ERR("MAX VALUE %d smaller than SMALL VALUE %d", max_value, min_value);
+        LOG_ERROR("MAX VALUE %d smaller than SMALL VALUE %d", max_value, min_value);
         assert(0);
         return kCommFaild;
     }
@@ -139,7 +142,7 @@ int RobotUtils::GetGamePort() {
 
     HallRoomData hall_room_data;
     if (kCommFaild == HallMgr.GetHallRoomData(room_id, hall_room_data)) {
-        UWL_ERR("GetHallRoomData room id = %d failed", room_id);
+        LOG_ERROR("GetHallRoomData room id = %d failed", room_id);
         ASSERT_FALSE_RETURN;
     }
 

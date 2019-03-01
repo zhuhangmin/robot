@@ -25,15 +25,30 @@ public:
     // 补银定时器间隔
     int GetDepositInterval() const;
 
+    // 补银活动ID
+    std::string& GetDepositActiveID();
+
     // 每次补银数量
     int GetGainAmount() const;
 
     // 每次还银数量
     int GetBackAmount() const;
 
+    // 补银url
+    std::string& GetDepositGainUrl();
+
+    // 还银url
+    std::string& GetDepositBackUrl();
+
 public:
     // 对象状态快照
     int SnapShotObjectStatus() const;
+
+    // 获得随机userid
+    int GetRandomUserID(UserID& random_userid) const;
+
+    // 启动时是否集体补银
+    int GetDeposiInitGainFlag() const;
 
 protected:
     SINGLETION_CONSTRUCTOR(SettingManager);
@@ -52,9 +67,19 @@ private:
 
     int deposit_interval_{DepositInterval};
 
+    int deposit_init_gain_{InitGainFlag};
+
     int gain_amount_{GainAmount};
 
     int back_amount_{BackAmount};
+
+    std::string deposit_active_id_;
+
+    std::string deposit_gain_url_;
+
+    std::string deposit_back_url_;
+
+
 
     //TODO HOT UPDATE NEED RESET AND LOCK?
 };

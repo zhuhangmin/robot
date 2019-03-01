@@ -18,14 +18,14 @@ int RobotNet::ConnectGame(const std::string& game_ip, const int game_port, const
     game_connection_ = std::make_shared<CDefSocketClient>();
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!game_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_notify_thread_id, 0, GetHelloData(), GetHelloLength())) {
-        UWL_ERR("ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
+        LOG_ERROR("ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
         ASSERT_FALSE_RETURN;
     }
 
     return kCommFaild;
 }
 
-int RobotNet::DisconnectGame() {
+int RobotNet::OnDisconnGame() {
     std::lock_guard<std::mutex> lock(mutex_);
     game_connection_->DestroyEx();
     return kCommSucc;
@@ -34,7 +34,7 @@ int RobotNet::DisconnectGame() {
 BOOL RobotNet::IsConnected() {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!game_connection_) {
-        UWL_ERR("m_ConnGame is nil");
+        LOG_ERROR("m_ConnGame is nil");
         ASSERT_FALSE_RETURN;
     }
     return game_connection_->IsConnected();
@@ -43,7 +43,7 @@ BOOL RobotNet::IsConnected() {
 int RobotNet::SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo /*= true*/) {
     CHECK_REQUESTID(requestid);
     if (!game_connection_) {
-        UWL_ERR("m_ConnGame is nil");
+        LOG_ERROR("m_ConnGame is nil");
         ASSERT_FALSE_RETURN;
     }
 
@@ -55,13 +55,19 @@ int RobotNet::SendGameRequestWithLock(const RequestID requestid, const google::p
 
     int result = RobotUtils::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
     if (result != kCommSucc) {
-        UWL_ERR("game send quest fail");
+        LOG_ERROR("game send quest fail");
+        if (result == RobotErrorCode::kOperationFailed) {
+
+        }
+
         ASSERT_FALSE_RETURN;
     }
     return result;
 }
 
 // 具体业务
+
+// TODO 多个机器人服务器用了同个账号 踢人警告
 int RobotNet::SendEnterGame(const RoomID roomid) {
     CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(mutex_);
@@ -78,19 +84,19 @@ int RobotNet::SendEnterGame(const RoomID roomid) {
 
     auto result = SendGameRequestWithLock(GR_ENTER_NORMAL_GAME, val, response);
     if (kCommSucc != result) {
-        UWL_ERR("ParseFromRequest faild.");
+        LOG_ERROR("ParseFromRequest faild.");
         return kCommFaild;
     }
 
     game::base::EnterNormalGameResp resp;
     int ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
-        UWL_ERR("ParseFromRequest faild.");
+        LOG_ERROR("ParseFromRequest faild.");
         return kCommFaild;
     }
 
     if (kCommSucc != resp.code()) {
-        UWL_ERR("enter game faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(val).c_str());
+        LOG_ERROR("enter game faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(val).c_str());
         return resp.code();
     }
 
@@ -119,12 +125,9 @@ UserID RobotNet::GetUserID() const {
 
 int RobotNet::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG_FUNC("[SNAPSHOT] BEG");
-
     LOG_INFO("OBJECT ADDRESS = %x", this);
     LOG_INFO("userid [%d]", userid_);
     LOG_INFO("token [%d]", game_connection_->GetTokenID());
 
-    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }

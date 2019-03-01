@@ -5,7 +5,6 @@
 #include "main.h"
 #include "app_delegate.h"
 #include "robot_define.h"
-#include "memory_statistic.h"
 #include "setting_manager.h"
 #include "robot_net_manager.h"
 #include "game_net_manager.h"
@@ -13,6 +12,7 @@
 #include "robot_hall_manager.h"
 #include "user_manager.h"
 #include "room_manager.h"
+#include "robot_utils.h"
 #pragma comment(lib,  "dbghelp.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -125,7 +125,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     GetPrivateProfileString("service", "display_name", DISPLAY_NAME, displayName, MAX_PATH, szIniFile);
 
     if (strcmp(szExeName, serviceName) != 0) {
-        UWL_ERR("szExeName[%s] != serviceName[%s]", szExeName, serviceName);
+        LOG_ERROR("szExeName[%s] != serviceName[%s]", szExeName, serviceName);
         nRetCode = -1;
         return nRetCode;
     }
@@ -160,11 +160,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         ch = _getch();
         ch = toupper(ch);
 
-        if (ch == 'M') {
-            MEMORY_SNAPSHOT();
-        }
-
         if (ch == 'S') {
+            LOG_INFO("-------------[STATUS SNAPSHOT]-------------");
             SettingMgr.SnapShotObjectStatus();
             RobotMgr.SnapShotObjectStatus();
             GameMgr.SnapShotObjectStatus();
@@ -172,6 +169,15 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
             HallMgr.SnapShotObjectStatus();
             UserMgr.SnapShotObjectStatus();
             RoomMgr.SnapShotObjectStatus();
+        }
+
+        if (ch == 'D') {
+            LOG_INFO("-------------[DEPOSIT TEST]-------------");
+            UserID userid = InvalidUserID;
+            SettingMgr.GetRandomUserID(userid);
+            DepositMgr.SetDepositType(userid, DepositType::kBack);
+            SettingMgr.GetRandomUserID(userid);
+            DepositMgr.SetDepositType(userid, DepositType::kGain);
         }
 
 

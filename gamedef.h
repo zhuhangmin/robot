@@ -70,6 +70,10 @@ enum ErrorCode {
     kInvalidParam = -2,
     kInternalErr = -3,
 
+    //@zhuhangmin TODO 模板错误码定一
+    kDepositOverFlow = -100,
+    kDepositUnderFlow = -101,
+
     // 错误码分配原则：客户端需要处理的才分配错误码
     kInvalidUser = -1000,			// 用户不合法（token和entergame时保存的token不一致）
     kInvalidRoomID = -1001,			// 房间不存在

@@ -13,7 +13,7 @@
 
 int RobotNetManager::Init() {
     LOG_FUNC("[START ROUTINE]");
-    robot_heart_timer_thread_.Initial(std::thread([this] {this->ThreadRobotPluse(); }));
+    robot_heart_timer_thread_.Initial(std::thread([this] {this->ThreadRobotPulse(); }));
     robot_notify_thread_.Initial(std::thread([this] {this->ThreadRobotNotify(); }));
     UWL_INF("RobotGameManager::Init Sucessed.");
     return kCommSucc;
@@ -47,7 +47,7 @@ ThreadID RobotNetManager::GetRobotNotifyThreadID() {
 
 // 具体业务
 
-int RobotNetManager::SendGamePluse() {
+int RobotNetManager::SendGamePulse() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     for (auto& kv : robot_map_) {
         auto robot = kv.second;
@@ -84,16 +84,16 @@ int RobotNetManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& r
     return kCommSucc;
 }
 
-int RobotNetManager::ThreadRobotPluse() {
+int RobotNetManager::ThreadRobotPulse() {
     LOG_INFO("[START ROUTINE] RobotGameManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, PluseInterval);
+        DWORD dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
 
         if (WAIT_TIMEOUT == dwRet) {
-            SendGamePluse();
+            SendGamePulse();
         }
     }
     LOG_INFO("[EXIT ROUTINE] RobotGameManager KeepAlive thread [%d] exiting", GetCurrentThreadId());
@@ -137,7 +137,7 @@ int RobotNetManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr
     switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            robot->DisconnectGame();
+            robot->OnDisconnGame();
             break;
         default:
             break;
@@ -147,8 +147,6 @@ int RobotNetManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr
 
 int RobotNetManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
-    LOG_FUNC("[SNAPSHOT] BEG");
-
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("robot_notify_thread_ [%d]", robot_notify_thread_.ThreadId());
     LOG_INFO("robot_heart_timer_thread_ [%d]", robot_heart_timer_thread_.ThreadId());
@@ -171,7 +169,6 @@ int RobotNetManager::SnapShotObjectStatus() {
     str += "}";
 
     LOG_INFO("%s", str.c_str());
-    LOG_FUNC("[SNAPSHOT] END");
     return kCommSucc;
 }
 

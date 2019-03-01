@@ -33,8 +33,6 @@ const GameRoomMap& RoomManager::GetAllRooms() const {
 
 int RoomManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(rooms_mutex_);
-    LOG_FUNC("[SNAPSHOT] BEG");
-
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("rooms_ size [%d]", rooms_.size());
     for (auto& kv : rooms_) {
@@ -43,8 +41,6 @@ int RoomManager::SnapShotObjectStatus() {
         LOG_INFO("roomid [%d]", roomid);
         room->SnapShotObjectStatus();
     }
-
-    LOG_FUNC("[SNAPSHOT] END");
 
     return kCommSucc;
 }

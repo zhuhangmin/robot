@@ -23,7 +23,7 @@ protected:
 
 private:
     // 机器人 定时心跳
-    int ThreadRobotPluse();
+    int ThreadRobotPulse();
 
     // 机器人 消息接收
     int ThreadRobotNotify();
@@ -32,7 +32,7 @@ private:
     int OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id);
 
     // 机器人 发送心跳
-    int SendGamePluse();
+    int SendGamePulse();
 
 private:
     //辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
@@ -51,7 +51,7 @@ private:
     //机器人 数据锁
     mutable std::mutex robot_map_mutex_;
 
-    //机器人 游戏服务器连接集合
+    //机器人 游戏服务器连接集合 (只增不减)
     RobotMap robot_map_;
 
     //机器人 接收消息线程
