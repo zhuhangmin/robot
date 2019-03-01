@@ -102,10 +102,10 @@ public:
 
 private:
     // 接收 游戏服务器消息 线程
-    YQThread	game_info_notify_thread_;
+    YQThread game_info_notify_thread_;
 
     // 心跳 定时器 线程
-    YQThread	heart_timer_thread_;
+    YQThread heart_timer_thread_;
 
     // 游戏服务器 IP
     std::string game_ip_;
