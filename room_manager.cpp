@@ -13,9 +13,9 @@ int RoomManager::GetRoom(const RoomID roomid, RoomPtr& room) const {
 }
 
 int RoomManager::AddRoom(const RoomID roomid, const RoomPtr &room) {
+    std::lock_guard<std::mutex> lock(rooms_mutex_);
     CHECK_ROOMID(roomid);
     CHECK_ROOM(room);
-    std::lock_guard<std::mutex> lock(rooms_mutex_);
     rooms_[roomid] = room;
     return kCommSucc;
 }

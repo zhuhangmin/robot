@@ -47,15 +47,21 @@ ThreadID RobotNetManager::GetRobotNotifyThreadID() {
 
 // 具体业务
 
+// 让500个机器人均匀的发心跳 避免瞬时500个心跳触发获得业务锁，造成消息堆积
 int RobotNetManager::SendGamePulse() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     for (auto& kv : robot_map_) {
         auto robot = kv.second;
-        if (robot->IsConnected()) {
-            robot->SendGamePulse();
+        auto timestamp = robot->GetTimeStamp();
+        auto now = time(0);
+        if (timestamp - now > PulseInterval) {
+            robot->SetTimeStamp(now);
+            if (robot->IsConnected()) {
+                robot->SendGamePulse();
+            }
         }
-    }
 
+    }
     return kCommSucc;
 }
 
@@ -87,7 +93,7 @@ int RobotNetManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& r
 int RobotNetManager::ThreadRobotPulse() {
     LOG_INFO("[START ROUTINE] RobotGameManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
+        DWORD dwRet = WaitForSingleObject(g_hExitServer, RobotTimerInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }

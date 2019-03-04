@@ -16,7 +16,7 @@ int RobotNet::ConnectGame(const std::string& game_ip, const int game_port, const
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     game_ip_ = game_ip;
-    game_port_ = game_port_;
+    game_port_ = game_port;
     game_notify_thread_id_ = game_notify_thread_id;
     if (kCommSucc !=InitDataWithLock()) {
         ASSERT_FALSE_RETURN;
@@ -51,26 +51,7 @@ int RobotNet::SendGameRequestWithLock(const RequestID requestid, const google::p
         ASSERT_FALSE_RETURN;
     }
 
-    int result = RobotUtils::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
-    if (result != kCommSucc) {
-        LOG_ERROR("game send quest fail");
-        if (result == RobotErrorCode::kOperationFailed) {
-            ResetInitDataWithLock();
-            return RobotErrorCode::kOperationFailed;
-        }
-
-        if (result == RobotErrorCode::kConnectionTimeOut) {
-            pulse_timeout_count_++;
-            if (pulse_timeout_count_ == MaxPluseTimeOutCount) {
-                ResetInitDataWithLock();
-            }
-            return RobotErrorCode::kConnectionTimeOut;
-        }
-
-        ASSERT_FALSE;
-        return result;
-    }
-    return result;
+    return RobotUtils::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
 }
 
 int RobotNet::ResetDataWithLock() {
@@ -89,6 +70,7 @@ int RobotNet::InitDataWithLock() {
         ASSERT_FALSE_RETURN;
     }
 
+    timestamp_ = time(0);
     return kCommFaild;
 }
 
@@ -106,6 +88,7 @@ int RobotNet::ResetInitDataWithLock() {
     }
     return kCommSucc;
 }
+
 // 具体业务
 
 // TODO 多个机器人服务器用了同个账号 踢人警告
@@ -124,9 +107,15 @@ int RobotNet::SendEnterGame(const RoomID roomid) {
     REQUEST response = {};
 
     auto result = SendGameRequestWithLock(GR_ENTER_NORMAL_GAME, val, response);
-    if (kCommSucc != result) {
-        LOG_ERROR("ParseFromRequest faild.");
-        return kCommFaild;
+    if (result != kCommSucc) {
+        LOG_ERROR("game send quest fail");
+        ASSERT_FALSE;
+        if (result == RobotErrorCode::kOperationFailed) {
+            ResetInitDataWithLock();
+        }
+
+
+        return result;
     }
 
     game::base::EnterNormalGameResp resp;
@@ -149,7 +138,16 @@ int RobotNet::SendGamePulse() {
     game::base::PulseReq val;
     val.set_id(userid_);
     REQUEST response = {};
-    return SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
+    auto result = SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
+    if (result != kCommSucc) {
+        LOG_ERROR("game send quest fail");
+        ASSERT_FALSE;
+        if (result == RobotErrorCode::kOperationFailed) {
+            ResetInitDataWithLock();
+        }
+        return result;
+    }
+    return kCommSucc;
 }
 
 // 属性接口 
@@ -162,6 +160,16 @@ TokenID RobotNet::GetTokenID() {
 // 配置机器人ID 初始化后不在改变,不需要锁保护
 UserID RobotNet::GetUserID() const {
     return userid_;
+}
+
+TimeStamp RobotNet::GetTimeStamp() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return timestamp_;
+}
+
+void RobotNet::SetTimeStamp(TimeStamp val) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    timestamp_ = val;
 }
 
 int RobotNet::SnapShotObjectStatus() {

@@ -17,6 +17,8 @@
 
 const std::string LocalIPStr = std::string("127.0.0.1");
 
+const int InvalidPort = 0;
+
 const int RobotAgentGroupID = 1;
 
 const int InvalidUserID = 0;
@@ -39,7 +41,9 @@ const int MS_PER_SECOND = 1000;  // ms
 
 const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间 4
 
-const int PulseInterval = 1 * MS_PER_SECOND; // 心跳时间间隔 60
+const int PulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
+
+const int RobotTimerInterval = 1 * MS_PER_SECOND; // 轮询1秒, 间隔 60
 
 const int HttpTimeOut = 5 * MS_PER_SECOND; // 5
 
@@ -73,6 +77,8 @@ using RequestID = uint32_t;
 using ThreadID = uint32_t;
 
 using NeedCount = uint32_t;
+
+using TimeStamp = time_t;
 
 enum RobotErrorCode {
     kConnectionNotExist = -6666, // "与服务器连接不存在"

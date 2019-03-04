@@ -21,9 +21,9 @@ BOOL CMainService::OnInit() {
     // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\<AppName>\Parameters
     HKEY hkey;
     TCHAR szKey[1024];
-    strcpy_s(szKey, _T("SYSTEM\\CurrentControlSet\\Services\\"));
-    strcat_s(szKey, m_szServiceName);
-    strcat_s(szKey, _T("\\Parameters"));
+    strcpy_s(szKey, sizeof(szKey), _T("SYSTEM\\CurrentControlSet\\Services\\"));
+    strcat_s(szKey, sizeof(szKey), m_szServiceName);
+    strcat_s(szKey, sizeof(szKey), _T("\\Parameters"));
     if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
         szKey,
         0,
@@ -108,9 +108,9 @@ void CMainService::SaveStatus() {
     // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\<AppName>\...
     HKEY hkey = NULL;
     TCHAR szKey[1024];
-    strcpy_s(szKey, _T("SYSTEM\\CurrentControlSet\\Services\\"));
-    strcat_s(szKey, m_szServiceName);
-    strcat_s(szKey, _T("\\Status"));
+    strcpy_s(szKey, sizeof(szKey), _T("SYSTEM\\CurrentControlSet\\Services\\"));
+    strcat_s(szKey, sizeof(szKey), m_szServiceName);
+    strcat_s(szKey, sizeof(szKey), _T("\\Status"));
     DWORD dwDisp;
     DWORD dwErr;
     UwlTrace(_T("Creating key: %s"), szKey);

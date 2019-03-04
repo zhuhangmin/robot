@@ -132,13 +132,20 @@ int RobotHallManager::LogonHall(const UserID userid) {
     logonUser.nHallBuildNO = 20160414;
     logonUser.nHallNetDelay = 1;
     logonUser.nHallRunCount = 1;
-    strcpy_s(logonUser.szPassword, password.c_str());
+    strcpy_s(logonUser.szPassword, sizeof(logonUser.szPassword), password.c_str());
 
     RequestID nResponse;
     std::shared_ptr<void> pRetData;
     int nDataLen = sizeof(logonUser);
-    if (kCommFaild == SendHallRequestWithLock(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData))
-        return kCommFaild;
+    auto result = SendHallRequestWithLock(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData);
+    if (kCommSucc != result) {
+        ASSERT_FALSE;
+        if (RobotErrorCode::kOperationFailed == result) {
+            LOG_ERROR("hall ResetInitDataWithLock");
+            ResetInitDataWithLock();
+        }
+        return result;
+    }
 
     if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
         LOG_ERROR("userid = %d GR_LOGON_USER_V2 FAIL", userid);
@@ -161,16 +168,24 @@ int RobotHallManager::SendHallPulse() {
     std::shared_ptr<void> pRetData;
     int nDataLen = sizeof(HALLUSER_PULSE);
     auto result = SendHallRequestWithLock(GR_HALLUSER_PULSE, nDataLen, &hp, nRespID, pRetData, false);
-    if (kCommSucc != result) {
+    if (kCommSucc != result) { // @zhuhangmin : chengqi review 抽象接口中不应该调用实例化接口，容易死循环
+        ASSERT_FALSE;
+        if (RobotErrorCode::kOperationFailed == result) {
+            LOG_ERROR("hall ResetInitDataWithLock");
+            ResetInitDataWithLock();
+        }
+
         if (RobotErrorCode::kConnectionTimeOut == result) {
             LOG_ERROR("Send hall pulse failed");
             pulse_timeout_count_++;
             if (MaxPluseTimeOutCount == pulse_timeout_count_) {
                 ResetInitDataWithLock();
             }
-            return kCommFaild;
         }
+
+        return result;
     }
+
     return kCommSucc;
 }
 
@@ -235,16 +250,12 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
     if (!result) {
         LOG_ERROR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", timeout, requestid);
         ASSERT_FALSE;
-        if (RobotErrorCode::kOperationFailed == result) {
-            ResetInitDataWithLock();
-            return RobotErrorCode::kOperationFailed;
-        }
 
         if (timeout) {
             return RobotErrorCode::kConnectionTimeOut;
         }
 
-        return kCommFaild;
+        return result;
     }
 
     data_size = Response.nDataLen;
@@ -299,9 +310,13 @@ int RobotHallManager::SendGetRoomDataWithLock(const RoomID roomid) {
     std::shared_ptr<void> pRetData;
     int nDataLen = sizeof(GET_ROOM);
     auto result = SendHallRequestWithLock(GR_GET_ROOM, nDataLen, &gr, nRespID, pRetData);
-    if (kCommSucc != result) {
-        LOG_ERROR("SendHallRequest GR_GET_ROOM fail nRoomId = %d, nResponse = %d", roomid, nRespID);
-        ASSERT_FALSE_RETURN;
+    if (kCommSucc != result) { // @zhuhangmin : chengqi review 抽象接口中不应该调用实例化接口，容易死循环
+        ASSERT_FALSE;
+        if (RobotErrorCode::kOperationFailed == result) {
+            LOG_ERROR("hall ResetInitDataWithLock");
+            ResetInitDataWithLock();
+        }
+        return result;
     }
 
     if (nRespID != UR_FETCH_SUCCEEDED) {

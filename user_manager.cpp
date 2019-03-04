@@ -3,8 +3,8 @@
 #include "robot_utils.h"
 
 int UserManager::GetUser(UserID userid, UserPtr& user) const {
-    CHECK_USERID(userid);
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    CHECK_USERID(userid);
     return GetUserWithLock(userid, user);
 }
 
@@ -14,8 +14,8 @@ const UserMap& UserManager::GetAllUsers() const {
 }
 
 int UserManager::DelUser(const UserID userid) {
-    CHECK_USERID(userid);
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    CHECK_USERID(userid);
     UserPtr user;
     if (kCommSucc != GetUser(userid, user)) {
         ASSERT_FALSE_RETURN;
@@ -28,14 +28,15 @@ int UserManager::DelUser(const UserID userid) {
 }
 
 int UserManager::AddUser(const UserID userid, const UserPtr &user) {
-    CHECK_USERID(userid);
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    CHECK_USERID(userid);
     user_map_[userid] = user;
 
     return kCommSucc;
 }
 
 int UserManager::Reset() {
+    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     user_map_.clear();
     return kCommSucc;
 }
@@ -62,6 +63,7 @@ const UserFilterMap UserManager::GetAllEnterUserID() const {
 
 
 int UserManager::GetUserCountInRoom(const RoomID roomid, int& count) const {
+    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     for (auto& kv : user_map_) {
         auto userid = kv.first;
         auto user = kv.second;
@@ -73,6 +75,7 @@ int UserManager::GetUserCountInRoom(const RoomID roomid, int& count) const {
 }
 
 int UserManager::GetRobotCountInRoom(const RoomID roomid, int& count) const {
+    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     for (auto& kv : user_map_) {
         auto userid = kv.first;
         auto user = kv.second;
@@ -86,6 +89,7 @@ int UserManager::GetRobotCountInRoom(const RoomID roomid, int& count) const {
 }
 
 int UserManager::GetNormalUserCountInRoom(const RoomID roomid, int& count) const {
+    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     for (auto& kv : user_map_) {
         auto userid = kv.first;
         auto user = kv.second;

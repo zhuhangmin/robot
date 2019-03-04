@@ -68,13 +68,13 @@ int AppDelegate::Init() {
     }
 
     // 游戏服务数据管理类
-    /*auto game_port = RobotUtils::GetGamePort();
+    auto game_port = RobotUtils::GetGamePort();
     auto game_ip = RobotUtils::GetGameIP();
     if (kCommFaild == GameMgr.Init(game_ip, game_port)) {
-    LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
-    ASSERT_FALSE;
-    return kCommFaild;
-    }*/
+        LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
+        ASSERT_FALSE;
+        return kCommFaild;
+    }
 
     // 机器人游戏管理类
     if (kCommFaild == RobotMgr.Init()) {
@@ -254,16 +254,16 @@ int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
 
         RoomPtr room;
         if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
-            ASSERT_FALSE_RETURN; continue;
+            ASSERT_FALSE_RETURN;
         }
 
         int inroom_count = InvalidCount;
         if (kCommSucc != UserMgr.GetRobotCountInRoom(roomid, inroom_count)) {
-            ASSERT_FALSE_RETURN; continue;
+            ASSERT_FALSE_RETURN;
         }
 
         if (InvalidCount == inroom_count) {
-            ASSERT_FALSE_RETURN; continue;
+            ASSERT_FALSE_RETURN;
         }
 
         auto need_count = designed_count - inroom_count;

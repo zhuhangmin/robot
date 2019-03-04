@@ -91,9 +91,6 @@ private:
     // 向游戏服务器 获取 游戏内所有信息 (room、table、user)
     int SendGetGameInfoWithLock();
 
-    // 游戏 断开连接
-    int OnDisconnGameInfoWithLock();
-
 public:
     // 对象状态快照
     int SnapShotObjectStatus();
@@ -111,7 +108,7 @@ private:
     std::string game_ip_;
 
     // 游戏服务器 PORT
-    int game_port_;
+    int game_port_{InvalidPort};
 
     //游戏服务器连接
     // 管理的数据层为 room_manager 和 user_manager 

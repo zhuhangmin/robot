@@ -41,16 +41,7 @@ int GameNetManager::Term() {
 int GameNetManager::SendGameRequest(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool bNeedEcho /*= true*/) {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
     CHECK_REQUESTID(requestid);
-    auto result = RobotUtils::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
-    if (kCommSucc != result) {
-        ASSERT_FALSE;
-        if (RobotErrorCode::kOperationFailed == result) {
-            ResetInitDataWithLock();
-            return RobotErrorCode::kOperationFailed;
-        }
-        return result;
-    }
-    return kCommSucc;
+    return RobotUtils::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
 }
 
 int GameNetManager::ThreadGameInfoNotify() {
@@ -149,8 +140,11 @@ int GameNetManager::SendValidateReqWithLock() {
     auto result = SendGameRequest(GR_VALID_ROBOTSVR, val, response);
 
     if (kCommSucc != result) {
-        LOG_ERROR("SendValidateReq failed");
-        return kCommFaild;
+        ASSERT_FALSE;
+        if (RobotErrorCode::kOperationFailed == result) {
+            ResetInitDataWithLock();
+        }
+        return result;
     }
 
     game::base::RobotSvrValidateResp resp;
@@ -175,8 +169,11 @@ int GameNetManager::SendGetGameInfoWithLock() {
     REQUEST response = {};
     auto result = SendGameRequest(GR_GET_GAMEUSERS, val, response);
     if (kCommSucc != result) {
-        LOG_ERROR("SendGetGameInfo failed");
-        return kCommFaild;
+        ASSERT_FALSE;
+        if (RobotErrorCode::kOperationFailed == result) {
+            ResetInitDataWithLock();
+        }
+        return result;
     }
 
     game::base::GetGameUsersResp resp;
@@ -232,22 +229,6 @@ int GameNetManager::ResetDataWithLock() {
     pulse_timeout_count_ = 0;
     UserMgr.Reset();
     RoomMgr.Reset();
-    return kCommSucc;
-}
-
-int GameNetManager::OnDisconnGameInfoWithLock() {
-    // 重置
-    if (kCommSucc != ResetDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-        return kCommFaild;
-    }
-
-    // 重新初始化
-    if (kCommSucc != InitDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-        return kCommFaild;
-    }
-
     return kCommSucc;
 }
 

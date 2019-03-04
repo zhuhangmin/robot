@@ -1,8 +1,6 @@
 #pragma once
 #include "robot_define.h"
 
-
-//TODO 加入机器人独离操作
 class RobotNet {
 public:
     RobotNet(UserID userid);
@@ -29,6 +27,10 @@ public:
 
     TokenID GetTokenID();
 
+    TimeStamp GetTimeStamp() const;
+
+    void SetTimeStamp(TimeStamp val);
+
 public:
     // 对象状态快照
     int SnapShotObjectStatus();
@@ -44,17 +46,20 @@ private:
     // ResetDataWithLock + InitDataWithLock
     int ResetInitDataWithLock();
 
+
+
 private:
     // 配置机器人ID 初始化后不在改变,不需要锁保护
     UserID userid_{0};
 
     // 游戏连接
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     CDefSocketClientPtr game_connection_;
     std::string game_ip_;
-    int game_port_;
-    ThreadID game_notify_thread_id_;
+    int game_port_{InvalidPort};;
+    ThreadID game_notify_thread_id_{0};
     int pulse_timeout_count_{0};
+    TimeStamp timestamp_{0};
 
 };
 
