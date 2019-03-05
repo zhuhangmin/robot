@@ -42,7 +42,7 @@ void WriteMiniDMP(struct _EXCEPTION_POINTERS *pExp) {
     HANDLE   hFile = CreateFile(strDumpFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE) {
         MINIDUMP_EXCEPTION_INFORMATION   ExInfo;
-        ExInfo.ThreadId = ::GetCurrentThreadId();
+        ExInfo.ThreadId = GetCurrentThreadId();
         ExInfo.ExceptionPointers = pExp;
         ExInfo.ClientPointers = NULL;
         //   write   the   dump 
@@ -158,7 +158,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     do {
         ch = _getch();
         ch = toupper(ch);
-
+#ifdef _DEBUG
         if (ch == 'S') {
             LOG_INFO("-------------[STATUS SNAPSHOT]-------------");
             SettingMgr.SnapShotObjectStatus();
@@ -178,7 +178,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
             SettingMgr.GetRandomUserID(userid);
             DepositMgr.SetDepositType(userid, DepositType::kGain);
         }
-
+#endif
 
     } while (ch != 'Q');
 

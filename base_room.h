@@ -12,7 +12,7 @@ enum RoomOptional {
 class BaseRoom {
 public:
     BaseRoom();
-    explicit BaseRoom(int roomid);
+    explicit BaseRoom(const int& roomid);
     virtual ~BaseRoom();
 
     virtual RoomOptional GetRoomType();

@@ -46,7 +46,7 @@ private:
     int ConnectHallWithLock();
 
     // 大厅 消息发送
-    int SendHallRequestWithLock(const RequestID& requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo = true) const;
+    int SendHallRequestWithLock(const RequestID& requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, const bool& need_echo = true) const;
 
     // 大厅 获得登陆状态
     int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) const;

@@ -19,7 +19,7 @@ private:
     int MainProcess();
 
     // 机器人流程 登入大厅 进入游戏
-    int RobotProcess(UserID userid, RoomID roomid);
+    int RobotProcess(const UserID& userid, const RoomID& roomid);
 
 private:
     // 辅助函数

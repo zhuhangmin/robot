@@ -160,7 +160,7 @@ int AppDelegate::MainProcess() {
     return kCommSucc;
 }
 
-int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
+int AppDelegate::RobotProcess(const UserID& userid, const RoomID& roomid) {
     CHECK_USERID(userid);
     CHECK_ROOMID(roomid);
     // µÇÂ½´óÌü

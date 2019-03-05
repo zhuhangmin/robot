@@ -161,11 +161,11 @@ public:
     int UnbindLooker(const int& userid);
 
     // (游戏中)弃牌
-    virtual int GiveUp(int userid);
+    virtual int GiveUp(const int& userid);
     // 整桌结算
     virtual int RefreshGameResult();
     // 单人结算
-    virtual int RefreshGameResult(int userid);
+    virtual int RefreshGameResult(const int& userid);
 
 public:
 

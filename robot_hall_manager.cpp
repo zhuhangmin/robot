@@ -245,7 +245,7 @@ int RobotHallManager::SendGetAllRoomData() {
     return kCommSucc;
 }
 
-int RobotHallManager::SendHallRequestWithLock(const RequestID& requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo /*= true*/) const {
+int RobotHallManager::SendHallRequestWithLock(const RequestID& requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, const bool& need_echo /*= true*/) const {
     CHECK_REQUESTID(requestid);
     if (!connection_) {
         LOG_ERROR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", requestid);
@@ -309,7 +309,7 @@ int RobotHallManager::InitDataWithLock() {
 
 int RobotHallManager::ConnectHallWithLock() {
     TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
-    GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof(szHallSvrIP), g_szIniFile);
+    GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof szHallSvrIP, g_szIniFile);
     auto nHallSvrPort = GetPrivateProfileInt(_T("hall_server"), _T("port"), 0, g_szIniFile);
     connection_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
     if (!connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {

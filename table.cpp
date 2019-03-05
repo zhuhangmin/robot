@@ -176,7 +176,7 @@ int Table::AddTableUserInfo(const UserID& userid, const TableUserInfo& table_use
     return kCommSucc;
 }
 
-int Table::GiveUp(int userid) {
+int Table::GiveUp(const int& userid) {
     CHECK_USERID(userid);
     if (!IS_BIT_SET(get_table_status(), kTablePlaying)) {
         LOG_WARN("user[%d] giveup, but not playing.", userid);
@@ -201,7 +201,7 @@ int Table::RefreshGameResult() {
     return kCommSucc;
 }
 
-int Table::RefreshGameResult(int userid) {
+int Table::RefreshGameResult(const int& userid) {
     CHECK_USERID(userid);
     const auto chairno = GetUserChair(userid);
     if (!IsValidChairno(chairno)) {

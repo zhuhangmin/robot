@@ -5,7 +5,7 @@
 
 BaseRoom::BaseRoom() {}
 
-BaseRoom::BaseRoom(int roomid) {
+BaseRoom::BaseRoom(const int& roomid) {
     if (RobotUtils::IsValidRoomID(roomid)) {
         assert(roomid);
         return;
@@ -49,7 +49,7 @@ int BaseRoom::PlayerEnterGame(const UserPtr &user) {
     return kCommSucc;
 }
 
-int BaseRoom::BindPlayer(const UserPtr &user) {
+int BaseRoom::BindPlayer(const UserPtr& user) {
     CHECK_USER(user);
     //V524 It is odd that the body of 'BindPlayer' function is fully equivalent to the body of 'PlayerEnterGame' function.base_room.cpp 43
     const auto tableno = user->get_table_no();
@@ -200,12 +200,12 @@ int BaseRoom::Player2Looker(const UserPtr& user) {
 int BaseRoom::LookerEnterGame(const UserPtr &user) {
     CHECK_USER(user);
     const auto target_tableno = user->get_table_no();
-    if (false == IsValidTable(target_tableno)) {
+    if (!IsValidTable(target_tableno)) {
         LOG_WARN("Get table[%d] faild", target_tableno);
         return kCommFaild;
     }
 
-    auto tableno = user->get_table_no();
+    const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);

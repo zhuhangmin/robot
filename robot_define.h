@@ -159,14 +159,14 @@ public:
 public:
     void Initial(std::thread&& thrd) {
         m_thrd.swap(thrd);
-        m_hThrd = (HANDLE) m_thrd.native_handle();
-        m_nThrd = ::GetThreadId(m_hThrd);
+        m_hThrd = static_cast<HANDLE>(m_thrd.native_handle());
+        m_nThrd = GetThreadId(m_hThrd);
     }
     void Release() {
         if (m_nThrd == 0) return;
 
-        ::PostThreadMessage(m_nThrd, WM_QUIT, 0, 0);
-        ::WaitForSingleObject(m_hThrd, WAITTIME_EXIT);
+        PostThreadMessage(m_nThrd, WM_QUIT, 0, 0);
+        WaitForSingleObject(m_hThrd, WAITTIME_EXIT);
         m_thrd.detach(); //::CloseHandle(m_hThrd);
         m_nThrd = 0; m_hThrd = nullptr;
     }
