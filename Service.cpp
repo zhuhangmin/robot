@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Service.h"
+#include "service.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -58,8 +58,7 @@ void CMainService::Run() {
     m_dwThreadId = GetCurrentThreadId();
 
     if (kCommSucc != m_AppDelegate.Init()) {
-        UwlTrace(_T("server initialize failed!"));
-        UwlLogFile(_T("server initialize failed!"));
+        LOG_ERROR("server initialize failed!");
         PostQuitMessage(0);
     }
 
@@ -71,7 +70,7 @@ void CMainService::Run() {
     m_AppDelegate.Term();
 
     // Sleep for a while
-    UwlTrace(_T("service is sleeping to finish(%lu)..."), m_iState);
+    LOG_INFO("service is sleeping to finish(%lu)...", m_iState);
     Sleep(dwWaitFinished); //wait for any threads to finish
 
     // Update the current state
@@ -81,7 +80,7 @@ void CMainService::Run() {
 
 // Called when the service control manager wants to stop the service
 void CMainService::OnStop() {
-    UwlTrace(_T("CMainService::OnStop()"));
+    LOG_INFO("CMainService::OnStop()");
 
     PostThreadMessage(m_dwThreadId, WM_QUIT, 0, 0);
 }
@@ -103,7 +102,8 @@ BOOL CMainService::OnUserControl(DWORD dwOpcode) {
 
 // Save the current status in the registry
 void CMainService::SaveStatus() {
-    UwlTrace(_T("Saving current status"));
+    LOG_INFO("Saving current status");
+
     // Try opening the registry key:
     // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\<AppName>\...
     HKEY hkey = NULL;
@@ -113,7 +113,7 @@ void CMainService::SaveStatus() {
     strcat_s(szKey, sizeof(szKey), _T("\\Status"));
     DWORD dwDisp;
     DWORD dwErr;
-    UwlTrace(_T("Creating key: %s"), szKey);
+    LOG_INFO("Creating key: %s", szKey);
     dwErr = RegCreateKeyEx(HKEY_LOCAL_MACHINE,
                            szKey,
                            0,
@@ -124,12 +124,12 @@ void CMainService::SaveStatus() {
                            &hkey,
                            &dwDisp);
     if (dwErr != ERROR_SUCCESS) {
-        UwlTrace(_T("Failed to create Status key (%lu)"), dwErr);
+        LOG_ERROR("Failed to create Status key (%lu)", dwErr);
         return;
     }
 
     // Set the registry values
-    UwlTrace(_T("Saving 'Current' as %ld"), m_iState);
+    LOG_INFO("Saving 'Current' as %ld", m_iState);
     RegSetValueEx(hkey,
                   _T("Current"),
                   0,

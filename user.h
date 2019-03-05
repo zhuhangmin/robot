@@ -3,9 +3,6 @@
 class User {
 
 public:
-    User();
-    virtual ~User();
-
 
     int get_token() const {
         return token_;
@@ -112,7 +109,7 @@ public:
         total_bout_ = val;
     }
 
-    bool IsPalyer() {
+    bool IsPalyer() const {
         return get_chair_no() > 0;
     }
 public:

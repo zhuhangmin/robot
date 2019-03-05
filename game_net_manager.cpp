@@ -76,41 +76,47 @@ int GameNetManager::ThreadGameInfoNotify() {
 }
 
 int GameNetManager::OnGameInfoNotify(const RequestID requestid, const REQUEST &request) {
+    int result = kCommSucc;
     switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            OnDisconnGameInfo();
+            result = OnDisconnGameInfo();
             break;
         case GN_RS_PLAER_ENTERGAME:
-            OnPlayerEnterGame(request);
+            result = OnPlayerEnterGame(request);
             break;
         case GN_RS_LOOKER_ENTERGAME:
-            OnLookerEnterGame(request);
+            result = OnLookerEnterGame(request);
             break;
         case GN_RS_LOOER2PLAYER:
-            OnLooker2Player(request);
+            result = OnLooker2Player(request);
             break;
         case GN_RS_PLAYER2LOOKER:
-            OnPlayer2Looker(request);
+            result = OnPlayer2Looker(request);
             break;
         case GN_RS_GAME_START:
-            OnStartGame(request);
+            result = OnStartGame(request);
             break;
         case GN_RS_USER_REFRESH_RESULT:
-            OnUserFreshResult(request);
+            result = OnUserFreshResult(request);
             break;
         case GN_RS_REFRESH_RESULT:
-            OnFreshResult(request);
+            result = OnFreshResult(request);
             break;
         case GN_RS_USER_LEAVEGAME:
-            OnLeaveGame(request);
+            result = OnLeaveGame(request);
             break;
         case GN_RS_SWITCH_TABLE:
-            OnSwitchTable(request);
+            result = OnSwitchTable(request);
             break;
         default:
+            LOG_WARN("requestid = %d", requestid);
             break;
+    }
 
+    if (kCommSucc != result) {
+        LOG_ERROR("requestid = %d, result = %d", requestid, result);
+        return kCommFaild;
     }
 
     return kCommSucc;
@@ -143,18 +149,18 @@ int GameNetManager::SendValidateReqWithLock() {
     game::base::RobotSvrValidateReq val;
     val.set_client_id(g_nClientID);
     REQUEST response = {};
-    auto result = SendGameRequest(GR_VALID_ROBOTSVR, val, response);
+    const auto result = SendGameRequest(GR_VALID_ROBOTSVR, val, response);
 
     if (kCommSucc != result) {
         ASSERT_FALSE;
-        if (RobotErrorCode::kOperationFailed == result) {
+        if (kOperationFailed == result) {
             ResetInitDataWithLock();
         }
         return result;
     }
 
     game::base::RobotSvrValidateResp resp;
-    int ret = ParseFromRequest(response, resp);
+    const auto ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
         LOG_ERROR("ParseFromRequest faild.");
         return kCommFaild;
@@ -173,17 +179,17 @@ int GameNetManager::SendGetGameInfoWithLock() {
     val.set_clientid(g_nClientID);
     val.set_roomid(0);
     REQUEST response = {};
-    auto result = SendGameRequest(GR_GET_GAMEUSERS, val, response);
+    const auto result = SendGameRequest(GR_GET_GAMEUSERS, val, response);
     if (kCommSucc != result) {
         ASSERT_FALSE;
-        if (RobotErrorCode::kOperationFailed == result) {
+        if (kOperationFailed == result) {
             ResetInitDataWithLock();
         }
         return result;
     }
 
     game::base::GetGameUsersResp resp;
-    int ret = ParseFromRequest(response, resp);
+    const auto ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
         LOG_ERROR("ParseFromRequest faild.");
         return kCommFaild;
@@ -246,31 +252,31 @@ int GameNetManager::SendPulse() {
     REQUEST response = {};
 
     //@zhuhangmin 大厅模板需要支持 清僵尸机制
-    auto result = RobotUtils::SendRequestWithLock(connection_, GR_GAME_PLUSE, val, response, false);
+    const auto result = RobotUtils::SendRequestWithLock(connection_, GR_GAME_PLUSE, val, response, false);
 
     if (kCommSucc != result) {
-        if (result == RobotErrorCode::kConnectionTimeOut) {
+        if (result == kConnectionTimeOut) {
             timeout_count_++;
             if (timeout_count_ == MaxPluseTimeOutCount) {
                 ResetInitDataWithLock();
             }
-            return RobotErrorCode::kConnectionTimeOut;
+            return kConnectionTimeOut;
         }
     }
 
     return result;
 }
 
-int GameNetManager::OnPlayerEnterGame(const REQUEST &request) {
+int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
     game::base::RS_UserEnterGameNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
     }
 
     game::base::RoomData room_data = ntf.room_data();
-    auto roomid = room_data.roomid();
+    const auto roomid = room_data.roomid();
 
     //V614 The 'user' smart pointer is utilized immediately after being declared or reset.
     //It is suspicious that no value was assigned to it.
@@ -301,7 +307,7 @@ int GameNetManager::OnPlayerEnterGame(const REQUEST &request) {
 
 int GameNetManager::OnLookerEnterGame(const REQUEST &request) {
     game::base::RS_UserEnterGameNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
@@ -339,7 +345,7 @@ int GameNetManager::OnLookerEnterGame(const REQUEST &request) {
 
 int GameNetManager::OnLooker2Player(const REQUEST &request) {
     game::base::RS_SwitchLookerPlayerNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
@@ -374,7 +380,7 @@ int GameNetManager::OnLooker2Player(const REQUEST &request) {
 
 int GameNetManager::OnPlayer2Looker(const REQUEST &request) {
     game::base::RS_SwitchLookerPlayerNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
@@ -409,7 +415,7 @@ int GameNetManager::OnPlayer2Looker(const REQUEST &request) {
 
 int GameNetManager::OnStartGame(const REQUEST &request) {
     game::base::RS_StartGameNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
@@ -449,7 +455,7 @@ int GameNetManager::OnStartGame(const REQUEST &request) {
 
 int GameNetManager::OnUserFreshResult(const REQUEST &request) {
     game::base::RS_UserRefreshResultNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
@@ -476,7 +482,7 @@ int GameNetManager::OnUserFreshResult(const REQUEST &request) {
 
 int GameNetManager::OnFreshResult(const REQUEST &request) {
     game::base::RS_RefreshResultNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
@@ -502,7 +508,7 @@ int GameNetManager::OnFreshResult(const REQUEST &request) {
 
 int GameNetManager::OnLeaveGame(const REQUEST &request) {
     game::base::RS_UserLeaveGameNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
@@ -528,17 +534,17 @@ int GameNetManager::OnLeaveGame(const REQUEST &request) {
 
 int GameNetManager::OnSwitchTable(const REQUEST &request) {
     game::base::RS_SwitchTableNotify ntf;
-    int parse_ret = ParseFromRequest(request, ntf);
+    const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
         LOG_WARN("ParseFromRequest failed.");
         ASSERT_FALSE_RETURN;
     }
 
-    auto userid = ntf.userid();
-    auto roomid = ntf.roomid();
-    auto old_tableno = ntf.old_tableno();
-    auto new_tableno = ntf.new_tableno();
-    auto new_chairno = ntf.new_chairno();
+    const auto userid = ntf.userid();
+    const auto roomid = ntf.roomid();
+    const auto old_tableno = ntf.old_tableno();
+    const auto new_tableno = ntf.new_tableno();
+    const auto new_chairno = ntf.new_chairno();
 
     UserPtr user;
     if (kCommSucc != UserMgr.GetUser(userid, user)) {
@@ -606,7 +612,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) {
 //
 int GameNetManager::AddRoomPB(const game::base::Room room_pb) {
     game::base::RoomData room_data_pb = room_pb.room_data();
-    RoomID roomid = room_data_pb.roomid();
+    const auto roomid = room_data_pb.roomid();
 
     auto base_room = std::make_shared<BaseRoom>();
     base_room->set_room_id(room_data_pb.roomid());
@@ -621,7 +627,7 @@ int GameNetManager::AddRoomPB(const game::base::Room room_pb) {
     // TABLE
     for (int table_index = 0; table_index < room_pb.tables_size(); table_index++) {
         game::base::Table table_pb = room_pb.tables(table_index);
-        TableNO tableno = table_pb.tableno();
+        const auto tableno = table_pb.tableno();
         auto table = std::make_shared<Table>();
         AddTablePB(table_pb, table);
         base_room->AddTable(tableno, table);
@@ -645,7 +651,7 @@ int GameNetManager::AddTablePB(const game::base::Table table_pb, TablePtr table)
     // CHAIR
     for (int chair_index = 0; chair_index < table_pb.chairs_size(); chair_index++) {
         game::base::ChairInfo chair_pb = table_pb.chairs(chair_index);
-        ChairNO chairno = chair_pb.chairno(); // chairno start from 1
+        const auto chairno = chair_pb.chairno(); // chairno start from 1
         ChairInfo chair_info;
         chair_info.set_userid(chair_pb.userid());
         chair_info.set_chair_status((ChairStatus) chair_pb.chair_status());
@@ -655,7 +661,7 @@ int GameNetManager::AddTablePB(const game::base::Table table_pb, TablePtr table)
     // TABLE USER INFO
     for (int table_user_index = 0; table_user_index < table_pb.table_users_size(); table_user_index++) {
         game::base::TableUserInfo table_user_pb = table_pb.table_users(table_user_index);
-        UserID userid = table_user_pb.userid();
+        const auto userid = table_user_pb.userid();
         TableUserInfo table_user_info;
         table_user_info.set_userid(table_user_pb.userid());
         table_user_info.set_bind_timestamp(table_user_pb.bind_timestamp());
@@ -665,7 +671,7 @@ int GameNetManager::AddTablePB(const game::base::Table table_pb, TablePtr table)
     return kCommSucc;
 }
 
-int GameNetManager::AddUserPB(const game::base::User user_pb) {
+int GameNetManager::AddUserPB(const game::base::User user_pb) const {
     auto user = std::make_shared<User>();
     user->set_user_id(user_pb.userid());
     user->set_room_id(user_pb.roomid());

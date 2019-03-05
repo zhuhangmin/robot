@@ -3,7 +3,7 @@
 
 class RobotNet {
 public:
-    RobotNet(UserID userid);
+    explicit RobotNet(UserID userid);
 
 public:
     // 游戏 连接
@@ -13,7 +13,7 @@ public:
     int OnDisconnGame();
 
     // 游戏 连接状态
-    BOOL IsConnected();
+    BOOL IsConnected() const;
 
     // 进入游戏
     int SendEnterGame(const RoomID roomid);

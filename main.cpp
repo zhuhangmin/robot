@@ -12,7 +12,6 @@
 #include "robot_hall_manager.h"
 #include "user_manager.h"
 #include "room_manager.h"
-#include "robot_utils.h"
 #pragma comment(lib,  "dbghelp.lib")
 #ifdef _DEBUG
 #define new DEBUG_NEW

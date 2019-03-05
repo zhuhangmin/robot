@@ -50,8 +50,8 @@ int RobotNetManager::SendGamePulse() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     for (auto& kv : robot_map_) {
         auto robot = kv.second;
-        auto timestamp = robot->GetTimeStamp();
-        auto now = time(0);
+        const auto timestamp = robot->GetTimeStamp();
+        const auto now = time(0);
         if (timestamp - now > PulseInterval) {
             robot->SetTimeStamp(now);
             if (robot->IsConnected()) {
@@ -81,10 +81,14 @@ int RobotNetManager::SetRobotWithLock(RobotPtr robot) {
 
 int RobotNetManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) const {
     CHECK_TOKENID(token_id);
-    auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& pair) {
+    const auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& pair) {
         return pair.second->GetTokenID() == token_id;
     });
-    robot = (it != robot_map_.end() ? it->second : nullptr);
+    if (it != robot_map_.end()) {
+        robot = it->second;
+    } else {
+        robot = nullptr;
+    }
     return kCommSucc;
 }
 
@@ -130,7 +134,7 @@ int RobotNetManager::ThreadRobotNotify() {
     return kCommSucc;
 }
 
-int RobotNetManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id) {
+int RobotNetManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id) const {
     RobotPtr robot;
     {
         std::lock_guard<std::mutex> lock(robot_map_mutex_);
@@ -158,9 +162,9 @@ int RobotNetManager::SnapShotObjectStatus() {
     LOG_INFO("robot_map_ size [%d]", robot_map_.size());
     std::string str = "{";
     for (auto& kv : robot_map_) {
-        auto userid = kv.first;
-        auto robot = kv.second;
-        auto token = robot->GetTokenID();
+        const auto userid = kv.first;
+        const auto robot = kv.second;
+        const auto token = robot->GetTokenID();
         str += "userid";
         str += "[";
         str += std::to_string(userid);

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "robot_utils.h"
-#include "Main.h"
+#include "main.h"
 #include "setting_manager.h"
 #include "robot_hall_manager.h"
 #include "robot_define.h"
@@ -22,8 +22,8 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
     context_head.bNeedEcho = need_echo;
 
     std::unique_ptr<char[]> data(new char[val.ByteSize()]);
-    bool is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
-    if (false == is_succ) {
+    const auto is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
+    if (!is_succ) {
         LOG_ERROR("SerializePartialToArray failed.");
         return kCommFaild;
     }
@@ -31,19 +31,19 @@ int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID r
     REQUEST request(requestid, data.get(), val.ByteSize());
 
     BOOL timeout = false;
-    BOOL result = connection->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
+    const auto result = connection->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
 
     if (!result) {
         LOG_ERROR("send request fail");
         ASSERT_FALSE;
         if (timeout) {
-            LOG_WARN("connection addr [%x] time out requestid = [%d]", connection, requestid);
-            return RobotErrorCode::kConnectionTimeOut;
+            LOG_WARN("connection addr [%x] time out requestid = [%d]", connection.get(), requestid);
+            return kConnectionTimeOut;
         }
-        return RobotErrorCode::kOperationFailed;
+        return kOperationFailed;
     }
 
-    auto responseid = response.head.nRequest;
+    const auto responseid = response.head.nRequest;
 
     if (0 == responseid) {
         ASSERT_FALSE_RETURN;
@@ -84,24 +84,22 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
             }
         }
     } catch (...) {
-        UwlTrace(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), url, retcode, GetLastError());
-        UwlLogFile(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), url, retcode, GetLastError());
+        LOG_ERROR(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), url, retcode, GetLastError());
         assert(false);
         return "";
-    };
+    }
 
     if (pHTTPFile) { pHTTPFile->Close(); delete  pHTTPFile;  pHTTPFile = NULL; }
     if (pHttpConn) { pHttpConn->Close(); delete  pHttpConn;  pHttpConn = NULL; }
     if (pSession) { pSession->Close();  delete   pSession;   pSession = NULL; }
 
     if (result_str == "") {
-        UwlTrace(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), url, retcode, GetLastError());
-        UwlLogFile(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), url, retcode, GetLastError());
+        LOG_ERROR(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), url, retcode, GetLastError());
         assert(false);
         return "";
 
     } else {
-        UwlLogFile(_T("ExecHttpRequestPost strResult:%s "), result_str);
+        LOG_INFO(_T("ExecHttpRequestPost strResult:%s "), result_str);
     }
     return result_str;
 }
@@ -129,7 +127,7 @@ std::string RobotUtils::GetGameIP() {
 
 int RobotUtils::GetGamePort() {
     auto room_setting_map = SettingMgr.GetRoomSettingMap();
-    if (room_setting_map.size() == 0) {
+    if (room_setting_map.empty()) {
         LOG_ERROR(_T("room_setting_map empty"));
         ASSERT_FALSE_RETURN;
     }
@@ -140,7 +138,7 @@ int RobotUtils::GetGamePort() {
         break;
     }
 
-    HallRoomData hall_room_data;
+    HallRoomData hall_room_data = {};
     if (kCommSucc != HallMgr.GetHallRoomData(room_id, hall_room_data)) {
         LOG_ERROR("GetHallRoomData room id = %d failed", room_id);
         ASSERT_FALSE_RETURN;
@@ -202,11 +200,11 @@ int RobotUtils::IsValidGamePort(const int32_t game_port) {
 }
 
 int RobotUtils::IsCurrentThread(YQThread& thread) {
-    return  thread.GetThreadID() != ::GetCurrentThreadId() ? kCommFaild : kCommSucc;
+    return  thread.GetThreadID() != GetCurrentThreadId() ? kCommFaild : kCommSucc;
 }
 
 int RobotUtils::NotThisThread(YQThread& thread) {
-    return  thread.GetThreadID() == ::GetCurrentThreadId() ? kCommFaild : kCommSucc;
+    return  thread.GetThreadID() == GetCurrentThreadId() ? kCommFaild : kCommSucc;
 }
 
 

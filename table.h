@@ -3,9 +3,6 @@
 #include "robot_define.h"
 class TableUserInfo {
 public:
-    TableUserInfo() {}
-    ~TableUserInfo() {}
-
     int get_userid() const {
         return userid_;
     }
@@ -35,9 +32,6 @@ private:
 
 class ChairInfo {
 public:
-    ChairInfo() {}
-    ~ChairInfo() {}
-
     int get_userid() const {
         return userid_;
     }
@@ -59,9 +53,6 @@ private:
 
 class UserResult {
 public:
-    UserResult() {}
-    ~UserResult() {}
-
     void clear() {
         userid_ = 0;
         diff_deposit_ = 0;
@@ -154,7 +145,6 @@ class Table {
 public:
     Table();
     Table(int tableno, int roomid, int chair_count, int min_player_count, INT64 base_deposit);
-    virtual ~Table();
 
     Table(const Table&) = delete;
 

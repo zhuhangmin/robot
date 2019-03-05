@@ -1,7 +1,5 @@
 #pragma once
 
-#include "resource.h"
-
 extern int				g_nClientID;
 
 extern std::string		g_curExePath;

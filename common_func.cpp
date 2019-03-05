@@ -3,7 +3,7 @@
 
 
 std::string GetConfigFilePath() {
-    static std::string config_path = "";
+    static std::string config_path;
 
     if (0 == config_path.length()) {
         char root_path[MAX_PATH] = {0};
@@ -18,15 +18,15 @@ std::string GetConfigFilePath() {
 }
 
 int ParseFromRequest(const REQUEST &req, google::protobuf::Message &val) {
-    int repeated = req.head.nRepeated;
-    int len = req.nDataLen - repeated * sizeof(CONTEXT_HEAD);
+    const auto repeated = req.head.nRepeated;
+    const auto len = req.nDataLen - repeated * sizeof(CONTEXT_HEAD);
     if (len <= 0) {
         LOG_WARN("Invalid req. repeated = %d, datalen = %d", repeated, req.nDataLen);
         return kCommFaild;
     }
 
     char *data = (char *) (req.pDataPtr) + repeated * sizeof(CONTEXT_HEAD);
-    if (true != val.ParseFromArray(data, len)) {
+    if (!val.ParseFromArray(data, len)) {
         LOG_WARN("ParseArray faild. req=%d");
         return kCommFaild;
     }
@@ -36,8 +36,8 @@ int ParseFromRequest(const REQUEST &req, google::protobuf::Message &val) {
 
 std::string GetStringFromPb(const google::protobuf::Message& val) {
     std::string msg;
-    bool is_true = google::protobuf::TextFormat::PrintToString(val, &msg);
-    if (false == is_true) {
+    const auto is_true = google::protobuf::TextFormat::PrintToString(val, &msg);
+    if (!is_true) {
         LOG_WARN("PrintToString return false.");
         return msg;
     }

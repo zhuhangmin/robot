@@ -33,7 +33,7 @@ private:
     // 接收业务消息 一般需要先更新user数据，在触发table上的用户数据变化
 
     // 玩家进入游戏	BindPlayer
-    int OnPlayerEnterGame(const REQUEST &request);
+    int OnPlayerEnterGame(const REQUEST &request) const;
 
     // 旁观者进入游戏	BindLooker
     int OnLookerEnterGame(const REQUEST &request);
@@ -65,7 +65,7 @@ private:
 
     int AddTablePB(const game::base::Table table_pb, TablePtr table);
 
-    int AddUserPB(const game::base::User user_pb);
+    int AddUserPB(const game::base::User user_pb) const;
 
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex

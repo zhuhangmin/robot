@@ -110,7 +110,7 @@ enum class HallLogonStatusType {
 //≈‰÷√¿‡ ÷ª∂¡
 class RobotSetting {
 public:
-    UserID		userid;
+    uint32_t	userid;
     std::string	password;
     std::string nickname;
     std::string headurl;
@@ -153,7 +153,7 @@ virtual ~_class_name_(){}; \
 class YQThread {
 public:
     YQThread() {}
-    YQThread(std::thread&& thrd) { Initial(std::move(thrd)); }
+    explicit YQThread(std::thread&& thrd) { Initial(std::move(thrd)); }
     ~YQThread() { Release(); }
 
 public:
@@ -170,7 +170,7 @@ public:
         m_thrd.detach(); //::CloseHandle(m_hThrd);
         m_nThrd = 0; m_hThrd = nullptr;
     }
-    ThreadID GetThreadID() { return m_nThrd; }
+    ThreadID GetThreadID() const { return m_nThrd; }
 protected:
     std::thread     m_thrd;
     ThreadID		m_nThrd{0};

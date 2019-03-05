@@ -29,7 +29,7 @@ private:
     int ThreadRobotNotify();
 
     // 机器人 消息处理
-    int OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id);
+    int OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id) const;
 
     // 机器人 发送心跳
     int SendGamePulse();

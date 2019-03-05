@@ -13,12 +13,11 @@ Table::Table(int tableno, int roomid, int chair_count, int min_player_count, INT
     , min_player_count_(min_player_count)
     , base_deposit_(base_deposit) {}
 
-Table::~Table() {}
 
 int Table::BindPlayer(const UserPtr &user) {
     CHECK_USER(user);
-    int userid = user->get_user_id();
-    int chairno = user->get_chair_no();
+    const auto userid = user->get_user_id();
+    const auto chairno = user->get_chair_no();
     chairs_[chairno].set_userid(userid);
     chairs_[chairno].set_chair_status(kChairWaiting);
 
@@ -54,7 +53,7 @@ int Table::UnbindUser(int userid) {
 
 int Table::UnbindPlayer(int userid) {
     CHECK_USERID(userid);
-    int chairno = GetUserChair(userid);
+    const auto chairno = GetUserChair(userid);
     CHECK_CHAIRNO(chairno);
     chairs_[chairno - 1].set_userid(0);
     chairs_[chairno - 1].set_chair_status(kChairWaiting);
@@ -68,7 +67,7 @@ int Table::UnbindLooker(int userid) {
 }
 
 int Table::GetPlayerCount() {
-    int player_count = 0;
+    auto player_count = 0;
 
     for (const auto &chair_info : chairs_) {
         if (chair_info.get_userid() > 0) {
@@ -81,7 +80,7 @@ int Table::GetPlayerCount() {
 
 int Table::GetUserID(int chairno) {
     CHECK_CHAIRNO(chairno);
-    int index = chairno - 1;
+    const auto index = chairno - 1;
     if (index < 0 || index >= chairs_.size()) {
         return 0;
     }
@@ -89,7 +88,7 @@ int Table::GetUserID(int chairno) {
 }
 
 int Table::GetFreeChairCount() {
-    for (int i = 0; i < get_chair_count(); ++i) {
+    for (auto i = 0; i < get_chair_count(); ++i) {
         if (get_chair_count() - GetPlayerCount() == i) {
             return i;
         }
@@ -98,29 +97,27 @@ int Table::GetFreeChairCount() {
 }
 
 bool Table::IsTablePlayer(int userid) {
-    int chairno = GetUserChair(userid);
+    const auto chairno = GetUserChair(userid);
     return IsValidChairno(chairno);
 }
 
 bool Table::IsTableLooker(int userid) {
-    int chairno = GetUserChair(userid);
-    if (IsTableUser(userid) && !IsValidChairno(chairno)) {
-        return true;
-    }
+    const auto chairno = GetUserChair(userid);
+
+    if (!IsTableUser(userid)) return false;
+
+    if (IsValidChairno(chairno)) return false;
+
     return false;
 }
 
 bool Table::IsTableUser(int userid) {
-    auto itr = table_users_.find(userid);
-    if (itr == table_users_.end()) {
-        return false;
-    }
-    return true;
+    return table_users_.find(userid) != table_users_.end();
 }
 
 int Table::GetUserChair(int userid) {
     CHECK_USERID(userid);
-    for (int i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
+    for (auto i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
         if (chairs_.at(i).get_userid() == userid) {
             // 下标+1就是椅子号
             return i + 1;
@@ -142,7 +139,7 @@ int Table::GetChairInfoByChairno(int chairno, ChairInfo& info) {
 
 int Table::GetChairInfoByUserid(int userid, ChairInfo& info) {
     CHECK_USERID(userid);
-    int chairno = GetUserChair(userid);
+    const auto chairno = GetUserChair(userid);
     if (kCommSucc != GetChairInfoByChairno(chairno, info)) {
         ASSERT_FALSE_RETURN;
     }
@@ -161,7 +158,7 @@ bool Table::IsValidDeposit(INT64 deposit) {
         return true;
     }
 
-    return (deposit >= get_min_deposit() && deposit < get_max_deposit());
+    return deposit >= get_min_deposit() && deposit < get_max_deposit());
 }
 
 
@@ -209,7 +206,7 @@ int Table::RefreshGameResult() {
 
 int Table::RefreshGameResult(int userid) {
     CHECK_USERID(userid);
-    int chairno = GetUserChair(userid);
+    const auto chairno = GetUserChair(userid);
     if (!IsValidChairno(chairno)) {
         LOG_WARN("user[%d] is not player.", userid);
         return kCommFaild;

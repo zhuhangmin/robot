@@ -13,13 +13,7 @@
 #define new DEBUG_NEW
 #endif
 
-AppDelegate::AppDelegate() {
-    g_hExitServer = NULL;
-}
-
-AppDelegate::~AppDelegate() {}
-
-int AppDelegate::InitLanuch() {
+int AppDelegate::InitLanuch() const {
     LOG_FUNC("[START ROUTINE]");
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -39,16 +33,15 @@ int AppDelegate::InitLanuch() {
         LOG_ERROR("[START ROUTINE] invalid clientid 0!");
         ASSERT_FALSE_RETURN;
 
-    } else {
-        LOG_INFO("[START ROUTINE] clientid = [%d]", g_nClientID);
     }
+    LOG_INFO("[START ROUTINE] clientid = [%d]", g_nClientID);
     return kCommSucc;
 }
 
 int AppDelegate::Init() {
     LOG_FUNC("[START ROUTINE]");
     if (S_FALSE == ::CoInitialize(NULL))
-        return kCommFaild;;
+        return kCommFaild;
 
     if (kCommSucc != InitLanuch()) {
         LOG_ERROR(_T("InitBase() return failed"));
@@ -140,7 +133,7 @@ int AppDelegate::MainProcess() {
     if (kCommSucc != GetRoomNeedCountMap(room_need_count_map)) {
         ASSERT_FALSE_RETURN;
     }
-    if (room_need_count_map.size() == 0) {
+    if (room_need_count_map.empty()) {
         ASSERT_FALSE_RETURN;
     }
 
@@ -175,7 +168,7 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
         ASSERT_FALSE_RETURN;
     }
 
-    HallRoomData hall_room_data;
+    HallRoomData hall_room_data = {};
     if (kCommSucc != HallMgr.GetHallRoomData(roomid, hall_room_data)) {
         ASSERT_FALSE_RETURN;
     }
@@ -190,15 +183,15 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
     }
 
     //@zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
-    auto game_ip = RobotUtils::GetGameIP();
-    auto game_port = RobotUtils::GetGamePort();
-    auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
+    const auto game_ip = RobotUtils::GetGameIP();
+    const auto game_port = RobotUtils::GetGamePort();
+    const auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
     if (kCommSucc != robot->ConnectGame(game_ip, game_port, game_notify_thread_id)) {
         ASSERT_FALSE_RETURN;
     }
 
     //TODO 需要大厅提供错误码
-    auto resp_code = robot->SendEnterGame(roomid);
+    const auto resp_code = robot->SendEnterGame(roomid);
     if (kCommSucc !=resp_code) {
         // 银子不够or太多，设置标签，补银还银线程处理
         if (kDepositUnderFlow == resp_code) {
@@ -217,7 +210,7 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
     return kCommSucc;
 }
 
-int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) {
+int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) const {
     // 过滤出没有登入游戏服务器的userid集合
     std::hash_map<UserID, UserID> not_logon_game_temp;
     auto enter_game_map = UserMgr.GetAllEnterUserID();
@@ -229,7 +222,7 @@ int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) {
         }
     }
 
-    if (not_logon_game_temp.size() == 0) {
+    if (not_logon_game_temp.empty()) {
         LOG_WARN("no more robot !");
         ASSERT_FALSE_RETURN;
     }
@@ -239,7 +232,7 @@ int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) {
     if (kCommSucc != RobotUtils::GenRandInRange(0, not_logon_game_temp.size() - 1, random_pos)) {
         ASSERT_FALSE_RETURN;
     }
-    auto random_it = std::next(std::begin(not_logon_game_temp), random_pos);
+    const auto random_it = std::next(std::begin(not_logon_game_temp), random_pos);
     random_userid = random_it->first;
 
     return kCommSucc;
@@ -248,9 +241,9 @@ int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) {
 int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
     auto room_setting_map = SettingMgr.GetRoomSettingMap();
     for (auto& kv: room_setting_map) {
-        auto roomid = kv.first;
-        auto setting = kv.second;
-        auto designed_count = setting.count;
+        const auto roomid = kv.first;
+        const auto setting = kv.second;
+        const auto designed_count = setting.count;
 
         RoomPtr room;
         if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
@@ -266,7 +259,7 @@ int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
             ASSERT_FALSE_RETURN;
         }
 
-        auto need_count = designed_count - inroom_count;
+        const auto need_count = designed_count - inroom_count;
         if (need_count > 0) {
             // @zhuhangmin 20190228 每次主循环每个房间只进一个机器人
             room_need_count_map[roomid] = 1;

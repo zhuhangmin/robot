@@ -4,16 +4,12 @@
 // 游戏业务
 class AppDelegate {
 public:
-    AppDelegate();
-    ~AppDelegate();
-
-public:
     int Init();
 
     int Term();
 
 protected:
-    int InitLanuch();
+    int InitLanuch() const;
 
 private:
     // 业务线程函数 
@@ -29,7 +25,7 @@ private:
     // 辅助函数
 
     // 随机选一个没有进入游戏的userid
-    int GetRandomUserIDNotInGame(UserID& random_userid);
+    int GetRandomUserIDNotInGame(UserID& random_userid) const;
 
     // 获得房间此时需要的机器人数量
     int GetRoomNeedCountMap(RoomNeedCountMap& room_count_map);

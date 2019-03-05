@@ -30,10 +30,10 @@ public:
     // 对象状态快照
     int SnapShotObjectStatus();
 
-    int SnapShotUser(UserID userid);
+    int SnapShotUser(UserID userid) const;
 
     // 返回调用时所有登入游戏userid集合，不返回引用，返回copy
-    const UserFilterMap GetAllEnterUserID() const;
+    UserFilterMap GetAllEnterUserID() const;
 
     // 获取所有用户数量（正常用户,机器人，各级管理员）
     int GetUserCountInRoom(const RoomID roomid, int& count) const;

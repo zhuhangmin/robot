@@ -18,13 +18,17 @@ BaseRoom::~BaseRoom() {}
 RoomOptional BaseRoom::GetRoomType() {
     if (IS_BIT_SET(options_, kClassicsRoom)) {
         return kClassicsRoom;
-    } else if (IS_BIT_SET(options_, kPrivateRoom)) {
-        return kPrivateRoom;
-    } else if (IS_BIT_SET(options_, kMatchRoom)) {
-        return kMatchRoom;
-    } else {
-        return kUnkonwRoom;
     }
+
+    if (IS_BIT_SET(options_, kPrivateRoom)) {
+        return kPrivateRoom;
+    }
+
+    if (IS_BIT_SET(options_, kMatchRoom)) {
+        return kMatchRoom;
+    }
+
+    return kUnkonwRoom;
 }
 
 int BaseRoom::PlayerEnterGame(const UserPtr &user) {

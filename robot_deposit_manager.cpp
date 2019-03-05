@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "robot_deposit_manager.h"
 #include "setting_manager.h"
-#include "Main.h"
+#include "main.h"
 #include "robot_utils.h"
 
 #ifdef _DEBUG
@@ -39,8 +39,8 @@ int RobotDepositManager::ThreadDeposit() {
             }
 
             for (auto& kv : deposit_map_temp) {
-                auto userid = kv.first;
-                auto deposit_type = kv.second;
+                const auto userid = kv.first;
+                const auto deposit_type = kv.second;
 
                 if (deposit_type == DepositType::kGain) {
                     if (kCommSucc != RobotGainDeposit(userid, SettingMgr.GetGainAmount())) {
@@ -65,16 +65,16 @@ int RobotDepositManager::RobotGainDeposit(const UserID userid, const int amount)
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
-    GameID game_id = SettingMgr.GetGameID();
+    const auto game_id = SettingMgr.GetGameID();
     CHECK_GAMEID(game_id);
 
     auto active_id = SettingMgr.GetDepositActiveID();
     if (active_id.empty()) ASSERT_FALSE_RETURN;
-    auto szValue = active_id.c_str();
+    const auto szValue = active_id.c_str();
 
     auto url = SettingMgr.GetDepositGainUrl();
     if (url.empty()) ASSERT_FALSE_RETURN;
-    auto szHttpUrl = url.c_str();
+    const auto szHttpUrl = url.c_str();
 
     Json::Value root;
     Json::FastWriter fast_writer;
@@ -105,16 +105,16 @@ int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount)
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
-    GameID game_id = SettingMgr.GetGameID();
+    const auto game_id = SettingMgr.GetGameID();
     CHECK_GAMEID(game_id);
 
     auto active_id = SettingMgr.GetDepositActiveID();
     if (active_id.empty()) ASSERT_FALSE_RETURN;
-    auto szValue = active_id.c_str();
+    const auto szValue = active_id.c_str();
 
     auto url = SettingMgr.GetDepositBackUrl();
     if (url.empty()) ASSERT_FALSE_RETURN;
-    auto szHttpUrl = url.c_str();
+    const auto szHttpUrl = url.c_str();
 
     Json::Value root;
     Json::FastWriter fast_writer;

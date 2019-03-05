@@ -29,7 +29,7 @@ int RobotNet::OnDisconnGame() {
     return kCommSucc;
 }
 
-BOOL RobotNet::IsConnected() {
+BOOL RobotNet::IsConnected() const {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!game_connection_) {
         LOG_ERROR("m_ConnGame is nil");
@@ -103,11 +103,11 @@ int RobotNet::SendEnterGame(const RoomID roomid) {
 
     REQUEST response = {};
 
-    auto result = SendGameRequestWithLock(GR_ENTER_NORMAL_GAME, val, response);
+    const auto result = SendGameRequestWithLock(GR_ENTER_NORMAL_GAME, val, response);
     if (result != kCommSucc) {
         LOG_ERROR("game send quest fail");
         ASSERT_FALSE;
-        if (result == RobotErrorCode::kOperationFailed) {
+        if (result == kOperationFailed) {
             ResetInitDataWithLock();
         }
 
@@ -116,7 +116,7 @@ int RobotNet::SendEnterGame(const RoomID roomid) {
     }
 
     game::base::EnterNormalGameResp resp;
-    int ret = ParseFromRequest(response, resp);
+    const auto ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
         LOG_ERROR("ParseFromRequest faild.");
         return kCommFaild;
@@ -135,11 +135,11 @@ int RobotNet::SendGamePulse() {
     game::base::PulseReq val;
     val.set_id(userid_);
     REQUEST response = {};
-    auto result = SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
+    const auto result = SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
     if (result != kCommSucc) {
         LOG_ERROR("game send quest fail");
         ASSERT_FALSE;
-        if (result == RobotErrorCode::kOperationFailed) {
+        if (result == kOperationFailed) {
             ResetInitDataWithLock();
         }
         return result;

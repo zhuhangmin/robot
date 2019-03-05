@@ -4,7 +4,7 @@
 
 int RoomManager::GetRoom(const RoomID& roomid, RoomPtr& room) const {
     std::lock_guard<std::mutex> lock(rooms_mutex_);
-    auto iter = rooms_.find(roomid);
+    const auto iter = rooms_.find(roomid);
     if (iter == rooms_.end()) {
         return kCommFaild;
     }
@@ -36,8 +36,8 @@ int RoomManager::SnapShotObjectStatus() {
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("rooms_ size [%d]", rooms_.size());
     for (auto& kv : rooms_) {
-        auto roomid = kv.first;
-        auto room = kv.second;
+        const auto roomid = kv.first;
+        const auto room = kv.second;
         LOG_INFO("roomid [%d]", roomid);
         room->SnapShotObjectStatus();
     }
