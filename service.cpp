@@ -57,7 +57,7 @@ BOOL CMainService::OnInit() {
 void CMainService::Run() {
     m_dwThreadId = GetCurrentThreadId();
 
-    if (kCommFaild == m_AppDelegate.Init()) {
+    if (kCommSucc != m_AppDelegate.Init()) {
         UwlTrace(_T("server initialize failed!"));
         UwlLogFile(_T("server initialize failed!"));
         PostQuitMessage(0);

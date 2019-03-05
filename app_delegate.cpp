@@ -50,40 +50,40 @@ int AppDelegate::Init() {
     if (S_FALSE == ::CoInitialize(NULL))
         return kCommFaild;;
 
-    if (kCommFaild == InitLanuch()) {
+    if (kCommSucc != InitLanuch()) {
         LOG_ERROR(_T("InitBase() return failed"));
         ASSERT_FALSE_RETURN;
     }
 
     // 配置数据类
-    if (kCommFaild == SettingMgr.Init()) {
+    if (kCommSucc != SettingMgr.Init()) {
         LOG_ERROR(_T("SettingManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
 
     // 机器人大厅管理类
-    if (kCommFaild == HallMgr.Init()) {
+    if (kCommSucc != HallMgr.Init()) {
         LOG_ERROR(_T("RobotHallManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
 
     // 游戏服务数据管理类
-    auto game_port = RobotUtils::GetGamePort();
+    /*auto game_port = RobotUtils::GetGamePort();
     auto game_ip = RobotUtils::GetGameIP();
-    if (kCommFaild == GameMgr.Init(game_ip, game_port)) {
-        LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
-        ASSERT_FALSE;
-        return kCommFaild;
-    }
+    if (kCommSucc != GameMgr.Init(game_ip, game_port)) {
+    LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
+    ASSERT_FALSE;
+    return kCommFaild;
+    }*/
 
     // 机器人游戏管理类
-    if (kCommFaild == RobotMgr.Init()) {
+    if (kCommSucc != RobotMgr.Init()) {
         LOG_ERROR(_T("RobotGameManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
 
     // 机器人补银管理类
-    if (kCommFaild == DepositMgr.Init()) {
+    if (kCommSucc != DepositMgr.Init()) {
         LOG_ERROR(_T("RobotDepositManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
@@ -176,7 +176,7 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
     }
 
     HallRoomData hall_room_data;
-    if (kCommFaild == HallMgr.GetHallRoomData(roomid, hall_room_data)) {
+    if (kCommSucc != HallMgr.GetHallRoomData(roomid, hall_room_data)) {
         ASSERT_FALSE_RETURN;
     }
 
@@ -193,7 +193,7 @@ int AppDelegate::RobotProcess(UserID userid, RoomID roomid) {
     auto game_ip = RobotUtils::GetGameIP();
     auto game_port = RobotUtils::GetGamePort();
     auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
-    if (kCommFaild == robot->ConnectGame(game_ip, game_port, game_notify_thread_id)) {
+    if (kCommSucc != robot->ConnectGame(game_ip, game_port, game_notify_thread_id)) {
         ASSERT_FALSE_RETURN;
     }
 
@@ -236,7 +236,7 @@ int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) {
 
     // 随机选取userid
     auto random_pos = 0;
-    if (kCommFaild == RobotUtils::GenRandInRange(0, not_logon_game_temp.size() - 1, random_pos)) {
+    if (kCommSucc != RobotUtils::GenRandInRange(0, not_logon_game_temp.size() - 1, random_pos)) {
         ASSERT_FALSE_RETURN;
     }
     auto random_it = std::next(std::begin(not_logon_game_temp), random_pos);

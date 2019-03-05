@@ -150,7 +150,7 @@ int RobotDepositManager::SetDepositType(const UserID userid, const DepositType t
 int RobotDepositManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(deposit_map_mutex_);
     LOG_INFO("OBJECT ADDRESS [%x]", this);
-    LOG_INFO("deposit_timer_thread_ [%d]", deposit_timer_thread_.ThreadId());
+    LOG_INFO("deposit_timer_thread_ [%d]", deposit_timer_thread_.GetThreadID());
     LOG_INFO("deposit_map_ size [%d]", deposit_map_.size());
     for (auto& kv : deposit_map_) {
         auto userid = kv.first;

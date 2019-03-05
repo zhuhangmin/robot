@@ -80,7 +80,7 @@ enum ErrorCode {
     kAllocTableFaild = -1002,		// 分配桌子失败
     kUserNotFound = -1003,			// 用户不存在
     kTableNotFound = -1004,			// 桌子不存在
-    kInvalidDeposit = -1005			// 银子数不符合条件（TODO：确认站起再坐下失败，是否符合产品需求？）
+    kInvalidDeposit = -1005			// 银子数不符合条件
 };
 
 enum EnterGameFlag {

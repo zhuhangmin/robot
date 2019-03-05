@@ -201,7 +201,7 @@ public:
     // 校验银子数是否合法
     virtual bool IsValidDeposit(INT64 deposit);
 
-    // 当减少一个用户的时候游戏是否能够继续  TODO:修改函数名
+    // 当减少一个用户的时候游戏是否能够继续 
     virtual bool IfContinueWhenOneUserLeave();
 
 public:

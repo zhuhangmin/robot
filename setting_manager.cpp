@@ -175,7 +175,7 @@ int SettingManager::SnapShotObjectStatus() const {
 int SettingManager::GetRandomUserID(UserID& random_userid) const {
     // Ëæ»úÑ¡È¡userid
     auto random_pos = 0;
-    if (kCommFaild == RobotUtils::GenRandInRange(0, robot_setting_map_.size() - 1, random_pos)) {
+    if (kCommSucc != RobotUtils::GenRandInRange(0, robot_setting_map_.size() - 1, random_pos)) {
         ASSERT_FALSE_RETURN;
     }
     auto random_it = std::next(std::begin(robot_setting_map_), random_pos);

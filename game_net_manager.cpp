@@ -204,17 +204,17 @@ int GameNetManager::SendGetGameInfoWithLock() {
 }
 
 int GameNetManager::InitDataWithLock() {
-    if (kCommFaild == ConnectGameSvrWithLock(game_ip_, game_port_)) {
+    if (kCommSucc != ConnectGameSvrWithLock(game_ip_, game_port_)) {
         LOG_ERROR("ConnectGame failed");
         ASSERT_FALSE_RETURN;
     }
 
-    if (kCommFaild == SendValidateReqWithLock()) {
+    if (kCommSucc != SendValidateReqWithLock()) {
         LOG_ERROR("SendValidateReq failed");
         ASSERT_FALSE_RETURN;
     }
 
-    if (kCommFaild == SendGetGameInfoWithLock()) {
+    if (kCommSucc != SendGetGameInfoWithLock()) {
         LOG_ERROR("SendGetGameInfo failed");
         ASSERT_FALSE_RETURN;
     }
@@ -239,6 +239,7 @@ int GameNetManager::SendPulse() {
     val.set_id(g_nClientID);
     REQUEST response = {};
 
+    //@zhuhangmin 大厅模板需要支持 清僵尸机制
     auto result = RobotUtils::SendRequestWithLock(game_info_connection_, GR_GAME_PLUSE, val, response, false);
 
     if (kCommSucc != result) {
@@ -411,7 +412,7 @@ int GameNetManager::OnStartGame(const REQUEST &request) {
     auto roomid = ntf.roomid();
     auto tableno = ntf.tableno();
 
-    //TODO refactor into RoomMgr add param check chari
+    //@zhuhangmin TODO refactor into RoomMgr add param check chari
     std::unordered_map<ChairNO, game::base::ChairInfo> chairs_pb_map;
     for (auto index = 0; index < ntf.chairs_size(); index++) {
         auto chair_pb = ntf.chairs(index);
@@ -514,7 +515,7 @@ int GameNetManager::OnLeaveGame(const REQUEST &request) {
 
     base_room->UserLeaveGame(userid, tableno);
 
-    if (kCommFaild != UserMgr.DelUser(userid)) {
+    if (kCommSucc != UserMgr.DelUser(userid)) {
         ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
@@ -571,7 +572,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) {
 //
 //    // 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
 //    game::base::Table table;
-//    if (kCommFaild == FindTable(userid, table)) return kCommFaild;
+//    if (kCommSucc != FindTable(userid, table)) return kCommFaild;
 //    auto table_status = table.table_status();
 //    if (table_status == kTableWaiting) {
 //        user_status = kUserWaiting;
@@ -580,7 +581,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) {
 //
 //    // 桌子playing && 椅子playing -> 玩家playing
 //    game::base::ChairInfo chair;
-//    if (kCommFaild == FindChair(userid, chair)) return kCommFaild;
+//    if (kCommSucc != FindChair(userid, chair)) return kCommFaild;
 //    auto chair_status = chair.chair_status();
 //    if (table_status != kTablePlaying) return kCommFaild;
 //
@@ -697,7 +698,7 @@ int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, const int
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     game_info_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
-    if (!game_info_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_info_notify_thread_.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
+    if (!game_info_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_info_notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
         LOG_ERROR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
         ASSERT_FALSE_RETURN;
     }
@@ -709,8 +710,8 @@ int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, const int
 int GameNetManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
     LOG_INFO("OBJECT ADDRESS = %x", this);
-    LOG_INFO("game_info_notify_thread_ [%d]", game_info_notify_thread_.ThreadId());
-    LOG_INFO("heart_timer_thread_ [%d]", heart_timer_thread_.ThreadId());
+    LOG_INFO("game_info_notify_thread_ [%d]", game_info_notify_thread_.GetThreadID());
+    LOG_INFO("heart_timer_thread_ [%d]", heart_timer_thread_.GetThreadID());
     LOG_INFO("token [%d]", game_info_connection_->GetTokenID());
 
     return kCommSucc;

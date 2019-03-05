@@ -1,32 +1,29 @@
 #pragma once
 #include "robot_define.h"
+
 class RobotHallManager : public ISingletion<RobotHallManager> {
 public:
+    // 无WithLock后缀函数：如果方法有多线程可见数据 一般都需要加锁，除非业务层次允许脏读
+    // 组合 lock + WithLock 函数组合而成, 保证不会获得多次mutex，std::mutex 为非递归锁
+    // 只对外部线程可见
 
-public:
     int Init();
 
     int Term();
 
-public:
     // 大厅 登陆
     int LogonHall(const UserID userid);
-
-    // 大厅 心跳
-    int SendHallPulse();
 
     // 获得大厅房间数据
     int GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data);
 
     // 随机选择没有登陆大厅的机器人
-    int GetRandomNotLogonUserID(UserID& random_userid) const;
-
-protected:
-    SINGLETION_CONSTRUCTOR(RobotHallManager);
+    int GetRandomNotLogonUserID(UserID& random_userid);
 
 private:
-    // 大厅 建立连接
-    int ConnectHall();
+
+    // 大厅 心跳
+    int SendHallPulse();
 
     // 大厅 消息接收
     int ThreadHallNotify();
@@ -51,10 +48,12 @@ private:
     // 大厅 消息发送
     int SendHallRequestWithLock(const RequestID requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo = true);
 
+    // 大厅 获得登陆状态
     int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) const;
 
     int SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status);
 
+    // 大厅 获得房间数据
     int GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) const;
 
     int SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
@@ -75,10 +74,20 @@ private:
     int SendGetRoomDataWithLock(const RoomID roomid);
 
 public:
+    // 非业务 调试函数
+
     // 对象状态快照
     int SnapShotObjectStatus();
 
+    // 方法和线程可见性检查
+    int CheckNotInnerThread();
+
+protected:
+    SINGLETION_CONSTRUCTOR(RobotHallManager);
 private:
+    // 保持一个对象一把锁对应关系,防止多把锁嵌套造成死锁
+    // 发现必须有多把锁时说明对象数据聚合太多，需要分成多个对象
+
     //大厅 数据锁
     mutable std::mutex hall_connection_mutex_;
     //大厅 连接

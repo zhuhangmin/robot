@@ -42,7 +42,7 @@ int RobotNetManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
 
 ThreadID RobotNetManager::GetRobotNotifyThreadID() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
-    return robot_notify_thread_.ThreadId();
+    return robot_notify_thread_.GetThreadID();
 }
 
 // 具体业务
@@ -154,8 +154,8 @@ int RobotNetManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr
 int RobotNetManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     LOG_INFO("OBJECT ADDRESS [%x]", this);
-    LOG_INFO("robot_notify_thread_ [%d]", robot_notify_thread_.ThreadId());
-    LOG_INFO("robot_heart_timer_thread_ [%d]", robot_heart_timer_thread_.ThreadId());
+    LOG_INFO("robot_notify_thread_ [%d]", robot_notify_thread_.GetThreadID());
+    LOG_INFO("robot_heart_timer_thread_ [%d]", robot_heart_timer_thread_.GetThreadID());
 
     LOG_INFO("robot_map_ size [%d]", robot_map_.size());
     std::string str = "{";

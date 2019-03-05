@@ -144,7 +144,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     LOG_INFO("[START ROUTINE] MainServer BEG");
     AppDelegate MainServer;
 
-    if (kCommFaild == MainServer.Init()) {
+    if (kCommSucc != MainServer.Init()) {
         UwlTrace(_T("server initialize failed!"));
         MainServer.Term();
         return -1;

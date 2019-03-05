@@ -8,9 +8,17 @@
 #define new DEBUG_NEW
 #endif
 
+
+
+//外部线程调用方法
+
 int RobotHallManager::Init() {
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     LOG_FUNC("[START ROUTINE]");
+    if (kCommSucc != CheckNotInnerThread()) {
+        ASSERT_FALSE_RETURN
+    }
+
     auto setting = SettingMgr.GetRobotSettingMap();
     for (auto& kv : setting) {
         auto userid = kv.first;
@@ -27,94 +35,35 @@ int RobotHallManager::Init() {
     return kCommSucc;
 }
 
-int RobotHallManager::InitDataWithLock() {
-    if (kCommFaild == ConnectHallWithLock()) {
-        LOG_ERROR("ConnectHall failed");
-        ASSERT_FALSE_RETURN;
-    }
-
-    if (kCommFaild == SendGetAllRoomDataWithLock()) {
-        LOG_ERROR("SendGetAllRoomData failed");
-        ASSERT_FALSE_RETURN;
-    }
-
-    return kCommSucc;
-}
-
 int RobotHallManager::Term() {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    if (kCommSucc != CheckNotInnerThread()) {
+        ASSERT_FALSE_RETURN
+    }
+
     hall_notify_thread_.Release();
     hall_heart_timer_thread_.Release();
     LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
-int RobotHallManager::ConnectHall() {
-    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-    if (kCommSucc != ConnectHallWithLock()) {
-        ASSERT_FALSE_RETURN;
-    }
-    return kCommSucc;
-}
-
-int RobotHallManager::ThreadHallNotify() {
-    LOG_INFO("[START ROUTINE] RobotHallManager Notify thread [%d] started", GetCurrentThreadId());
-
-    MSG msg = {};
-    while (GetMessage(&msg, 0, 0, 0)) {
-        if (UM_DATA_RECEIVED == msg.message) {
-
-            LPCONTEXT_HEAD pContext = (LPCONTEXT_HEAD) (msg.wParam);
-            LPREQUEST pRequest = (LPREQUEST) (msg.lParam);
-
-            TokenID	nTokenID = pContext->lTokenID;
-            RequestID requestid = pRequest->head.nRequest;
-
-            OnHallNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen);
-
-            SAFE_DELETE(pContext);
-            UwlClearRequest(pRequest);
-            SAFE_DELETE(pRequest);
-        } else {
-            DispatchMessage(&msg);
-        }
-    }
-    LOG_INFO("[EXIT ROUTINE] RobotHallManager Notify thread [%d] exiting", GetCurrentThreadId());
-    return kCommSucc;
-}
-
-int RobotHallManager::OnHallNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size) {
-    CHECK_REQUESTID(requestid);
-    switch (requestid) {
-        case UR_SOCKET_ERROR:
-        case UR_SOCKET_CLOSE:
-            OnDisconnHall();
-            break;
-        default:
-            break;
-    }
-    return kCommSucc;
-}
-
-int RobotHallManager::OnDisconnHall() {
-    LOG_ERROR(_T("与大厅服务断开连接"));
-    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-    ResetInitDataWithLock();
-    return kCommSucc;
-}
 
 int RobotHallManager::LogonHall(const UserID userid) {
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     CHECK_USERID(userid);
+    if (kCommSucc != CheckNotInnerThread()) {
+        ASSERT_FALSE_RETURN
+    }
 
     HallLogonStatusType status;
     if (kCommSucc == GetLogonStatusWithLock(userid, status)) {
-        if (status ==HallLogonStatusType::kLogon) {
+        if (HallLogonStatusType::kLogon == status) {
             return kCommSucc;
         }
     }
 
     RobotSetting setting;
-    if (kCommFaild == SettingMgr.GetRobotSetting(userid, setting)) {
+    if (kCommSucc != SettingMgr.GetRobotSetting(userid, setting)) {
         return kCommFaild;
     }
     std::string password = setting.password;
@@ -158,8 +107,92 @@ int RobotHallManager::LogonHall(const UserID userid) {
     return kCommSucc;
 }
 
+int RobotHallManager::GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data) {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    CHECK_ROOMID(roomid);
+    if (kCommSucc != CheckNotInnerThread()) {
+        ASSERT_FALSE_RETURN
+    }
+    return GetHallRoomDataWithLock(roomid, hall_room_data);
+}
+
+int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    if (kCommSucc != CheckNotInnerThread()) {
+        ASSERT_FALSE_RETURN
+    }
+
+    HallLogonMap temp_map;
+    for (auto& kv : hall_logon_status_map_) {
+        UserID userid = kv.first;
+        auto status = kv.second;
+        if (HallLogonStatusType::kNotLogon == status) {
+            temp_map[userid] = status;
+        }
+    }
+
+    if (temp_map.size() == 0) return kCommFaild;
+
+    //random pick up one
+    auto random_pos = 0;
+    if (kCommSucc != RobotUtils::GenRandInRange(0, temp_map.size() - 1, random_pos)) {
+        return kCommFaild;
+    }
+
+    auto random_it = std::next(std::begin(temp_map), random_pos);
+    random_userid = random_it->first;
+    return kCommSucc;
+}
+
+int RobotHallManager::ThreadHallNotify() {
+    LOG_INFO("[START ROUTINE] RobotHallManager Notify thread [%d] started", GetCurrentThreadId());
+    MSG msg = {};
+    while (GetMessage(&msg, 0, 0, 0)) {
+        if (UM_DATA_RECEIVED == msg.message) {
+
+            LPCONTEXT_HEAD pContext = (LPCONTEXT_HEAD) (msg.wParam);
+            LPREQUEST pRequest = (LPREQUEST) (msg.lParam);
+
+            TokenID	nTokenID = pContext->lTokenID;
+            RequestID requestid = pRequest->head.nRequest;
+
+            OnHallNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen);
+
+            SAFE_DELETE(pContext);
+            UwlClearRequest(pRequest);
+            SAFE_DELETE(pRequest);
+        } else {
+            DispatchMessage(&msg);
+        }
+    }
+    LOG_INFO("[EXIT ROUTINE] RobotHallManager Notify thread [%d] exiting", GetCurrentThreadId());
+    return kCommSucc;
+}
+
+int RobotHallManager::OnHallNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size) {
+    CHECK_REQUESTID(requestid);
+    switch (requestid) {
+        case UR_SOCKET_ERROR:
+        case UR_SOCKET_CLOSE:
+            OnDisconnHall();
+            break;
+        default:
+            break;
+    }
+    return kCommSucc;
+}
+
+int RobotHallManager::OnDisconnHall() {
+    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    CHECK_THREAD(hall_notify_thread_);
+    LOG_ERROR(_T("与大厅服务断开连接"));
+    ResetInitDataWithLock();
+    return kCommSucc;
+}
+
 int RobotHallManager::SendHallPulse() {
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
+    CHECK_THREAD(hall_heart_timer_thread_);
     HALLUSER_PULSE hp = {};
     hp.nUserID = 0;
     hp.nAgentGroupID = RobotAgentGroupID;
@@ -187,12 +220,6 @@ int RobotHallManager::SendHallPulse() {
     }
 
     return kCommSucc;
-}
-
-int RobotHallManager::GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data) {
-    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-    CHECK_ROOMID(roomid);
-    return GetHallRoomDataWithLock(roomid, hall_room_data);
 }
 
 int RobotHallManager::ThreadHallPulse() {
@@ -269,12 +296,26 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& da
     return kCommSucc;
 }
 
+int RobotHallManager::InitDataWithLock() {
+    if (kCommSucc != ConnectHallWithLock()) {
+        LOG_ERROR("ConnectHall failed");
+        ASSERT_FALSE_RETURN;
+    }
+
+    if (kCommSucc != SendGetAllRoomDataWithLock()) {
+        LOG_ERROR("SendGetAllRoomData failed");
+        ASSERT_FALSE_RETURN;
+    }
+
+    return kCommSucc;
+}
+
 int RobotHallManager::ConnectHallWithLock() {
     TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
     GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof(szHallSvrIP), g_szIniFile);
     auto nHallSvrPort = GetPrivateProfileInt(_T("hall_server"), _T("port"), 0, g_szIniFile);
     hall_connection_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
-    if (!hall_connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, hall_notify_thread_.ThreadId(), 0, GetHelloData(), GetHelloLength())) {
+    if (!hall_connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, hall_notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
         LOG_ERROR("[ROUTE] ConnectHall Faild! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
         ASSERT_FALSE_RETURN;
     }
@@ -286,7 +327,7 @@ int RobotHallManager::SendGetAllRoomDataWithLock() {
     auto setting = SettingMgr.GetRoomSettingMap();
     for (auto& kv : setting) {
         auto roomid = kv.first;
-        if (kCommFaild == SendGetRoomDataWithLock(roomid)) {
+        if (kCommSucc != SendGetRoomDataWithLock(roomid)) {
             LOG_ERROR("cannnot get hall room data = %d", roomid);
             ASSERT_FALSE_RETURN;
         }
@@ -391,36 +432,11 @@ int RobotHallManager::ResetDataWithLock() {
     return kCommSucc;
 }
 
-int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) const {
-    //filter robots who are not logon on hall
-    std::lock_guard<std::mutex> lock(hall_connection_mutex_);
-    HallLogonMap temp_map;
-    for (auto& kv : hall_logon_status_map_) {
-        UserID userid = kv.first;
-        auto status = kv.second;
-        if (HallLogonStatusType::kNotLogon == status) {
-            temp_map[userid] = status;
-        }
-    }
-
-    if (temp_map.size() == 0) return kCommFaild;
-
-    //random pick up one
-    auto random_pos = 0;
-    if (kCommFaild == RobotUtils::GenRandInRange(0, temp_map.size() - 1, random_pos)) {
-        return kCommFaild;
-    }
-
-    auto random_it = std::next(std::begin(temp_map), random_pos);
-    random_userid = random_it->first;
-    return kCommSucc;
-}
-
 int RobotHallManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(hall_connection_mutex_);
     LOG_INFO("OBJECT ADDRESS [%x]", this);
-    LOG_INFO("hall_notify_thread_ [%d]", hall_notify_thread_.ThreadId());
-    LOG_INFO("hall_heart_timer_thread_ [%d]", hall_heart_timer_thread_.ThreadId());
+    LOG_INFO("hall_notify_thread_ [%d]", hall_notify_thread_.GetThreadID());
+    LOG_INFO("hall_heart_timer_thread_ [%d]", hall_heart_timer_thread_.GetThreadID());
     LOG_INFO("token [%d]", hall_connection_->GetTokenID());
 
     LOG_INFO("hall_room_data_map_ size [%d]", hall_room_data_map_.size());
@@ -462,5 +478,11 @@ int RobotHallManager::SnapShotObjectStatus() {
     LOG_INFO("on [%d] off [%d] unknow [%d]", status_on_count, status_off_count, status_unknow_count);
     LOG_INFO("%s", str.c_str());
 
+    return kCommSucc;
+}
+
+int RobotHallManager::CheckNotInnerThread() {
+    CHECK_NOT_THREAD(hall_notify_thread_);
+    CHECK_NOT_THREAD(hall_heart_timer_thread_);
     return kCommSucc;
 }

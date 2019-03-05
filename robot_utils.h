@@ -47,6 +47,12 @@ public:
 
     static int IsValidGamePort(const int32_t game_port);
 
+    // 控制方法对特定线程可见
+    static int IsCurrentThread(YQThread& thread);
+
+    // 控制方法对特定线程不可见
+    static int NotThisThread(YQThread& thread);
+
 };
 
 #define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {ASSERT_FALSE_RETURN}
@@ -74,5 +80,9 @@ public:
 #define CHECK_GAMEIP(x)  if(kCommSucc != RobotUtils::IsValidGameIP(x))  {ASSERT_FALSE_RETURN}
 
 #define CHECK_GAMEPORT(x)  if(kCommSucc != RobotUtils::IsValidGamePort(x))  {ASSERT_FALSE_RETURN}
+
+#define CHECK_THREAD(x)  if(kCommSucc != RobotUtils::IsCurrentThread(x))  {ASSERT_FALSE_RETURN}
+
+#define CHECK_NOT_THREAD(x)  if(kCommSucc != RobotUtils::NotThisThread(x))  {ASSERT_FALSE_RETURN}
 
 #define LOG_FUNC(x) LOG_INFO("%s %s", x, __FUNCTION__);

@@ -141,7 +141,7 @@ int RobotUtils::GetGamePort() {
     }
 
     HallRoomData hall_room_data;
-    if (kCommFaild == HallMgr.GetHallRoomData(room_id, hall_room_data)) {
+    if (kCommSucc != HallMgr.GetHallRoomData(room_id, hall_room_data)) {
         LOG_ERROR("GetHallRoomData room id = %d failed", room_id);
         ASSERT_FALSE_RETURN;
     }
@@ -201,5 +201,12 @@ int RobotUtils::IsValidGamePort(const int32_t game_port) {
     return game_port <= 0 ? kCommFaild : kCommSucc;
 }
 
+int RobotUtils::IsCurrentThread(YQThread& thread) {
+    return  thread.GetThreadID() != ::GetCurrentThreadId() ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::NotThisThread(YQThread& thread) {
+    return  thread.GetThreadID() == ::GetCurrentThreadId() ? kCommFaild : kCommSucc;
+}
 
 

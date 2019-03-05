@@ -170,7 +170,7 @@ public:
         m_thrd.detach(); //::CloseHandle(m_hThrd);
         m_nThrd = 0; m_hThrd = nullptr;
     }
-    ThreadID ThreadId() { return m_nThrd; }
+    ThreadID GetThreadID() { return m_nThrd; }
 protected:
     std::thread     m_thrd;
     ThreadID		m_nThrd{0};
