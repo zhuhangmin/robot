@@ -9,7 +9,7 @@ public:
 
 public:
     // 设置 补银还银状态
-    int SetDepositType(const UserID userid, const DepositType type);
+    int SetDepositType(const UserID& userid, const DepositType& type);
 
 public:
     // 对象状态快照

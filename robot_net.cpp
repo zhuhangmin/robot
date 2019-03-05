@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "robot_net.h"
-#include "main.h"
 #include "common_func.h"
 #include "robot_utils.h"
 
@@ -11,7 +10,7 @@
 RobotNet::RobotNet(UserID userid) {
     userid_ = userid;
 }
-int RobotNet::ConnectGame(const std::string& game_ip, const int game_port, const ThreadID game_notify_thread_id) {
+int RobotNet::ConnectGame(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
@@ -78,13 +77,11 @@ int RobotNet::ResetInitDataWithLock() {
     // 重置
     if (kCommSucc != ResetDataWithLock()) {
         ASSERT_FALSE_RETURN;
-        return kCommFaild;
     }
 
     // 重新初始化
     if (kCommSucc != InitDataWithLock()) {
         ASSERT_FALSE_RETURN;
-        return kCommFaild;
     }
     return kCommSucc;
 }

@@ -8,7 +8,7 @@ class RoomManager : public ISingletion<RoomManager> {
 protected:
     SINGLETION_CONSTRUCTOR(RoomManager);
 public:
-    int GetRoom(const RoomID roomid, RoomPtr& room) const;
+    int GetRoom(const RoomID& roomid, RoomPtr& room) const;
     const GameRoomMap& GetAllRooms() const;
     int AddRoom(const RoomID roomid, const RoomPtr &room);
 

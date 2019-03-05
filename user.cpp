@@ -1,7 +1,5 @@
 #include "stdafx.h"
 #include "user.h"
-#include "robot_utils.h"
-
 
 User::User() {}
 

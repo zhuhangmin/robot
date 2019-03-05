@@ -3,12 +3,9 @@
 #include "table.h"
 class GameNetManager : public ISingletion<GameNetManager> {
 public:
-    int Init(const std::string game_ip, const int game_port);
+    int Init(const std::string& game_ip, const int& game_port);
 
     int Term();
-
-protected:
-    SINGLETION_CONSTRUCTOR(GameNetManager);
 
 private:
     // 游戏 消息发送
@@ -95,28 +92,33 @@ public:
     // 对象状态快照
     int SnapShotObjectStatus();
 
-    // 获得房间内特定状态人数
+private:
+    // 方法的线程可见性检查
+    int CheckNotInnerThread();
+
+protected:
+    SINGLETION_CONSTRUCTOR(GameNetManager);
 
 private:
+    //游戏服务器连接
+    // 管理的数据层为 RoomManager, UserManager
+    // 接收游戏服务器网络数据，上层逻辑业务层[不能修改] RoomManager, UserManager
+    // 可以认为整个RoomManager, UserManager 为游戏服务器数据层[只读]快照
+    mutable std::mutex mutex_;
+    CDefSocketClientPtr connection_{std::make_shared<CDefSocketClient>()};
+    int timeout_count_{0};
+
     // 接收 游戏服务器消息 线程
-    YQThread game_info_notify_thread_;
+    YQThread notify_thread_;
 
     // 心跳 定时器 线程
-    YQThread heart_timer_thread_;
+    YQThread heart_thread_;
 
     // 游戏服务器 IP
     std::string game_ip_;
 
     // 游戏服务器 PORT
     int game_port_{InvalidPort};
-
-    //游戏服务器连接
-    // 管理的数据层为 room_manager 和 user_manager 
-    // 只用来接收网络消息形成数据层，逻辑业务层[不能修改] room_manager 和 user_manager
-    // 可以认为整个room_manager 和 user_manager 为游戏服务器数据层[只读]快照
-    mutable std::mutex game_info_connection_mutex_;
-    CDefSocketClientPtr game_info_connection_{std::make_shared<CDefSocketClient>()};
-    int pulse_timeout_count_{0};
 };
 
 #define GameMgr GameNetManager::Instance()

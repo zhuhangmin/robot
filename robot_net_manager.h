@@ -48,6 +48,9 @@ public:
     int SnapShotObjectStatus();
 
 private:
+    int CheckNotInnerThread();
+
+private:
     //机器人 数据锁
     mutable std::mutex robot_map_mutex_;
 
@@ -55,10 +58,10 @@ private:
     RobotMap robot_map_;
 
     //机器人 接收消息线程
-    YQThread robot_notify_thread_;
+    YQThread notify_thread_;
 
     //机器人 心跳线程
-    YQThread robot_heart_timer_thread_;
+    YQThread heart_thread_;
 
 };
 

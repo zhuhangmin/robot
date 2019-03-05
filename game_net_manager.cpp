@@ -9,10 +9,14 @@
 #include "user_manager.h"
 
 
-int GameNetManager::Init(const std::string game_ip, const int game_port) {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+int GameNetManager::Init(const std::string& game_ip, const int& game_port) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (kCommSucc != CheckNotInnerThread()) {
+        ASSERT_FALSE_RETURN
+    }
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
+
     // 同步过程
     game_ip_ = game_ip;
     game_port_ = game_port;
@@ -22,16 +26,20 @@ int GameNetManager::Init(const std::string game_ip, const int game_port) {
     }
 
     // @zhuhangmin 20190225 不可颠倒同步过程和接收消息顺序。不然前置通知消息会被SendGetGameInfo覆盖
-    game_info_notify_thread_.Initial(std::thread([this] {this->ThreadGameInfoNotify(); }));
+    notify_thread_.Initial(std::thread([this] {this->ThreadGameInfoNotify(); }));
 
-    heart_timer_thread_.Initial(std::thread([this] {this->ThreadSendGamePulse(); }));
+    heart_thread_.Initial(std::thread([this] {this->ThreadSendGamePulse(); }));
 
     return kCommSucc;
 }
 
 int GameNetManager::Term() {
-    game_info_notify_thread_.Release();
-    heart_timer_thread_.Release();
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (kCommSucc != CheckNotInnerThread()) {
+        ASSERT_FALSE_RETURN
+    }
+    notify_thread_.Release();
+    heart_thread_.Release();
     LOG_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
@@ -39,9 +47,9 @@ int GameNetManager::Term() {
 
 
 int GameNetManager::SendGameRequest(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool bNeedEcho /*= true*/) {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     CHECK_REQUESTID(requestid);
-    return RobotUtils::SendRequestWithLock(game_info_connection_, requestid, val, response, bNeedEcho);
+    return RobotUtils::SendRequestWithLock(connection_, requestid, val, response, bNeedEcho);
 }
 
 int GameNetManager::ThreadGameInfoNotify() {
@@ -52,8 +60,6 @@ int GameNetManager::ThreadGameInfoNotify() {
 
             LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
             LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
-
-            TokenID		nTokenID = pContext->lTokenID;
             RequestID		requestid = pRequest->head.nRequest;
 
             OnGameInfoNotify(requestid, *pRequest);
@@ -111,7 +117,7 @@ int GameNetManager::OnGameInfoNotify(const RequestID requestid, const REQUEST &r
 }
 
 int GameNetManager::OnDisconnGameInfo() {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     ResetInitDataWithLock();
     return kCommSucc;
 }
@@ -222,30 +228,30 @@ int GameNetManager::InitDataWithLock() {
 }
 
 int GameNetManager::ResetDataWithLock() {
-    if (game_info_connection_) {
+    if (connection_) {
         //@zhuhanmin 20190228 socket建立后发消息时如果连接已断失效，销毁
-        game_info_connection_->DestroyEx();
+        connection_->DestroyEx();
     }
-    pulse_timeout_count_ = 0;
+    timeout_count_ = 0;
     UserMgr.Reset();
     RoomMgr.Reset();
     return kCommSucc;
 }
 
 int GameNetManager::SendPulse() {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
 
     game::base::PulseReq val;
     val.set_id(g_nClientID);
     REQUEST response = {};
 
     //@zhuhangmin 大厅模板需要支持 清僵尸机制
-    auto result = RobotUtils::SendRequestWithLock(game_info_connection_, GR_GAME_PLUSE, val, response, false);
+    auto result = RobotUtils::SendRequestWithLock(connection_, GR_GAME_PLUSE, val, response, false);
 
     if (kCommSucc != result) {
         if (result == RobotErrorCode::kConnectionTimeOut) {
-            pulse_timeout_count_++;
-            if (pulse_timeout_count_ == MaxPluseTimeOutCount) {
+            timeout_count_++;
+            if (timeout_count_ == MaxPluseTimeOutCount) {
                 ResetInitDataWithLock();
             }
             return RobotErrorCode::kConnectionTimeOut;
@@ -452,7 +458,6 @@ int GameNetManager::OnUserFreshResult(const REQUEST &request) {
     auto userid = ntf.userid();
     auto roomid = ntf.roomid();
     auto tableno = ntf.tableno();
-    auto chairno = ntf.chairno();
 
     RoomPtr base_room;
     if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
@@ -628,7 +633,6 @@ int GameNetManager::AddRoomPB(const game::base::Room room_pb) {
 }
 
 int GameNetManager::AddTablePB(const game::base::Table table_pb, TablePtr table) {
-    TableNO tableno = table_pb.tableno();
     table->set_table_no(table_pb.tableno()); // tableno start from 1
     table->set_room_id(table_pb.roomid());
     table->set_chair_count(table_pb.chair_count());
@@ -662,7 +666,6 @@ int GameNetManager::AddTablePB(const game::base::Table table_pb, TablePtr table)
 }
 
 int GameNetManager::AddUserPB(const game::base::User user_pb) {
-    UserID userid = user_pb.userid();
     auto user = std::make_shared<User>();
     user->set_user_id(user_pb.userid());
     user->set_room_id(user_pb.roomid());
@@ -683,13 +686,11 @@ int GameNetManager::ResetInitDataWithLock() {
     // 重置
     if (kCommSucc != ResetDataWithLock()) {
         ASSERT_FALSE_RETURN;
-        return kCommFaild;
     }
 
     // 重新初始化
     if (kCommSucc != InitDataWithLock()) {
         ASSERT_FALSE_RETURN;
-        return kCommFaild;
     }
     return kCommSucc;
 }
@@ -697,8 +698,8 @@ int GameNetManager::ResetInitDataWithLock() {
 int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, const int game_port) {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
-    game_info_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
-    if (!game_info_connection_->Create(game_ip.c_str(), game_port, 5, 0, game_info_notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
+    connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
+    if (!connection_->Create(game_ip.c_str(), game_port, 5, 0, notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
         LOG_ERROR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
         ASSERT_FALSE_RETURN;
     }
@@ -708,12 +709,18 @@ int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, const int
 }
 
 int GameNetManager::SnapShotObjectStatus() {
-    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("OBJECT ADDRESS = %x", this);
-    LOG_INFO("game_info_notify_thread_ [%d]", game_info_notify_thread_.GetThreadID());
-    LOG_INFO("heart_timer_thread_ [%d]", heart_timer_thread_.GetThreadID());
-    LOG_INFO("token [%d]", game_info_connection_->GetTokenID());
+    LOG_INFO("game_info_notify_thread_ [%d]", notify_thread_.GetThreadID());
+    LOG_INFO("heart_timer_thread_ [%d]", heart_thread_.GetThreadID());
+    LOG_INFO("token [%d]", connection_->GetTokenID());
 
+    return kCommSucc;
+}
+
+int GameNetManager::CheckNotInnerThread() {
+    CHECK_NOT_THREAD(notify_thread_);
+    CHECK_NOT_THREAD(heart_thread_);
     return kCommSucc;
 }
 

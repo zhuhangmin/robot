@@ -2,7 +2,7 @@
 #include "room_manager.h"
 #include "robot_utils.h"
 
-int RoomManager::GetRoom(const RoomID roomid, RoomPtr& room) const {
+int RoomManager::GetRoom(const RoomID& roomid, RoomPtr& room) const {
     std::lock_guard<std::mutex> lock(rooms_mutex_);
     auto iter = rooms_.find(roomid);
     if (iter == rooms_.end()) {

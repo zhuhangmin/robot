@@ -7,7 +7,7 @@ public:
 
 public:
     // 游戏 连接
-    int ConnectGame(const std::string& game_ip, const int game_port, const ThreadID game_notify_thread_id);
+    int ConnectGame(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id);
 
     // 游戏 断开
     int OnDisconnGame();

@@ -109,7 +109,7 @@ const RoomSettingMap& SettingManager::GetRoomSettingMap() const {
 }
 
 int SettingManager::GetRobotSetting(const UserID userid, RobotSetting& robot_setting) const {
-    auto& iter = robot_setting_map_.find(userid);
+    auto iter = robot_setting_map_.find(userid);
     if (iter == robot_setting_map_.end()) {
         return kCommFaild;
     }

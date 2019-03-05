@@ -79,7 +79,9 @@ public:
     // 对象状态快照
     int SnapShotObjectStatus();
 
-    // 方法和线程可见性检查
+private:
+
+    // 方法的线程可见性检查
     int CheckNotInnerThread();
 
 protected:
@@ -89,19 +91,19 @@ private:
     // 发现必须有多把锁时说明对象数据聚合太多，需要分成多个对象
 
     //大厅 数据锁
-    mutable std::mutex hall_connection_mutex_;
+    mutable std::mutex mutex_;
     //大厅 连接
-    CDefSocketClientPtr hall_connection_{std::make_shared<CDefSocketClient>()};
+    CDefSocketClientPtr connection_{std::make_shared<CDefSocketClient>()};
     //大厅 登陆状态
-    HallLogonMap hall_logon_status_map_;
+    HallLogonMap logon_status_map_;
     //大厅 房间配置
-    HallRoomDataMap hall_room_data_map_;
+    HallRoomDataMap room_data_map_;
     //大厅 接收消息线程
-    YQThread	hall_notify_thread_;
+    YQThread	notify_thread_;
     //大厅 心跳线程
-    YQThread	hall_heart_timer_thread_;
+    YQThread	heart_thread_;
     //大厅 超时计数
-    int pulse_timeout_count_{0};
+    int timeout_count_{0};
 
 };
 

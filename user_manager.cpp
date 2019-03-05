@@ -65,7 +65,6 @@ const UserFilterMap UserManager::GetAllEnterUserID() const {
 int UserManager::GetUserCountInRoom(const RoomID roomid, int& count) const {
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     for (auto& kv : user_map_) {
-        auto userid = kv.first;
         auto user = kv.second;
         if (user->get_room_id() == roomid) {
             count++;
@@ -77,7 +76,6 @@ int UserManager::GetUserCountInRoom(const RoomID roomid, int& count) const {
 int UserManager::GetRobotCountInRoom(const RoomID roomid, int& count) const {
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     for (auto& kv : user_map_) {
-        auto userid = kv.first;
         auto user = kv.second;
         if (user->get_room_id() == roomid) {
             if (user->get_user_type() == kUserRobot) {
@@ -91,7 +89,6 @@ int UserManager::GetRobotCountInRoom(const RoomID roomid, int& count) const {
 int UserManager::GetNormalUserCountInRoom(const RoomID roomid, int& count) const {
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     for (auto& kv : user_map_) {
-        auto userid = kv.first;
         auto user = kv.second;
         if (user->get_room_id() == roomid) {
             if (user->get_user_type() == kUserNormal) {

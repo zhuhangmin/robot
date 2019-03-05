@@ -43,11 +43,15 @@ int RobotDepositManager::ThreadDeposit() {
                 auto deposit_type = kv.second;
 
                 if (deposit_type == DepositType::kGain) {
-                    RobotGainDeposit(userid, SettingMgr.GetGainAmount());
+                    if (kCommSucc != RobotGainDeposit(userid, SettingMgr.GetGainAmount())) {
+                        ASSERT_FALSE_RETURN;
+                    }
                 }
 
                 if (deposit_type == DepositType::kBack) {
-                    RobotBackDeposit(userid, SettingMgr.GetBackAmount());
+                    if (kCommSucc != RobotBackDeposit(userid, SettingMgr.GetBackAmount())) {
+                        ASSERT_FALSE_RETURN;
+                    }
                 }
             }
         }
@@ -137,7 +141,7 @@ int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount)
     return kCommSucc;
 }
 
-int RobotDepositManager::SetDepositType(const UserID userid, const DepositType type) {
+int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType& type) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(deposit_map_mutex_);
     if (deposit_map_.find(userid) == deposit_map_.end()) {

@@ -229,7 +229,6 @@ int Table::SnapShotObjectStatus() {
 
     LOG_INFO("table_users_ size [%d]", table_users_.size());
     for (auto& kv: table_users_) {
-        auto userid = kv.first;
         auto tableinfo = kv.second;
         LOG_INFO("table userid [%d] user_type_ [%d] bind_timestamp_ [%d]", tableinfo.get_userid(), tableinfo.get_user_type(), tableinfo.get_bind_timestamp());
     }
