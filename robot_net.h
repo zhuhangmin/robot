@@ -3,7 +3,7 @@
 
 class RobotNet {
 public:
-    explicit RobotNet(UserID userid);
+    explicit RobotNet(const UserID& userid);
 
 public:
     // 游戏 连接
@@ -16,7 +16,7 @@ public:
     BOOL IsConnected() const;
 
     // 进入游戏
-    int SendEnterGame(const RoomID roomid);
+    int SendEnterGame(const RoomID& roomid);
 
     // 发送心跳
     int SendGamePulse();
@@ -25,11 +25,11 @@ public:
     // 属性接口
     UserID GetUserID() const;
 
-    TokenID GetTokenID();
+    TokenID GetTokenID() const;
 
     TimeStamp GetTimeStamp() const;
 
-    void SetTimeStamp(TimeStamp val);
+    void SetTimeStamp(const TimeStamp& val);
 
 public:
     // 对象状态快照
@@ -37,7 +37,7 @@ public:
 
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
-    int SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo = true);
+    int SendGameRequestWithLock(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo = true) const;
 
     int ResetDataWithLock();
 

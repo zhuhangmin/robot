@@ -33,7 +33,7 @@ RoomOptional BaseRoom::GetRoomType() {
 
 int BaseRoom::PlayerEnterGame(const UserPtr &user) {
     CHECK_USER(user);
-    auto tableno = user->get_table_no();
+    const auto tableno = user->get_table_no();
 
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
@@ -52,7 +52,7 @@ int BaseRoom::PlayerEnterGame(const UserPtr &user) {
 int BaseRoom::BindPlayer(const UserPtr &user) {
     CHECK_USER(user);
     //V524 It is odd that the body of 'BindPlayer' function is fully equivalent to the body of 'PlayerEnterGame' function.base_room.cpp 43
-    auto tableno = user->get_table_no();
+    const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
@@ -66,7 +66,7 @@ int BaseRoom::BindPlayer(const UserPtr &user) {
     return kCommSucc;
 }
 
-int BaseRoom::UserLeaveGame(const UserID userid, const TableNO tableno) {
+int BaseRoom::UserLeaveGame(const UserID& userid, const TableNO& tableno) {
     CHECK_USERID(userid);
     CHECK_TABLENO(tableno);
 
@@ -87,7 +87,7 @@ int BaseRoom::UserLeaveGame(const UserID userid, const TableNO tableno) {
     return kCommSucc;
 }
 
-int BaseRoom::UnbindUser(const UserID userid, const TableNO tableno) {
+int BaseRoom::UnbindUser(const UserID& userid, const TableNO& tableno) {
     CHECK_USERID(userid);
     CHECK_TABLENO(tableno);
 
@@ -109,7 +109,7 @@ int BaseRoom::UnbindUser(const UserID userid, const TableNO tableno) {
     return kCommSucc;
 }
 
-int BaseRoom::UserGiveUp(const UserID userid, const TableNO tableno) {
+int BaseRoom::UserGiveUp(const UserID& userid, const TableNO& tableno) {
     CHECK_USERID(userid);
     CHECK_TABLENO(tableno);
 
@@ -127,14 +127,14 @@ int BaseRoom::UserGiveUp(const UserID userid, const TableNO tableno) {
     return kCommSucc;
 }
 
-int BaseRoom::Looker2Player(UserPtr &user) {
+int BaseRoom::Looker2Player(const UserPtr& user) {
     CHECK_USER(user);
     if (!IsValidDeposit(user->get_deposit())) {
         LOG_WARN("user[%d] deposit[%I64d] invalid.", user->get_user_id(), user->get_deposit());
         return kInvalidDeposit;
     }
 
-    auto tableno = user->get_table_no();
+    const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
@@ -166,9 +166,9 @@ int BaseRoom::Looker2Player(UserPtr &user) {
     return kCommSucc;
 }
 
-int BaseRoom::Player2Looker(UserPtr &user) {
+int BaseRoom::Player2Looker(const UserPtr& user) {
     CHECK_USER(user);
-    auto tableno = user->get_table_no();
+    const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
         LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
@@ -199,7 +199,7 @@ int BaseRoom::Player2Looker(UserPtr &user) {
 
 int BaseRoom::LookerEnterGame(const UserPtr &user) {
     CHECK_USER(user);
-    TableNO target_tableno = user->get_table_no();
+    const auto target_tableno = user->get_table_no();
     if (false == IsValidTable(target_tableno)) {
         LOG_WARN("Get table[%d] faild", target_tableno);
         return kCommFaild;
@@ -218,28 +218,28 @@ int BaseRoom::LookerEnterGame(const UserPtr &user) {
     return kCommSucc;
 }
 
-bool BaseRoom::IsValidTable(TableNO tableno) const {
+bool BaseRoom::IsValidTable(const TableNO& tableno) const {
     if (tableno <= 0 || tableno > get_max_table_cout()) {
         return false;
     }
     return true;
 }
 
-bool BaseRoom::IsValidDeposit(INT64 deposit) const {
+bool BaseRoom::IsValidDeposit(const INT64& deposit) const {
     if (deposit >= get_min_deposit() && deposit < get_max_deposit()) {
         return true;
     }
     return false;
 }
 
-int BaseRoom::AddTable(const TableNO tableno, const TablePtr& table) {
+int BaseRoom::AddTable(const TableNO& tableno, const TablePtr& table) {
     CHECK_TABLENO(tableno);
     CHECK_TABLE(table);
     tables_[tableno - 1] = table;
     return kCommSucc;
 }
 
-int BaseRoom::GetTable(const TableNO tableno, TablePtr& table) const {
+int BaseRoom::GetTable(const TableNO& tableno, TablePtr& table) const {
     CHECK_TABLENO(tableno);
     if (!IsValidTable(tableno)) {
         LOG_WARN("GetTable faild. valid tableno[%d]", tableno);

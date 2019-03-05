@@ -46,10 +46,10 @@ int GameNetManager::Term() {
 
 
 
-int GameNetManager::SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho /*= true*/) const {
+int GameNetManager::SendGameRequest(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) const {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_REQUESTID(requestid);
-    return RobotUtils::SendRequestWithLock(connection_, requestid, val, response, bNeedEcho);
+    return RobotUtils::SendRequestWithLock(connection_, requestid, val, response, need_echo);
 }
 
 int GameNetManager::ThreadGameInfoNotify() {
@@ -75,7 +75,7 @@ int GameNetManager::ThreadGameInfoNotify() {
     return kCommSucc;
 }
 
-int GameNetManager::OnGameInfoNotify(RequestID requestid, const REQUEST &request) {
+int GameNetManager::OnGameInfoNotify(const RequestID& requestid, const REQUEST &request) {
     int result = kCommSucc;
     switch (requestid) {
         case UR_SOCKET_ERROR:
@@ -704,7 +704,7 @@ int GameNetManager::ResetInitDataWithLock() {
     return kCommSucc;
 }
 
-int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, int game_port) const {
+int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, const int& game_port) const {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);

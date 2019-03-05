@@ -9,13 +9,13 @@ public:
 
 private:
     // 游戏 消息发送
-    int SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true) const;
+    int SendGameRequest(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo = true) const;
 
     // 游戏 消息接收
     int ThreadGameInfoNotify();
 
     // 游戏 消息处理
-    int OnGameInfoNotify(RequestID requestid, const REQUEST &request);
+    int OnGameInfoNotify(const RequestID& requestid, const REQUEST &request);
 
     // 游戏 断开连接
     int OnDisconnGameInfo();
@@ -79,7 +79,7 @@ private:
     int ResetInitDataWithLock();
 
     // 游戏 建立连接
-    int ConnectGameSvrWithLock(const std::string& game_ip, int game_port) const;
+    int ConnectGameSvrWithLock(const std::string& game_ip, const int& game_port) const;
 
     // 向游戏服务器 注册 为合法机器人服务器
     int SendValidateReqWithLock();

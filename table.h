@@ -143,8 +143,9 @@ private:
 
 class Table {
 public:
-    Table();
-    Table(int tableno, int roomid, int chair_count, int min_player_count, INT64 base_deposit);
+    Table() {};
+
+    Table(const int& tableno, const int& roomid, const int& chair_count, const int& min_player_count, const INT64& base_deposit);
 
     Table(const Table&) = delete;
 
@@ -153,11 +154,11 @@ public:
     // 旁观者和桌子进行绑定
     int BindLooker(const UserPtr &user);
     // 解除用户（玩家\旁观者）和桌子的绑定关系
-    int UnbindUser(int userid);
+    int UnbindUser(const int& user);
     // 解除玩家和桌子的绑定关系
-    int UnbindPlayer(int userid);
+    int UnbindPlayer(const int& userid);
     // 解除旁观者和桌子的绑定关系
-    int UnbindLooker(int userid);
+    int UnbindLooker(const int& userid);
 
     // (游戏中)弃牌
     virtual int GiveUp(int userid);
@@ -171,32 +172,32 @@ public:
     // 获取玩家数量
     virtual int GetPlayerCount();
     // 获取指定椅子上的userid
-    virtual int GetUserID(int chairno);
+    virtual int GetUserID(const int& chairno);
     // 获取桌子上的空座位数量
     virtual int GetFreeChairCount();
 
     // 是否为玩家
-    virtual bool IsTablePlayer(int userid);
+    virtual bool IsTablePlayer(const int& userid);
     // 是否为旁观者
-    virtual bool IsTableLooker(int userid);
+    virtual bool IsTableLooker(const int& userid);
     // 用户是否在桌上
-    virtual bool IsTableUser(int userid);
+    virtual bool IsTableUser(const int& userid);
     // 获取用户的椅子号，如果椅子号是0，则说明是旁观者
-    virtual int GetUserChair(int userid);
+    virtual int GetUserChair(const int& userid);
     // 获取椅子信息
-    int GetChairInfoByChairno(int chairno, ChairInfo& info);
-    int GetChairInfoByUserid(int userid, ChairInfo& info);
+    int GetChairInfoByChairno(const int& chairno, ChairInfo& info);
+    int GetChairInfoByUserid(const int& userid, ChairInfo& info);
     // 校验椅子号是否合法
-    virtual bool IsValidChairno(int chairno);
+    virtual bool IsValidChairno(const int& chairno);
     // 校验银子数是否合法
-    virtual bool IsValidDeposit(INT64 deposit);
+    virtual bool IsValidDeposit(const INT64& deposit);
 
     // 当减少一个用户的时候游戏是否能够继续 
     virtual bool IfContinueWhenOneUserLeave();
 
 public:
-    int AddChair(ChairNO chairno, ChairInfo info);
-    int AddTableUserInfo(UserID userid, TableUserInfo table_user_info);
+    int AddChair(const ChairNO& chairno, const ChairInfo& info);
+    int AddTableUserInfo(const UserID& userid, const TableUserInfo& table_user_info);
     std::array<ChairInfo, kMaxChairCountPerTable>& GetChairs() { return chairs_; }
 
 public:

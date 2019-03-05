@@ -12,7 +12,7 @@ public:
     int Term();
 
     // 大厅 登陆
-    int LogonHall(const UserID userid);
+    int LogonHall(const UserID& userid);
 
     // 获得大厅房间数据
     int GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data);
@@ -29,7 +29,7 @@ private:
     int ThreadHallNotify();
 
     // 大厅 消息处理
-    int OnHallNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size);
+    int OnHallNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size);
 
     // 大厅 断开链接
     int OnDisconnHall();
@@ -46,17 +46,17 @@ private:
     int ConnectHallWithLock();
 
     // 大厅 消息发送
-    int SendHallRequestWithLock(const RequestID requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo = true);
+    int SendHallRequestWithLock(const RequestID& requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo = true) const;
 
     // 大厅 获得登陆状态
     int GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) const;
 
-    int SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status);
+    int SetLogonStatusWithLock(const UserID& userid, const HallLogonStatusType& status);
 
     // 大厅 获得房间数据
     int GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) const;
 
-    int SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data);
+    int SetHallRoomDataWithLock(const RoomID& roomid, HallRoomData* hall_room_data);
 
     // 大厅 初始化连接和数据
     int InitDataWithLock();
@@ -71,7 +71,7 @@ private:
     int SendGetAllRoomDataWithLock();
 
     // 大厅 房间数据
-    int SendGetRoomDataWithLock(const RoomID roomid);
+    int SendGetRoomDataWithLock(const RoomID& roomid);
 
 public:
     // 非业务 调试函数

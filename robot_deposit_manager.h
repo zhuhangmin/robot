@@ -8,7 +8,7 @@ public:
     int Term();
 
     // 设置 补银还银状态
-    int SetDepositType(UserID userid, const DepositType& type);
+    int SetDepositType(const UserID& userid, const DepositType& type);
 
     // 对象状态快照
     int SnapShotObjectStatus();
@@ -21,7 +21,7 @@ private:
     int ThreadDeposit();
 
     // 后台 补银
-    int RobotGainDeposit(UserID userid, int amount) const;
+    int RobotGainDeposit(const UserID& userid, const int& amount) const;
 
     // 后台 还银
     int RobotBackDeposit(UserID userid, int amount) const;

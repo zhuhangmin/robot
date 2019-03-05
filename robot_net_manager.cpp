@@ -24,7 +24,7 @@ int RobotNetManager::Term() {
     return kCommSucc;
 }
 
-int RobotNetManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
+int RobotNetManager::GetRobotWithCreate(const UserID& userid, RobotPtr& robot) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     if (kCommSucc != GetRobotWithLock(userid, robot)) {
@@ -38,7 +38,7 @@ int RobotNetManager::GetRobotWithCreate(const UserID userid, RobotPtr& robot) {
     return kCommSucc;
 }
 
-ThreadID RobotNetManager::GetRobotNotifyThreadID() {
+ThreadID RobotNetManager::GetRobotNotifyThreadID() const {
     std::lock_guard<std::mutex> lock(robot_map_mutex_);
     return notify_thread_.GetThreadID();
 }
@@ -63,9 +63,9 @@ int RobotNetManager::SendGamePulse() {
     return kCommSucc;
 }
 
-int RobotNetManager::GetRobotWithLock(const UserID userid, RobotPtr& robot) const {
+int RobotNetManager::GetRobotWithLock(const UserID& userid, RobotPtr& robot) const {
     CHECK_USERID(userid);
-    auto iter = robot_map_.find(userid);
+    const auto& iter = robot_map_.find(userid);
     if (iter == robot_map_.end()) {
         return kCommFaild;
     }
@@ -73,13 +73,13 @@ int RobotNetManager::GetRobotWithLock(const UserID userid, RobotPtr& robot) cons
     return kCommSucc;
 }
 
-int RobotNetManager::SetRobotWithLock(RobotPtr robot) {
+int RobotNetManager::SetRobotWithLock(const RobotPtr& robot) {
     CHECK_ROBOT(robot);
     robot_map_.insert(std::make_pair(robot->GetUserID(), robot));
     return kCommSucc;
 }
 
-int RobotNetManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& robot) const {
+int RobotNetManager::GetRobotByTokenWithLock(const TokenID& token_id, RobotPtr& robot) const {
     CHECK_TOKENID(token_id);
     const auto it = std::find_if(robot_map_.begin(), robot_map_.end(), [&] (const std::pair<UserID, RobotPtr>& pair) {
         return pair.second->GetTokenID() == token_id;
@@ -95,7 +95,7 @@ int RobotNetManager::GetRobotByTokenWithLock(const TokenID token_id, RobotPtr& r
 int RobotNetManager::ThreadRobotPulse() {
     LOG_INFO("[START ROUTINE] RobotGameManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, RobotTimerInterval);
+        const auto dwRet = WaitForSingleObject(g_hExitServer, RobotTimerInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
@@ -115,11 +115,10 @@ int RobotNetManager::ThreadRobotNotify() {
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
 
-            LPCONTEXT_HEAD	pContext = (LPCONTEXT_HEAD) (msg.wParam);
-            LPREQUEST		pRequest = (LPREQUEST) (msg.lParam);
-
-            TokenID		nTokenID = pContext->lTokenID;
-            RequestID		requestid = pRequest->head.nRequest;
+            auto pContext = reinterpret_cast<LPCONTEXT_HEAD>(msg.wParam);
+            auto pRequest = reinterpret_cast<LPREQUEST>(msg.lParam);
+            const auto nTokenID = pContext->lTokenID;
+            const auto requestid = pRequest->head.nRequest;
 
             OnRobotNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen, nTokenID);
 
@@ -134,7 +133,7 @@ int RobotNetManager::ThreadRobotNotify() {
     return kCommSucc;
 }
 
-int RobotNetManager::OnRobotNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size, const TokenID token_id) const {
+int RobotNetManager::OnRobotNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size, const TokenID& token_id) const {
     RobotPtr robot;
     {
         std::lock_guard<std::mutex> lock(robot_map_mutex_);

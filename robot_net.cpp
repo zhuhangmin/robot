@@ -7,9 +7,11 @@
 #define new DEBUG_NEW
 #endif
 
-RobotNet::RobotNet(UserID userid) {
-    userid_ = userid;
+RobotNet::RobotNet(const UserID& userid) :
+userid_(userid) {
+
 }
+
 int RobotNet::ConnectGame(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_GAMEIP(game_ip);
@@ -38,7 +40,7 @@ BOOL RobotNet::IsConnected() const {
     return game_connection_->IsConnected();
 }
 
-int RobotNet::SendGameRequestWithLock(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool need_echo /*= true*/) {
+int RobotNet::SendGameRequestWithLock(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) const {
     CHECK_REQUESTID(requestid);
     if (!game_connection_) {
         LOG_ERROR("m_ConnGame is nil");
@@ -89,7 +91,7 @@ int RobotNet::ResetInitDataWithLock() {
 // 具体业务
 
 // TODO 多个机器人服务器用了同个账号 踢人警告
-int RobotNet::SendEnterGame(const RoomID roomid) {
+int RobotNet::SendEnterGame(const RoomID& roomid) {
     CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(mutex_);
     TCHAR hard_id[32];
@@ -149,7 +151,7 @@ int RobotNet::SendGamePulse() {
 
 // 属性接口 
 
-TokenID RobotNet::GetTokenID() {
+TokenID RobotNet::GetTokenID() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return game_connection_->GetTokenID();
 }
@@ -164,7 +166,7 @@ TimeStamp RobotNet::GetTimeStamp() const {
     return timestamp_;
 }
 
-void RobotNet::SetTimeStamp(TimeStamp val) {
+void RobotNet::SetTimeStamp(const TimeStamp& val) {
     std::lock_guard<std::mutex> lock(mutex_);
     timestamp_ = val;
 }

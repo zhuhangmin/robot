@@ -6,7 +6,7 @@
 #include "robot_define.h"
 
 
-int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
+int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) {
     if (!connection) {
         ASSERT_FALSE_RETURN;
     }
@@ -102,14 +102,14 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
     return result_str;
 }
 
-int RobotUtils::GenRandInRange(int min_value, int max_value, int& random_result) {
+int RobotUtils::GenRandInRange(const int& min_value, const int& max_value, int& random_result) {
     if (max_value < min_value) {
         LOG_ERROR("MAX VALUE %d smaller than SMALL VALUE %d", max_value, min_value);
         assert(0);
         return kCommFaild;
     }
     static std::default_random_engine default_engine(std::time(nullptr));
-    auto raw_result = default_engine();
+    const auto raw_result = default_engine();
     random_result = raw_result % (max_value - min_value + 1) + min_value;
     return kCommSucc;
 }
@@ -145,31 +145,31 @@ int RobotUtils::GetGamePort() {
     return hall_room_data.room.nGamePort;
 }
 
-int RobotUtils::IsValidGameID(const GameID game_id) {
+int RobotUtils::IsValidGameID(const GameID& game_id) {
     return game_id <= InvalidGameID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidUserID(const UserID userid) {
+int RobotUtils::IsValidUserID(const UserID& userid) {
     return userid <=InvalidUserID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidRoomID(const RoomID roomid) {
+int RobotUtils::IsValidRoomID(const RoomID& roomid) {
     return roomid <= InvalidRoomID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidTableNO(const TableNO tableno) {
+int RobotUtils::IsValidTableNO(const TableNO& tableno) {
     return tableno <= InvalidTableNO ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidChairNO(const ChairNO chairno) {
+int RobotUtils::IsValidChairNO(const ChairNO& chairno) {
     return chairno <= InvalidChairNO ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidTokenID(const TokenID tokenid) {
+int RobotUtils::IsValidTokenID(const TokenID& tokenid) {
     return tokenid <= InvalidTokenID ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidRequestID(const RequestID requestid) {
+int RobotUtils::IsValidRequestID(const RequestID& requestid) {
     return requestid <= InvalidRequestID ? kCommFaild : kCommSucc;
 }
 
@@ -193,7 +193,7 @@ int RobotUtils::IsValidGameIP(const std::string& game_ip) {
     return game_ip.empty() ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidGamePort(const int32_t game_port) {
+int RobotUtils::IsValidGamePort(const int32_t& game_port) {
     return game_port <= 0 ? kCommFaild : kCommSucc;
 }
 

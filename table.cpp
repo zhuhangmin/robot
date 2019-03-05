@@ -3,10 +3,7 @@
 #include "user.h"
 #include "robot_utils.h"
 
-Table::Table() {}
-
-
-Table::Table(int tableno, int roomid, int chair_count, int min_player_count, INT64 base_deposit)
+Table::Table(const int& tableno, const int& roomid, const int& chair_count, const int& min_player_count, const INT64& base_deposit)
     :table_no_(tableno)
     , room_id_(roomid)
     , chair_count_(chair_count)
@@ -38,7 +35,7 @@ int Table::BindLooker(const UserPtr &user) {
     return kCommSucc;
 }
 
-int Table::UnbindUser(int userid) {
+int Table::UnbindUser(const int& userid) {
     CHECK_USERID(userid);
     if (kCommSucc != UnbindPlayer(userid)) {
         ASSERT_FALSE_RETURN;
@@ -51,7 +48,7 @@ int Table::UnbindUser(int userid) {
     return kCommSucc;
 }
 
-int Table::UnbindPlayer(int userid) {
+int Table::UnbindPlayer(const int& userid) {
     CHECK_USERID(userid);
     const auto chairno = GetUserChair(userid);
     CHECK_CHAIRNO(chairno);
@@ -60,7 +57,7 @@ int Table::UnbindPlayer(int userid) {
     return kCommSucc;
 }
 
-int Table::UnbindLooker(int userid) {
+int Table::UnbindLooker(const int& userid) {
     CHECK_USERID(userid);
     table_users_.erase(userid);
     return kCommSucc;
@@ -78,7 +75,7 @@ int Table::GetPlayerCount() {
     return player_count;
 }
 
-int Table::GetUserID(int chairno) {
+int Table::GetUserID(const int& chairno) {
     CHECK_CHAIRNO(chairno);
     const auto index = chairno - 1;
     if (index < 0 || index >= chairs_.size()) {
@@ -96,12 +93,12 @@ int Table::GetFreeChairCount() {
     return 0;
 }
 
-bool Table::IsTablePlayer(int userid) {
+bool Table::IsTablePlayer(const int& userid) {
     const auto chairno = GetUserChair(userid);
     return IsValidChairno(chairno);
 }
 
-bool Table::IsTableLooker(int userid) {
+bool Table::IsTableLooker(const int& userid) {
     const auto chairno = GetUserChair(userid);
 
     if (!IsTableUser(userid)) return false;
@@ -111,11 +108,11 @@ bool Table::IsTableLooker(int userid) {
     return false;
 }
 
-bool Table::IsTableUser(int userid) {
+bool Table::IsTableUser(const int& userid) {
     return table_users_.find(userid) != table_users_.end();
 }
 
-int Table::GetUserChair(int userid) {
+int Table::GetUserChair(const int& userid) {
     CHECK_USERID(userid);
     for (auto i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
         if (chairs_.at(i).get_userid() == userid) {
@@ -126,7 +123,7 @@ int Table::GetUserChair(int userid) {
     return 0;
 }
 
-int Table::GetChairInfoByChairno(int chairno, ChairInfo& info) {
+int Table::GetChairInfoByChairno(const int& chairno, ChairInfo& info) {
     CHECK_CHAIRNO(chairno);
     if (!IsValidChairno(chairno)) {
         LOG_ERROR("Invalid chairno[%d]", chairno);
@@ -137,7 +134,7 @@ int Table::GetChairInfoByChairno(int chairno, ChairInfo& info) {
     return kCommSucc;
 }
 
-int Table::GetChairInfoByUserid(int userid, ChairInfo& info) {
+int Table::GetChairInfoByUserid(const int& userid, ChairInfo& info) {
     CHECK_USERID(userid);
     const auto chairno = GetUserChair(userid);
     if (kCommSucc != GetChairInfoByChairno(chairno, info)) {
@@ -146,14 +143,14 @@ int Table::GetChairInfoByUserid(int userid, ChairInfo& info) {
     return kCommSucc;
 }
 
-bool Table::IsValidChairno(int chairno) {
+bool Table::IsValidChairno(const int& chairno) {
     if (chairno > 0 && chairno <= get_chair_count() && chairno <= chairs_.size()) {
         return true;
     }
     return false;
 }
 
-bool Table::IsValidDeposit(INT64 deposit) {
+bool Table::IsValidDeposit(const INT64& deposit) {
     if (get_min_deposit() == 0 && get_max_deposit() == 0) {
         return true;
     }
@@ -167,13 +164,13 @@ bool Table::IfContinueWhenOneUserLeave() {
 }
 
 
-int Table::AddChair(ChairNO chairno, ChairInfo info) {
+int Table::AddChair(const ChairNO& chairno, const ChairInfo& info) {
     CHECK_CHAIRNO(chairno);
     chairs_[chairno - 1] = info;
     return kCommSucc;
 }
 
-int Table::AddTableUserInfo(UserID userid, TableUserInfo table_user_info) {
+int Table::AddTableUserInfo(const UserID& userid, const TableUserInfo& table_user_info) {
     CHECK_USERID(userid);
     table_users_[userid] = table_user_info;
     return kCommSucc;
@@ -189,9 +186,9 @@ int Table::GiveUp(int userid) {
     // ½áËã
     if (IfContinueWhenOneUserLeave()) {
         return RefreshGameResult(userid);
-    } else {
-        return RefreshGameResult();
     }
+
+    return RefreshGameResult();
 }
 
 int Table::RefreshGameResult() {

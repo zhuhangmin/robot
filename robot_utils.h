@@ -7,13 +7,13 @@
 class RobotUtils {
 public:
     // 某个特定的connection发送协议
-    static int SendRequestWithLock(const CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
+    static int SendRequestWithLock(const CDefSocketClientPtr& connection, const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo = true);
 
     // 发送HTTP POST协议
     static CString ExecHttpRequestPost(const CString& url, const CString& params);
 
     // 产生随机数
-    static int GenRandInRange(int min_value, int max_value, int& random_result);
+    static int GenRandInRange(const int& min_value, const int& max_value, int& random_result);
 
     // 获得配置游戏服务器地址
     static std::string GetGameIP();
@@ -21,19 +21,19 @@ public:
     // 获得动态游戏服务器端口
     static int GetGamePort();
 
-    static int IsValidGameID(const GameID game_id);
+    static int IsValidGameID(const GameID& game_id);
 
-    static int IsValidUserID(const UserID userid);
+    static int IsValidUserID(const UserID& userid);
 
-    static int IsValidRoomID(const RoomID roomid);
+    static int IsValidRoomID(const RoomID& roomid);
 
-    static int IsValidTableNO(const TableNO tableno);
+    static int IsValidTableNO(const TableNO& tableno);
 
-    static int IsValidChairNO(const ChairNO chairno);
+    static int IsValidChairNO(const ChairNO& chairno);
 
-    static int IsValidTokenID(const TokenID tokenid);
+    static int IsValidTokenID(const TokenID& tokenid);
 
-    static int IsValidRequestID(const RequestID requestid);
+    static int IsValidRequestID(const RequestID& requestid);
 
     static int IsValidUser(const UserPtr& user);
 
@@ -45,7 +45,7 @@ public:
 
     static int IsValidGameIP(const std::string& game_ip);
 
-    static int IsValidGamePort(const int32_t game_port);
+    static int IsValidGamePort(const int32_t& game_port);
 
     // 控制方法对特定线程可见
     static int IsCurrentThread(YQThread& thread);

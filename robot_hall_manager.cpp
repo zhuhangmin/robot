@@ -48,7 +48,7 @@ int RobotHallManager::Term() {
 }
 
 
-int RobotHallManager::LogonHall(const UserID userid) {
+int RobotHallManager::LogonHall(const UserID& userid) {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
     if (kCommSucc != CheckNotInnerThread()) {
@@ -66,7 +66,7 @@ int RobotHallManager::LogonHall(const UserID userid) {
     if (kCommSucc != SettingMgr.GetRobotSetting(userid, setting)) {
         return kCommFaild;
     }
-    std::string password = setting.password;
+    const auto& password = setting.password;
 
     //账号对应robot是否已经生成, 是否已经登入大厅
     LOGON_USER_V2  logonUser = {};
@@ -124,8 +124,8 @@ int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
 
     HallLogonMap temp_map;
     for (auto& kv : logon_status_map_) {
-        UserID userid = kv.first;
-        auto status = kv.second;
+        const auto userid = kv.first;
+        const auto status = kv.second;
         if (HallLogonStatusType::kNotLogon == status) {
             temp_map[userid] = status;
         }
@@ -139,7 +139,7 @@ int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
         return kCommFaild;
     }
 
-    auto random_it = std::next(std::begin(temp_map), random_pos);
+    const auto random_it = std::next(std::begin(temp_map), random_pos);
     random_userid = random_it->first;
     return kCommSucc;
 }
@@ -149,10 +149,9 @@ int RobotHallManager::ThreadHallNotify() {
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
-
-            LPCONTEXT_HEAD pContext = (LPCONTEXT_HEAD) (msg.wParam);
-            LPREQUEST pRequest = (LPREQUEST) (msg.lParam);
-            RequestID requestid = pRequest->head.nRequest;
+            auto pContext = reinterpret_cast<LPCONTEXT_HEAD>(msg.wParam);
+            auto pRequest = reinterpret_cast<LPREQUEST>(msg.lParam);
+            const auto requestid = pRequest->head.nRequest;
 
             OnHallNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen);
 
@@ -167,7 +166,7 @@ int RobotHallManager::ThreadHallNotify() {
     return kCommSucc;
 }
 
-int RobotHallManager::OnHallNotify(const RequestID requestid, void* ntf_data_ptr, const int data_size) {
+int RobotHallManager::OnHallNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size) {
     CHECK_REQUESTID(requestid);
     switch (requestid) {
         case UR_SOCKET_ERROR:
@@ -223,7 +222,7 @@ int RobotHallManager::SendHallPulse() {
 int RobotHallManager::ThreadHallPulse() {
     LOG_INFO("[START ROUTINE] RobotHallManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
+        const auto dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
@@ -246,7 +245,7 @@ int RobotHallManager::SendGetAllRoomData() {
     return kCommSucc;
 }
 
-int RobotHallManager::SendHallRequestWithLock(const RequestID requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo /*= true*/) {
+int RobotHallManager::SendHallRequestWithLock(const RequestID& requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, bool need_echo /*= true*/) const {
     CHECK_REQUESTID(requestid);
     if (!connection_) {
         LOG_ERROR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", requestid);
@@ -324,7 +323,7 @@ int RobotHallManager::ConnectHallWithLock() {
 int RobotHallManager::SendGetAllRoomDataWithLock() {
     auto setting = SettingMgr.GetRoomSettingMap();
     for (auto& kv : setting) {
-        auto roomid = kv.first;
+        const auto roomid = kv.first;
         if (kCommSucc != SendGetRoomDataWithLock(roomid)) {
             LOG_ERROR("cannnot get hall room data = %d", roomid);
             ASSERT_FALSE_RETURN;
@@ -334,9 +333,9 @@ int RobotHallManager::SendGetAllRoomDataWithLock() {
     return kCommSucc;
 }
 
-int RobotHallManager::SendGetRoomDataWithLock(const RoomID roomid) {
+int RobotHallManager::SendGetRoomDataWithLock(const RoomID& roomid) {
     CHECK_ROOMID(roomid);
-    GameID game_id = SettingMgr.GetGameID();
+    const auto game_id = SettingMgr.GetGameID();
     CHECK_GAMEID(game_id);
     GET_ROOM  gr = {};
     gr.nGameID = game_id;
@@ -363,13 +362,13 @@ int RobotHallManager::SendGetRoomDataWithLock(const RoomID roomid) {
         ASSERT_FALSE_RETURN;
     }
 
-    SetHallRoomDataWithLock(roomid, (HallRoomData*) pRetData.get());
+    SetHallRoomDataWithLock(roomid, static_cast<HallRoomData*>(pRetData.get()));
     return kCommSucc;
 }
 
 int RobotHallManager::GetLogonStatusWithLock(const UserID& userid, HallLogonStatusType& status) const {
     CHECK_USERID(userid);
-    auto iter = logon_status_map_.find(userid);
+    const auto& iter = logon_status_map_.find(userid);
     if (iter == logon_status_map_.end()) {
         return kCommFaild;
     }
@@ -378,7 +377,7 @@ int RobotHallManager::GetLogonStatusWithLock(const UserID& userid, HallLogonStat
     return kCommSucc;
 }
 
-int RobotHallManager::SetLogonStatusWithLock(const UserID userid, HallLogonStatusType status) {
+int RobotHallManager::SetLogonStatusWithLock(const UserID& userid, const HallLogonStatusType& status) {
     CHECK_USERID(userid);
     logon_status_map_[userid] = status;
     return kCommSucc;
@@ -386,7 +385,7 @@ int RobotHallManager::SetLogonStatusWithLock(const UserID userid, HallLogonStatu
 
 int RobotHallManager::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData& hall_room_data) const {
     CHECK_ROOMID(roomid);
-    auto iter = room_data_map_.find(roomid);
+    const auto& iter = room_data_map_.find(roomid);
     if (iter == room_data_map_.end()) {
         return kCommFaild;
     }
@@ -395,7 +394,7 @@ int RobotHallManager::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData
     return kCommSucc;
 }
 
-int RobotHallManager::SetHallRoomDataWithLock(const RoomID roomid, HallRoomData* hall_room_data) {
+int RobotHallManager::SetHallRoomDataWithLock(const RoomID& roomid, HallRoomData* hall_room_data) {
     CHECK_ROOMID(roomid);
     room_data_map_[roomid] = *hall_room_data;
     return kCommSucc;
@@ -459,7 +458,7 @@ int RobotHallManager::SnapShotObjectStatus() {
             str += "] ";
             str += "status ";
             str += "[";
-            str += std::to_string((int) status);
+            str += std::to_string(static_cast<int>(status));
             str += "]";
             str += ", ";
 

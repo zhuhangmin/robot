@@ -61,7 +61,7 @@ int RobotDepositManager::ThreadDeposit() {
     return kCommSucc;
 }
 
-int RobotDepositManager::RobotGainDeposit(UserID userid, int amount) const {
+int RobotDepositManager::RobotGainDeposit(const UserID& userid, const int& amount) const {
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
@@ -141,7 +141,7 @@ int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount)
     return kCommSucc;
 }
 
-int RobotDepositManager::SetDepositType(UserID userid, const DepositType& type) {
+int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType& type) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(deposit_map_mutex_);
     if (deposit_map_.find(userid) == deposit_map_.end()) {

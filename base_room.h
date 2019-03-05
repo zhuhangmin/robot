@@ -23,25 +23,25 @@ public:
     // 旁观者进入房间
     virtual int LookerEnterGame(const UserPtr &user);
     // 玩家离开游戏
-    virtual int UserLeaveGame(const UserID userid, const TableNO tableno);
-    int UnbindUser(const UserID userid, const TableNO tableno);
+    virtual int UserLeaveGame(const UserID& userid, const TableNO& tableno);
+    int UnbindUser(const UserID& userid, const TableNO& tableno);
     // 玩家弃牌
-    virtual int UserGiveUp(const UserID userid, const TableNO tableno);
+    virtual int UserGiveUp(const UserID& userid, const TableNO& tableno);
     // 旁观者转玩家
-    virtual int Looker2Player(UserPtr &user);
+    virtual int Looker2Player(const UserPtr& user);
     // 玩家转旁观者
-    virtual int Player2Looker(UserPtr &user);
+    virtual int Player2Looker(const UserPtr& user);
 
     // 判断桌子号是否合法
-    virtual bool IsValidTable(TableNO tableno) const;
+    virtual bool IsValidTable(const TableNO& tableno) const;
     // 判断银子数是否合法
-    virtual bool IsValidDeposit(INT64 deposit) const;
+    virtual bool IsValidDeposit(const INT64& deposit) const;
 
 public:
-    int AddTable(const TableNO tableno, const TablePtr& table);
+    int AddTable(const TableNO& tableno, const TablePtr& table);
 
     // 获取桌子， 如果没有获取到table 返回的桌子号为0
-    int GetTable(const TableNO tableno, TablePtr& table) const;
+    int GetTable(const TableNO& tableno, TablePtr& table) const;
 
 public:
     // 对象状态快照
