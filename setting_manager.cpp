@@ -23,7 +23,7 @@ std::string& SettingManager::GetDepositActiveID() {
 
 int SettingManager::InitSetting() {
     LOG_FUNC("[START ROUTINE]");
-    std::string filename = g_curExePath + _T("robot.setting");
+    const auto filename = g_curExePath + _T("robot.setting");
     Json::Value root;
     Json::Reader reader;
     std::ifstream ifile; //@zhuhangmin 20190226 RAII OBJ, NO NEED TO CLOSE
@@ -42,21 +42,21 @@ int SettingManager::InitSetting() {
     auto rooms = root["rooms"];
     int size = rooms.size();
 
-    for (int n = 0; n < size; ++n) {
-        RoomID roomid = rooms[n]["roomid"].asInt();
-        int count = rooms[n]["count"].asInt();
+    for (auto n = 0; n < size; ++n) {
+        const auto roomid = rooms[n]["roomid"].asInt();
+        const auto count = rooms[n]["count"].asInt();
         room_setting_map_[roomid] = RoomSetiing{roomid, count};
     }
 
 
     auto robots = root["robots"];
     size = robots.size();
-    for (int i = 0; i < size; ++i) {
+    for (auto i = 0; i < size; ++i) {
         auto robot = robots[i];
-        UserID		userid = (UserID) robot["userid"].asInt();
-        std::string password = robot["password"].asString();
-        std::string nickname = robot["nickname"].asString();
-        std::string headurl = robot["headurl"].asString();
+        auto userid = static_cast<UserID>(robot["userid"].asInt());
+        const auto password = robot["password"].asString();
+        const auto nickname = robot["nickname"].asString();
+        const auto headurl = robot["headurl"].asString();
 
         RobotSetting unit;
         unit.userid = userid;
@@ -109,7 +109,7 @@ const RoomSettingMap& SettingManager::GetRoomSettingMap() const {
 }
 
 int SettingManager::GetRobotSetting(const UserID userid, RobotSetting& robot_setting) const {
-    auto iter = robot_setting_map_.find(userid);
+    const auto iter = robot_setting_map_.find(userid);
     if (iter == robot_setting_map_.end()) {
         return kCommFaild;
     }
@@ -156,7 +156,7 @@ int SettingManager::SnapShotObjectStatus() const {
     LOG_INFO("robot_setting_map_ size [%d]", robot_setting_map_.size());
     std::string userid_str;
     for (auto& kv : robot_setting_map_) {
-        auto userid = kv.first;
+        const auto userid = kv.first;
         userid_str += std::to_string(userid);
         userid_str += ", ";
     }
@@ -164,8 +164,8 @@ int SettingManager::SnapShotObjectStatus() const {
 
     LOG_INFO("room_setting_map_ size [%d]", room_setting_map_.size());
     for (auto& kv : room_setting_map_) {
-        auto roomid = kv.first;
-        auto setting = kv.second;
+        const auto roomid = kv.first;
+        const auto setting = kv.second;
         LOG_INFO("roomid [%d]  count [%d]", roomid, setting.count);
     }
 
@@ -178,7 +178,7 @@ int SettingManager::GetRandomUserID(UserID& random_userid) const {
     if (kCommSucc != RobotUtils::GenRandInRange(0, robot_setting_map_.size() - 1, random_pos)) {
         ASSERT_FALSE_RETURN;
     }
-    auto random_it = std::next(std::begin(robot_setting_map_), random_pos);
+    const auto random_it = std::next(std::begin(robot_setting_map_), random_pos);
     random_userid = random_it->first;
     return kCommSucc;
 }

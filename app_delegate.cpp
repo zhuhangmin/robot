@@ -18,7 +18,7 @@ int AppDelegate::InitLanuch() const {
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     TCHAR szFullName[MAX_PATH];
-    GetModuleFileName(GetModuleHandle(NULL), szFullName, sizeof(szFullName));
+    GetModuleFileName(GetModuleHandle(NULL), szFullName, sizeof szFullName);
     UwlSplitPath(szFullName, SPLIT_DRIVE_DIR, g_szIniFile);
     g_curExePath = g_szIniFile;
     lstrcat(g_szIniFile, "RobotTool");
@@ -40,7 +40,7 @@ int AppDelegate::InitLanuch() const {
 
 int AppDelegate::Init() {
     LOG_FUNC("[START ROUTINE]");
-    if (S_FALSE == ::CoInitialize(NULL))
+    if (S_FALSE == CoInitialize(NULL))
         return kCommFaild;
 
     if (kCommSucc != InitLanuch()) {
@@ -103,7 +103,7 @@ int AppDelegate::Term() {
 
     if (g_hExitServer) { CloseHandle(g_hExitServer); g_hExitServer = NULL; }
 
-    ::CoUninitialize();
+    CoUninitialize();
     LOG_FUNC("[EXIT ROUTINE]");
     LOG_INFO("\n ===================================SERVER EXIT=================================== \n");
     return kCommSucc;
@@ -114,7 +114,7 @@ int AppDelegate::ThreadMainProc() {
     LOG_INFO("[START ROUTINE] main timer thread [%d] started", GetCurrentThreadId());
 
     while (true) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetMainsInterval());
+        const auto dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetMainsInterval());
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
@@ -139,8 +139,8 @@ int AppDelegate::MainProcess() {
 
     // 所有房间机器人开始依次同步阻塞进入
     for (auto& kv : room_need_count_map) {
-        auto roomid = kv.first;
-        auto need_count = kv.second;
+        const auto roomid = kv.first;
+        const auto need_count = kv.second;
         for (auto index = 0; index < need_count; index++) {
             // 随机选一个没有进入游戏的userid
             auto random_userid = InvalidUserID;
@@ -250,7 +250,7 @@ int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
             ASSERT_FALSE_RETURN;
         }
 
-        int inroom_count = InvalidCount;
+        auto inroom_count = InvalidCount;
         if (kCommSucc != UserMgr.GetRobotCountInRoom(roomid, inroom_count)) {
             ASSERT_FALSE_RETURN;
         }
@@ -276,7 +276,7 @@ int AppDelegate::DepositGainAll() {
 
     auto robot_setting_map = SettingMgr.GetRobotSettingMap();
     for (auto& kv : robot_setting_map) {
-        auto userid = kv.first;
+        const auto userid = kv.first;
         DepositMgr.SetDepositType(userid, DepositType::kGain);
     }
 

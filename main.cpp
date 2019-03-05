@@ -61,8 +61,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     LOG_INFO("\n ===================================SERVER START===================================");
     LOG_INFO("[START ROUTINE] BEG");
 
-    int nRetCode = 0;
-    ::SetUnhandledExceptionFilter(ExpFilter);
+    auto nRetCode = EXIT_SUCCESS;
+    SetUnhandledExceptionFilter(ExpFilter);
 
     LOG_INFO("[START ROUTINE] AFX BEG");
     WSADATA wsa;
@@ -70,7 +70,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     // 初始化 MFC 并在失败时显示错误
     if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0)) {
         MessageBox(NULL, _T("Fatal error: MFC initialization failed!\n"), "", MB_ICONSTOP);
-        nRetCode = -1;
+        nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
     LOG_INFO("[START ROUTINE] AFX END");
@@ -79,7 +79,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     LOG_INFO("[START ROUTINE] UWL BEG");
     if (!UwlInit()) {
         MessageBox(NULL, _T("Fatal error: UWL initialization failed!\n"), "", MB_ICONSTOP);
-        nRetCode = -1;
+        nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
     LOG_INFO("[START ROUTINE] UWL END");
@@ -96,7 +96,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     LOG_INFO("[START ROUTINE] AFX SOCKET BEG");
     if (!AfxSocketInit()) {
         MessageBox(NULL, _T("Fatal error: Failed to initialize sockets!\n"), "", MB_ICONSTOP);
-        nRetCode = -1;
+        nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
     LOG_INFO("[START ROUTINE] AFX SOCKET END");
@@ -125,7 +125,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     if (strcmp(szExeName, serviceName) != 0) {
         LOG_ERROR("szExeName[%s] != serviceName[%s]", szExeName, serviceName);
-        nRetCode = -1;
+        nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
     CMainService MainService(serviceName, displayName, 0, 0);
@@ -144,13 +144,13 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     AppDelegate MainServer;
 
     if (kCommSucc != MainServer.Init()) {
-        UwlTrace(_T("server initialize failed!"));
+        LOG_ERROR("server initialize failed!");
+        UwlTrace("server initialize failed!");
         MainServer.Term();
         return -1;
     }
 
     LOG_INFO("[START ROUTINE] MainServer END");
-
     LOG_INFO("[START ROUTINE] END");
 
     UwlTrace("Type 'q' when you want to exit. ");
@@ -172,7 +172,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
         if (ch == 'D') {
             LOG_INFO("-------------[DEPOSIT TEST]-------------");
-            UserID userid = InvalidUserID;
+            auto userid = InvalidUserID;
             SettingMgr.GetRandomUserID(userid);
             DepositMgr.SetDepositType(userid, DepositType::kBack);
             SettingMgr.GetRandomUserID(userid);
@@ -184,7 +184,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     MainServer.Term();
 
-    nRetCode = 1;
+    nRetCode = EXIT_SUCCESS;
 #endif
 
     TCLOG_UNINT();
