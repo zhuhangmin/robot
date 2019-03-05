@@ -157,7 +157,7 @@ int BaseRoom::Looker2Player(UserPtr &user) {
         return kCommSucc;
     }
 
-    int ret = table->BindPlayer(user);
+    const auto ret = table->BindPlayer(user);
     if (ret != kCommSucc) {
         LOG_WARN("user[%d] BindPlayer faild. ret=%d", user->get_user_id(), ret);
         return kCommFaild;

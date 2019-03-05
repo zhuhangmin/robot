@@ -6,7 +6,7 @@
 #include "robot_define.h"
 
 
-int RobotUtils::SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
+int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo /*= true*/) {
     if (!connection) {
         ASSERT_FALSE_RETURN;
     }
@@ -98,8 +98,6 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
         assert(false);
         return "";
 
-    } else {
-        LOG_INFO(_T("ExecHttpRequestPost strResult:%s "), result_str);
     }
     return result_str;
 }

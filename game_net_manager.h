@@ -9,13 +9,13 @@ public:
 
 private:
     // 游戏 消息发送
-    int SendGameRequest(const RequestID requestid, const google::protobuf::Message &val, REQUEST& response, const bool bNeedEcho = true);
+    int SendGameRequest(RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool bNeedEcho = true) const;
 
     // 游戏 消息接收
     int ThreadGameInfoNotify();
 
     // 游戏 消息处理
-    int OnGameInfoNotify(const RequestID requestid, const REQUEST &request);
+    int OnGameInfoNotify(RequestID requestid, const REQUEST &request);
 
     // 游戏 断开连接
     int OnDisconnGameInfo();
@@ -25,47 +25,46 @@ private:
 
 private:
     // 发送业务消息
-
-    // 向游戏服务器 发送 心跳
     int SendPulse();
 
 private:
-    // 接收业务消息 一般需要先更新user数据，在触发table上的用户数据变化
+    // 接收业务消息
+    // 一般需要先更新user数据，触发table上的用户数据变化
 
     // 玩家进入游戏	BindPlayer
     int OnPlayerEnterGame(const REQUEST &request) const;
 
     // 旁观者进入游戏	BindLooker
-    int OnLookerEnterGame(const REQUEST &request);
+    int OnLookerEnterGame(const REQUEST &request) const;
 
     // 旁观转玩家	BindPlayer
-    int OnLooker2Player(const REQUEST &request);
+    int OnLooker2Player(const REQUEST &request) const;
 
     // 玩家转旁观	UnbindPlayer
-    int OnPlayer2Looker(const REQUEST &request);
+    int OnPlayer2Looker(const REQUEST &request) const;
 
     // 开始游戏	StartGame
-    int OnStartGame(const REQUEST &request);
+    int OnStartGame(const REQUEST &request) const;
 
     // 用户单人结算	RefreshGameResult(int userid)
-    int OnUserFreshResult(const REQUEST &request);
+    int OnUserFreshResult(const REQUEST &request) const;
 
     // 整桌结算	RefreshGameResult
-    int OnFreshResult(const REQUEST &request);
+    int OnFreshResult(const REQUEST &request) const;
 
     // 用户离开游戏	UnbindUser
-    int OnLeaveGame(const REQUEST &request);
+    int OnLeaveGame(const REQUEST &request) const;
 
     // 用户换桌	UnbindUser+BindPlaye
-    int OnSwitchTable(const REQUEST &request);
+    int OnSwitchTable(const REQUEST &request) const;
 
 private:
     //int GetUserStatus(UserID userid, UserStatus& user_status);
-    int AddRoomPB(const game::base::Room room_pb);
+    int AddRoomPB(const game::base::Room& room_pb) const;
 
-    int AddTablePB(const game::base::Table table_pb, TablePtr table);
+    static int AddTablePB(const game::base::Table& table_pb, const TablePtr& table);
 
-    int AddUserPB(const game::base::User user_pb) const;
+    int AddUserPB(const game::base::User& user_pb) const;
 
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
@@ -80,7 +79,7 @@ private:
     int ResetInitDataWithLock();
 
     // 游戏 建立连接
-    int ConnectGameSvrWithLock(const std::string& game_ip, const int game_port);
+    int ConnectGameSvrWithLock(const std::string& game_ip, int game_port) const;
 
     // 向游戏服务器 注册 为合法机器人服务器
     int SendValidateReqWithLock();

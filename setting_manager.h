@@ -17,7 +17,7 @@ public:
     const RoomSettingMap& GetRoomSettingMap() const;
 
     // 获得指定机器人配置
-    int GetRobotSetting(const UserID userid, RobotSetting& robot_setting) const;
+    int GetRobotSetting(UserID userid, RobotSetting& robot_setting) const;
 
     // 主业务定时器间隔
     int GetMainsInterval() const;

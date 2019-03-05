@@ -26,7 +26,7 @@ int RobotDepositManager::ThreadDeposit() {
     LOG_INFO("[START ROUTINE] RobotDepositManager Deposit thread [%d] started", GetCurrentThreadId());
 
     while (true) {
-        DWORD dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetDepositInterval());
+        const auto dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetDepositInterval());
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
@@ -61,7 +61,7 @@ int RobotDepositManager::ThreadDeposit() {
     return kCommSucc;
 }
 
-int RobotDepositManager::RobotGainDeposit(const UserID userid, const int amount) const {
+int RobotDepositManager::RobotGainDeposit(UserID userid, int amount) const {
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
@@ -141,7 +141,7 @@ int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount)
     return kCommSucc;
 }
 
-int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType& type) {
+int RobotDepositManager::SetDepositType(UserID userid, const DepositType& type) {
     CHECK_USERID(userid);
     std::lock_guard<std::mutex> lock(deposit_map_mutex_);
     if (deposit_map_.find(userid) == deposit_map_.end()) {
@@ -157,8 +157,8 @@ int RobotDepositManager::SnapShotObjectStatus() {
     LOG_INFO("deposit_timer_thread_ [%d]", deposit_timer_thread_.GetThreadID());
     LOG_INFO("deposit_map_ size [%d]", deposit_map_.size());
     for (auto& kv : deposit_map_) {
-        auto userid = kv.first;
-        auto status = kv.second;
+        const auto userid = kv.first;
+        const auto status = kv.second;
         LOG_INFO("robot userid [%d] status [%d]", userid, status);
     }
 

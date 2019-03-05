@@ -7,7 +7,7 @@
 class RobotUtils {
 public:
     // 某个特定的connection发送协议
-    static int SendRequestWithLock(CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
+    static int SendRequestWithLock(const CDefSocketClientPtr& connection, RequestID requestid, const google::protobuf::Message &val, REQUEST& response, bool need_echo = true);
 
     // 发送HTTP POST协议
     static CString ExecHttpRequestPost(const CString& url, const CString& params);

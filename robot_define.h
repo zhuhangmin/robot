@@ -110,7 +110,7 @@ enum class HallLogonStatusType {
 //≈‰÷√¿‡ ÷ª∂¡
 class RobotSetting {
 public:
-    uint32_t	userid;
+    UserID	userid;
     std::string	password;
     std::string nickname;
     std::string headurl;

@@ -158,7 +158,7 @@ bool Table::IsValidDeposit(INT64 deposit) {
         return true;
     }
 
-    return deposit >= get_min_deposit() && deposit < get_max_deposit());
+    return deposit >= get_min_deposit() && deposit < get_max_deposit();
 }
 
 
