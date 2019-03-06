@@ -38,7 +38,7 @@ void WriteMiniDMP(struct _EXCEPTION_POINTERS *pExp) {
     TCHAR szFilePath[MAX_PATH];
     GetModuleFileName(NULL, szFilePath, MAX_PATH);
     *strrchr(szFilePath, '\\') = 0;
-    strDumpFile.Format("%s\\%d.dmp", szFilePath, CTime::GetCurrentTime().GetTickCount());
+    strDumpFile.Format(" [%s]\\%d.dmp", szFilePath, CTime::GetCurrentTime().GetTickCount());
     HANDLE   hFile = CreateFile(strDumpFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE) {
         MINIDUMP_EXCEPTION_INFORMATION   ExInfo;
@@ -110,7 +110,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     PathStripPath(szExeName);
     PathRemoveExtension(szExeName);
     TCHAR szExeIni[MAX_PATH] = {0};
-    sprintf(szExeIni, "%s.ini", szExeName);
+    sprintf(szExeIni, " [%s].ini", szExeName);
 
     TCHAR szFullName[MAX_PATH] = {0};
     GetModuleFileName(GetModuleHandle(NULL), szFullName, sizeof(szFullName));
@@ -124,7 +124,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     GetPrivateProfileString("service", "display_name", DISPLAY_NAME, displayName, MAX_PATH, szIniFile);
 
     if (strcmp(szExeName, serviceName) != 0) {
-        LOG_ERROR("szExeName[%s] != serviceName[%s]", szExeName, serviceName);
+        LOG_ERROR("szExeName[ [%s]] != serviceName[ [%s]]", szExeName, serviceName);
         nRetCode = EXIT_FAILURE;
         return nRetCode;
     }

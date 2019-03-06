@@ -113,7 +113,7 @@ void CMainService::SaveStatus() {
     strcat_s(szKey, sizeof(szKey), _T("\\Status"));
     DWORD dwDisp;
     DWORD dwErr;
-    LOG_INFO("Creating key: %s", szKey);
+    LOG_INFO("Creating key:  [%s]", szKey);
     dwErr = RegCreateKeyEx(HKEY_LOCAL_MACHINE,
                            szKey,
                            0,

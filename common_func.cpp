@@ -21,13 +21,13 @@ int ParseFromRequest(const REQUEST &req, google::protobuf::Message &val) {
     const auto repeated = req.head.nRepeated;
     const auto len = req.nDataLen - repeated * sizeof(CONTEXT_HEAD);
     if (len <= 0) {
-        LOG_WARN("Invalid req. repeated = %d, datalen = %d", repeated, req.nDataLen);
+        LOG_WARN("Invalid req. repeated  = [%d], datalen  = [%d]", repeated, req.nDataLen);
         return kCommFaild;
     }
 
     char *data = (char *) (req.pDataPtr) + repeated * sizeof(CONTEXT_HEAD);
     if (!val.ParseFromArray(data, len)) {
-        LOG_WARN("ParseArray faild. req=%d");
+        LOG_WARN("ParseArray faild. req  [%d]");
         return kCommFaild;
     }
 

@@ -97,13 +97,13 @@ int RobotHallManager::LogonHall(const UserID& userid) {
     }
 
     if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
-        LOG_ERROR("userid = %d GR_LOGON_USER_V2 FAIL", userid);
+        LOG_ERROR("userid  = [%d] GR_LOGON_USER_V2 FAIL", userid);
         return kCommFaild;
     }
 
     SetLogonStatusWithLock(userid, HallLogonStatusType::kLogon);
 
-    LOG_INFO("userid:%d logon hall ok.", userid);
+    LOG_INFO("userid: [%d] logon hall ok.", userid);
     return kCommSucc;
 }
 
@@ -248,12 +248,12 @@ int RobotHallManager::SendGetAllRoomData() {
 int RobotHallManager::SendHallRequestWithLock(const RequestID& requestid, int& data_size, void *req_data_ptr, RequestID &response_id, std::shared_ptr<void> &resp_data_ptr, const bool& need_echo /*= true*/) const {
     CHECK_REQUESTID(requestid);
     if (!connection_) {
-        LOG_ERROR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId = %d", requestid);
+        LOG_ERROR("SendHallRequest m_CoonHall nil ERR_CONNECT_NOT_EXIST nReqId  = [%d]", requestid);
         ASSERT_FALSE_RETURN;
     }
 
     if (!connection_->IsConnected()) {
-        LOG_ERROR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId = %d", requestid);
+        LOG_ERROR("SendHallRequest m_CoonHall not connect ERR_CONNECT_DISABLE nReqId  = [%d]", requestid);
         ASSERT_FALSE_RETURN;
     }
 
@@ -272,7 +272,7 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID& requestid, int& d
     BOOL result = connection_->SendRequest(&Context, &Request, &Response, timeout, RequestTimeOut);
 
     if (!result) {
-        LOG_ERROR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut = %d, nReqId = %d", timeout, requestid);
+        LOG_ERROR("SendHallRequest m_ConnHall->SendRequest fail bTimeOut  = [%d], nReqId  = [%d]", timeout, requestid);
         ASSERT_FALSE;
 
         if (timeout) {
@@ -287,7 +287,7 @@ int RobotHallManager::SendHallRequestWithLock(const RequestID& requestid, int& d
     resp_data_ptr.reset(Response.pDataPtr);
 
     if (response_id == GR_ERROR_INFOMATION) {
-        LOG_ERROR("SendHallRequest m_ConnHall->SendRequest fail responseid GR_ERROR_INFOMATION nReqId = %d", requestid);
+        LOG_ERROR("SendHallRequest m_ConnHall->SendRequest fail responseid GR_ERROR_INFOMATION nReqId  = [%d]", requestid);
         ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
@@ -313,10 +313,10 @@ int RobotHallManager::ConnectHallWithLock() {
     auto nHallSvrPort = GetPrivateProfileInt(_T("hall_server"), _T("port"), 0, g_szIniFile);
     connection_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
     if (!connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
-        LOG_ERROR("[ROUTE] ConnectHall Faild! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
+        LOG_ERROR("[ROUTE] ConnectHall Faild! IP: [%s] Port: [%d]", szHallSvrIP, nHallSvrPort);
         ASSERT_FALSE_RETURN;
     }
-    LOG_INFO("ConnectHall OK! IP:%s Port:%d", szHallSvrIP, nHallSvrPort);
+    LOG_INFO("ConnectHall OK! IP: [%s] Port: [%d]", szHallSvrIP, nHallSvrPort);
     return kCommSucc;
 }
 
@@ -325,7 +325,7 @@ int RobotHallManager::SendGetAllRoomDataWithLock() {
     for (auto& kv : setting) {
         const auto roomid = kv.first;
         if (kCommSucc != SendGetRoomDataWithLock(roomid)) {
-            LOG_ERROR("cannnot get hall room data = %d", roomid);
+            LOG_ERROR("cannnot get hall room data  = [%d]", roomid);
             ASSERT_FALSE_RETURN;
         }
     }
@@ -358,7 +358,7 @@ int RobotHallManager::SendGetRoomDataWithLock(const RoomID& roomid) {
     }
 
     if (nRespID != UR_FETCH_SUCCEEDED) {
-        LOG_ERROR("SendHallRequest GR_GET_ROOM fail nRoomId = %d, nResponse = %d", roomid, nRespID);
+        LOG_ERROR("SendHallRequest GR_GET_ROOM fail nRoomId  = [%d], nResponse  = [%d]", roomid, nRespID);
         ASSERT_FALSE_RETURN;
     }
 
@@ -438,7 +438,7 @@ int RobotHallManager::SnapShotObjectStatus() {
     for (auto& kv : room_data_map_) {
         const auto roomid = kv.first;
         const auto room = kv.second.room;
-        LOG_INFO("roomid [%d] ip [%s] port [%d]", roomid, room.szGameIP, room.nGamePort);
+        LOG_INFO("roomid [%d] ip [ [%s]] port [%d]", roomid, room.szGameIP, room.nGamePort);
     }
 
     LOG_INFO("hall_logon_status_map_ size [%d]", logon_status_map_.size());
@@ -471,7 +471,7 @@ int RobotHallManager::SnapShotObjectStatus() {
     str += "}";
 
     LOG_INFO("on [%d] off [%d] unknow [%d]", status_on_count, status_off_count, status_unknow_count);
-    LOG_INFO("%s", str.c_str());
+    LOG_INFO(" [%s]", str.c_str());
 
     return kCommSucc;
 }

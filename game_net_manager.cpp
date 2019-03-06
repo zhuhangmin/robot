@@ -110,12 +110,12 @@ int GameNetManager::OnGameInfoNotify(const RequestID& requestid, const REQUEST &
             result = OnSwitchTable(request);
             break;
         default:
-            LOG_WARN("requestid = %d", requestid);
+            LOG_WARN("requestid  = [%d]", requestid);
             break;
     }
 
     if (kCommSucc != result) {
-        LOG_ERROR("requestid = %d, result = %d", requestid, result);
+        LOG_ERROR("requestid  = [%d], result  = [%d]", requestid, result);
         return kCommFaild;
     }
 
@@ -167,7 +167,7 @@ int GameNetManager::SendValidateReqWithLock() {
     }
 
     if (kCommSucc != resp.code()) {
-        LOG_ERROR("SendValidateReq faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(val).c_str());
+        LOG_ERROR("SendValidateReq faild. check return[%d]. req =  [%s]", resp.code(), GetStringFromPb(val).c_str());
         return kCommFaild;
     }
 
@@ -196,7 +196,7 @@ int GameNetManager::SendGetGameInfoWithLock() {
     }
 
     if (kCommSucc != resp.code()) {
-        LOG_ERROR("SendGetGameInfo faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(val).c_str());
+        LOG_ERROR("SendGetGameInfo faild. check return[%d]. req =  [%s]", resp.code(), GetStringFromPb(val).c_str());
         return kCommFaild;
     }
 
@@ -442,7 +442,7 @@ int GameNetManager::OnStartGame(const REQUEST &request) const {
 
     TablePtr table;
     if (kCommSucc != base_room->GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild tableno=%d", tableno);
+        LOG_WARN("GetTable faild tableno  [%d]", tableno);
         ASSERT_FALSE_RETURN;
     }
 
@@ -475,7 +475,7 @@ int GameNetManager::OnUserFreshResult(const REQUEST &request) const {
     }
     TablePtr table;
     if (kCommSucc != base_room->GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. tableno=%d", tableno);
+        LOG_WARN("GetTable faild. tableno  [%d]", tableno);
         ASSERT_FALSE_RETURN;
     }
 
@@ -502,7 +502,7 @@ int GameNetManager::OnFreshResult(const REQUEST &request) const {
 
     TablePtr table;
     if (kCommSucc != base_room->GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild.  tableno=%d", tableno);
+        LOG_WARN("GetTable faild.  tableno  [%d]", tableno);
         ASSERT_FALSE_RETURN;
     }
     table->RefreshGameResult();
@@ -709,11 +709,11 @@ int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, const int
     CHECK_GAMEPORT(game_port);
     connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!connection_->Create(game_ip.c_str(), game_port, 5, 0, notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
-        LOG_ERROR("[ROUTE] ConnectGame Faild! IP:%s Port:%d", game_ip.c_str(), game_port);
+        LOG_ERROR("[ROUTE] ConnectGame Faild! IP: [%s] Port: [%d]", game_ip.c_str(), game_port);
         ASSERT_FALSE_RETURN;
     }
 
-    LOG_INFO("ConnectGame OK! IP:%s Port:%d", game_ip.c_str(), game_port);
+    LOG_INFO("ConnectGame OK! IP: [%s] Port: [%d]", game_ip.c_str(), game_port);
     return kCommSucc;
 }
 

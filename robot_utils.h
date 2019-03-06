@@ -85,4 +85,4 @@ public:
 
 #define CHECK_NOT_THREAD(x)  if(kCommSucc != RobotUtils::NotThisThread(x))  {ASSERT_FALSE_RETURN}
 
-#define LOG_FUNC(x) LOG_INFO("%s %s", x, __FUNCTION__);
+#define LOG_FUNC(x) LOG_INFO(" [%s]  [%s]", x, __FUNCTION__);

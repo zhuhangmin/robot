@@ -93,7 +93,7 @@ int SettingManager::InitSetting() {
 
     // check
     if (InvalidGameID == game_id_) {
-        LOG_ERROR("game_id_ = %d", InvalidGameID);
+        LOG_ERROR("game_id_  = [%d]", InvalidGameID);
         ASSERT_FALSE_RETURN;
     }
 
@@ -160,7 +160,7 @@ int SettingManager::SnapShotObjectStatus() const {
         userid_str += std::to_string(userid);
         userid_str += ", ";
     }
-    LOG_INFO("robot userid [%s]", userid_str.c_str());
+    LOG_INFO("robot userid [ [%s]]", userid_str.c_str());
 
     LOG_INFO("room_setting_map_ size [%d]", room_setting_map_.size());
     for (auto& kv : room_setting_map_) {

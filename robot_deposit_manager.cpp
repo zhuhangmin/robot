@@ -95,7 +95,7 @@ int RobotDepositManager::RobotGainDeposit(const UserID& userid, const int& amoun
     if (!reader.parse((LPCTSTR) strResult, _root)) ASSERT_FALSE_RETURN;
 
     if (_root["Code"].asInt() != 0) {
-        LOG_ERROR("userid = %d gain deposit fail, code = %d, strResult = %s", userid, _root["Code"].asInt(), strResult);
+        LOG_ERROR("userid  = [%d] gain deposit fail, code  = [%d], strResult =  [%s]", userid, _root["Code"].asInt(), strResult);
         ASSERT_FALSE_RETURN
     }
     return kCommSucc;
@@ -135,7 +135,7 @@ int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount)
     if (!reader.parse((LPCTSTR) strResult, _root)) ASSERT_FALSE_RETURN;
 
     if (_root["Code"].asInt() != 0) {
-        LOG_ERROR("userid = %d gain deposit fail, code = %d, strResult = %s", userid, _root["Code"].asInt(), strResult);
+        LOG_ERROR("userid  = [%d] gain deposit fail, code  = [%d], strResult =  [%s]", userid, _root["Code"].asInt(), strResult);
         ASSERT_FALSE_RETURN
     }
     return kCommSucc;

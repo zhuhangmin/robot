@@ -84,7 +84,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
             }
         }
     } catch (...) {
-        LOG_ERROR(_T("ExecHttpRequestPost catch:%s retcode:%d error: %d"), url, retcode, GetLastError());
+        LOG_ERROR(_T("ExecHttpRequestPost catch: [%s] retcode: [%d] error: [%d]"), url, retcode, GetLastError());
         assert(false);
         return "";
     }
@@ -94,7 +94,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
     if (pSession) { pSession->Close();  delete   pSession;   pSession = NULL; }
 
     if (result_str == "") {
-        LOG_ERROR(_T("ExecHttpRequestPost urlPath:%s retcode:%d error: %d"), url, retcode, GetLastError());
+        LOG_ERROR(_T("ExecHttpRequestPost urlPath: [%s] retcode: [%d] error: [%d]"), url, retcode, GetLastError());
         assert(false);
         return "";
 
@@ -138,7 +138,7 @@ int RobotUtils::GetGamePort() {
 
     HallRoomData hall_room_data = {};
     if (kCommSucc != HallMgr.GetHallRoomData(room_id, hall_room_data)) {
-        LOG_ERROR("GetHallRoomData room id = %d failed", room_id);
+        LOG_ERROR("GetHallRoomData room id  = [%d] failed", room_id);
         ASSERT_FALSE_RETURN;
     }
 

@@ -67,7 +67,7 @@ int RobotNet::InitDataWithLock() {
     game_connection_ = std::make_shared<CDefSocketClient>();
     game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!game_connection_->Create(game_ip_.c_str(), game_port_, 5, 0, game_notify_thread_id_, 0, GetHelloData(), GetHelloLength())) {
-        LOG_ERROR("ConnectGame Faild! IP:%s Port:%d", game_ip_.c_str(), game_port_);
+        LOG_ERROR("ConnectGame Faild! IP: [%s] Port: [%d]", game_ip_.c_str(), game_port_);
         ASSERT_FALSE_RETURN;
     }
 
@@ -125,7 +125,7 @@ int RobotNet::SendEnterGame(const RoomID& roomid) {
     }
 
     if (kCommSucc != resp.code()) {
-        LOG_ERROR("enter game faild. check return[%d]. req = %s", resp.code(), GetStringFromPb(val).c_str());
+        LOG_ERROR("enter game faild. check return[%d]. req =  [%s]", resp.code(), GetStringFromPb(val).c_str());
         return resp.code();
     }
 

@@ -175,7 +175,7 @@ int RobotNetManager::SnapShotObjectStatus() {
     }
     str += "}";
 
-    LOG_INFO("%s", str.c_str());
+    LOG_INFO(" [%s]", str.c_str());
     return kCommSucc;
 }
 

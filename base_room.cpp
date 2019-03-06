@@ -37,12 +37,12 @@ int BaseRoom::PlayerEnterGame(const UserPtr &user) {
 
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
     if (kCommSucc != table->BindPlayer(user)) {
-        LOG_WARN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("BindPlayer faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
@@ -55,12 +55,12 @@ int BaseRoom::BindPlayer(const UserPtr& user) {
     const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
     if (kCommSucc != table->BindPlayer(user)) {
-        LOG_WARN("BindPlayer faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("BindPlayer faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
         return kCommFaild;
     }
     return kCommSucc;
@@ -72,7 +72,7 @@ int BaseRoom::UserLeaveGame(const UserID& userid, const TableNO& tableno) {
 
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
+        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", userid, tableno);
         return kCommFaild;
     }
 
@@ -94,7 +94,7 @@ int BaseRoom::UnbindUser(const UserID& userid, const TableNO& tableno) {
     //V524 It is odd that the body of 'UnbindUser' function is fully equivalent to the body of 'UserLeaveGame' function.base_room.cpp 91
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
+        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", userid, tableno);
         return kCommFaild;
     }
 
@@ -115,7 +115,7 @@ int BaseRoom::UserGiveUp(const UserID& userid, const TableNO& tableno) {
 
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid=%d, tableno=%d", userid, tableno);
+        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", userid, tableno);
         return kCommFaild;
     }
 
@@ -137,7 +137,7 @@ int BaseRoom::Looker2Player(const UserPtr& user) {
     const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
@@ -159,7 +159,7 @@ int BaseRoom::Looker2Player(const UserPtr& user) {
 
     const auto ret = table->BindPlayer(user);
     if (ret != kCommSucc) {
-        LOG_WARN("user[%d] BindPlayer faild. ret=%d", user->get_user_id(), ret);
+        LOG_WARN("user[%d] BindPlayer faild. ret  [%d]", user->get_user_id(), ret);
         return kCommFaild;
     }
 
@@ -171,7 +171,7 @@ int BaseRoom::Player2Looker(const UserPtr& user) {
     const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
         return kCommFaild;
     }
 
@@ -208,7 +208,7 @@ int BaseRoom::LookerEnterGame(const UserPtr &user) {
     const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid=%d, tableno=%d", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
         return kCommFaild;
     }
     if (kCommSucc != table->BindLooker(user)) {
