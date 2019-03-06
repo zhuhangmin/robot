@@ -46,8 +46,7 @@ int GameNetManager::Term() {
 
 
 
-int GameNetManager::SendGameRequest(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) const {
-    std::lock_guard<std::mutex> lock(mutex_);
+int GameNetManager::SendRequestWithLock(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) const {
     CHECK_REQUESTID(requestid);
     return RobotUtils::SendRequestWithLock(connection_, requestid, val, response, need_echo);
 }
@@ -149,7 +148,7 @@ int GameNetManager::SendValidateReqWithLock() {
     game::base::RobotSvrValidateReq val;
     val.set_client_id(g_nClientID);
     REQUEST response = {};
-    const auto result = SendGameRequest(GR_VALID_ROBOTSVR, val, response);
+    const auto result = SendRequestWithLock(GR_VALID_ROBOTSVR, val, response);
 
     if (kCommSucc != result) {
         ASSERT_FALSE;
@@ -179,7 +178,7 @@ int GameNetManager::SendGetGameInfoWithLock() {
     val.set_clientid(g_nClientID);
     val.set_roomid(0);
     REQUEST response = {};
-    const auto result = SendGameRequest(GR_GET_GAMEUSERS, val, response);
+    const auto result = SendRequestWithLock(GR_GET_GAMEUSERS, val, response);
     if (kCommSucc != result) {
         ASSERT_FALSE;
         if (kOperationFailed == result) {
@@ -298,7 +297,7 @@ int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
     }
 
     const auto ret = base_room->PlayerEnterGame(user); //Add User Manager
-    if (ret != kCommSucc) {
+    if (kCommSucc != ret) {
         LOG_WARN("PlayerEnterGame failed.");
         ASSERT_FALSE_RETURN;
     }
@@ -336,7 +335,7 @@ int GameNetManager::OnLookerEnterGame(const REQUEST &request) const {
     }
 
     const auto ret = base_room->LookerEnterGame(user); //Add User To User Manager
-    if (ret != kCommSucc) {
+    if (kCommSucc != ret) {
         LOG_WARN("PlayerEnterGame failed.");
         ASSERT_FALSE_RETURN;
     }
@@ -375,7 +374,7 @@ int GameNetManager::OnLooker2Player(const REQUEST &request) const {
     user->set_chair_no(chairno);
 
     const auto ret = base_room->Looker2Player(user);
-    if (ret != kCommSucc) {
+    if (kCommSucc != ret) {
         LOG_WARN("Looker2Player failed");
         ASSERT_FALSE_RETURN;
     }
@@ -410,7 +409,7 @@ int GameNetManager::OnPlayer2Looker(const REQUEST &request) const {
     user->set_chair_no(chairno);
 
     const auto ret = base_room->Player2Looker(user);
-    if (ret != kCommSucc) {
+    if (kCommSucc != ret) {
         LOG_WARN("Player2Looker failed");
         ASSERT_FALSE_RETURN;
     }

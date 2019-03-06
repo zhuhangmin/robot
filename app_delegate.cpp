@@ -62,7 +62,6 @@ int AppDelegate::Init() {
     auto game_ip = RobotUtils::GetGameIP();
     if (kCommSucc != GameMgr.Init(game_ip, game_port)) {
     LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
-    ASSERT_FALSE;
     ASSERT_FALSE_RETURN;
     }*/
 
@@ -269,7 +268,8 @@ int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
 }
 
 int AppDelegate::DepositGainAll() {
-    if (InitGainFlag  != SettingMgr.GetDeposiInitGainFlag()) return kCommSucc;
+    if (InitGainFlag  != SettingMgr.GetDeposiInitGainFlag())
+        return kCommSucc;
 
     auto robot_setting_map = SettingMgr.GetRobotSettingMap();
     for (auto& kv : robot_setting_map) {

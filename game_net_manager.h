@@ -8,9 +8,6 @@ public:
     int Term();
 
 private:
-    // 游戏 消息发送
-    int SendGameRequest(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo = true) const;
-
     // 游戏 消息接收
     int ThreadGameInfoNotify();
 
@@ -24,6 +21,9 @@ private:
     int ThreadSendGamePulse();
 
 private:
+    // 游戏 消息发送
+    int SendRequestWithLock(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo = true) const;
+
     // 发送业务消息
     int SendPulse();
 

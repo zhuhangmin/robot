@@ -32,6 +32,8 @@
 * Terminal 中输入'M' 打印进程使用的资源信息
 * Terminal 中输入'S' 打印业务类数据状态
 * Terminal 中输入'M' 打印发送消息数
+* PRINT_STACK 打印调用栈traceback
+* TRACE_ASSERT 开启严格调试模式, 错误时打印调用栈stack trace, 并assert断言
 
 # 整体设计
 * 数据层（配置，网络，运行状态）-> 资源管理类（线程安全，网络异常，数据同步）->具体业务（机器人自定义调度）

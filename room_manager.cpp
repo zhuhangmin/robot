@@ -6,7 +6,7 @@ int RoomManager::GetRoom(const RoomID& roomid, RoomPtr& room) const {
     std::lock_guard<std::mutex> lock(rooms_mutex_);
     const auto iter = rooms_.find(roomid);
     if (iter == rooms_.end()) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     room = iter->second;
     return kCommSucc;

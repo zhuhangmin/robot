@@ -53,8 +53,10 @@ public:
     // 控制方法对特定线程不可见
     static int NotThisThread(YQThread& thread);
 
-    static SendMsgCountMap send_msg_count_map;
+    static int TraceStack();
 
+public:
+    static SendMsgCountMap send_msg_count_map;
 };
 
 #define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {ASSERT_FALSE_RETURN}
@@ -87,4 +89,33 @@ public:
 
 #define CHECK_NOT_THREAD(x)  if(kCommSucc != RobotUtils::NotThisThread(x))  {ASSERT_FALSE_RETURN}
 
+#ifdef _DEBUG
+#define TRACE_STACK RobotUtils::TraceStack();
+#else
+#define TRACE_STACK
+#endif
+
 #define LOG_FUNC(x) LOG_INFO(" [%s]  [%s]", x, __FUNCTION__);
+
+#define TRACE_ASSERT // 开启严格调试模式, 错误时打印调用栈 并assert 
+#ifdef TRACE_ASSERT
+
+#define  ASSERT_FALSE {\
+                        TRACE_STACK \
+                        assert(false); \
+                       }
+
+#define  ASSERT_FALSE_RETURN { \
+                                ASSERT_FALSE \
+                                return kCommFaild; \
+                             }
+#else
+
+#define  ASSERT_FALSE TRACE_STACK
+
+#define  ASSERT_FALSE_RETURN {\
+                                TRACE_STACK \
+                                return kCommFaild; \
+                               }
+#endif
+

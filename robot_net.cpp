@@ -102,7 +102,7 @@ int RobotNet::SendEnterGame(const RoomID& roomid) {
     REQUEST response = {};
 
     const auto result = SendGameRequestWithLock(GR_ENTER_NORMAL_GAME, val, response);
-    if (result != kCommSucc) {
+    if (kCommSucc != result) {
         LOG_ERROR("game send quest fail");
         ASSERT_FALSE;
         if (result == kOperationFailed) {
@@ -134,7 +134,7 @@ int RobotNet::SendGamePulse() {
     val.set_id(userid_);
     REQUEST response = {};
     const auto result = SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
-    if (result != kCommSucc) {
+    if (kCommSucc != result) {
         LOG_ERROR("game send quest fail");
         ASSERT_FALSE;
         if (result == kOperationFailed) {
