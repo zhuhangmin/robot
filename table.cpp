@@ -127,7 +127,7 @@ int Table::GetChairInfoByChairno(const int& chairno, ChairInfo& info) {
     CHECK_CHAIRNO(chairno);
     if (!IsValidChairno(chairno)) {
         LOG_ERROR("Invalid chairno[%d]", chairno);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     info = chairs_.at(chairno - 1);
@@ -180,7 +180,7 @@ int Table::GiveUp(const int& userid) {
     CHECK_USERID(userid);
     if (!IS_BIT_SET(get_table_status(), kTablePlaying)) {
         LOG_WARN("user[%d] giveup, but not playing.", userid);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     // Ω·À„
@@ -206,7 +206,7 @@ int Table::RefreshGameResult(const int& userid) {
     const auto chairno = GetUserChair(userid);
     if (!IsValidChairno(chairno)) {
         LOG_WARN("user[%d] is not player.", userid);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     return kCommSucc;

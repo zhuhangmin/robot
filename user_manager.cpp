@@ -44,7 +44,7 @@ int UserManager::GetUserWithLock(const UserID& userid, UserPtr& user) const {
     CHECK_USERID(userid);
     const auto itr = user_map_.find(userid);
     if (itr == user_map_.end()) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     user = itr->second;
     return kCommSucc;
@@ -118,7 +118,7 @@ int UserManager::SnapShotUser(const UserID& userid) const {
     std::lock_guard<std::mutex> users_lock(user_map_mutex_);
     UserPtr user;
     if (kCommSucc != GetUserWithLock(userid, user)) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     user->SnapShotObjectStatus();

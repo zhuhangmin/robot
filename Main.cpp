@@ -1,6 +1,3 @@
-// Main.cpp : 定义控制台应用程序的入口点。
-//
-
 #include "stdafx.h"
 #include "main.h"
 #include "app_delegate.h"
@@ -12,8 +9,15 @@
 #include "robot_hall_manager.h"
 #include "user_manager.h"
 #include "room_manager.h"
+#include "process_info.h"
+#include "robot_utils.h"
 #pragma comment(lib,  "dbghelp.lib")
+
+
+
 #ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
 #define new DEBUG_NEW
 #endif
 
@@ -38,16 +42,17 @@ void WriteMiniDMP(struct _EXCEPTION_POINTERS *pExp) {
     TCHAR szFilePath[MAX_PATH];
     GetModuleFileName(NULL, szFilePath, MAX_PATH);
     *strrchr(szFilePath, '\\') = 0;
-    strDumpFile.Format(" [%s]\\%d.dmp", szFilePath, CTime::GetCurrentTime().GetTickCount());
+    SYSTEMTIME stTime;
+    GetLocalTime(&stTime);
+    strDumpFile.Format("%s\\[%02d-%02d %02d-%02d-%02d]full.dmp", szFilePath, stTime.wMonth, stTime.wDay, stTime.wHour, stTime.wMinute, stTime.wSecond);
     HANDLE   hFile = CreateFile(strDumpFile, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE) {
         MINIDUMP_EXCEPTION_INFORMATION   ExInfo;
-        ExInfo.ThreadId = GetCurrentThreadId();
+        ExInfo.ThreadId = ::GetCurrentThreadId();
         ExInfo.ExceptionPointers = pExp;
         ExInfo.ClientPointers = NULL;
-        //   write   the   dump 
-        BOOL   bOK = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &ExInfo, NULL, NULL);
-        CloseHandle(hFile);
+        (void) MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, (MINIDUMP_TYPE) 0x9b67, &ExInfo, NULL, NULL);
+        (void) CloseHandle(hFile);
     }
 }
 
@@ -60,6 +65,12 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     TCLOG_INIT();
     LOG_INFO("\n ===================================SERVER START===================================");
     LOG_INFO("[START ROUTINE] BEG");
+
+    //绑定单核运行 避免机器人本身消耗所有CPU
+    BOOL success = SetProcessAffinityMask(GetCurrentProcess(), 0x00000001);
+    if (!success) {
+        LOG_WARN("bind to single core 0x00000001 failed error [%d]", GetLastError());
+    }
 
     auto nRetCode = EXIT_SUCCESS;
     SetUnhandledExceptionFilter(ExpFilter);
@@ -159,8 +170,9 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         ch = _getch();
         ch = toupper(ch);
 #ifdef _DEBUG
+        // TEST CASE
         if (ch == 'S') {
-            LOG_INFO("-------------[STATUS SNAPSHOT]-------------");
+            LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
             SettingMgr.SnapShotObjectStatus();
             RobotMgr.SnapShotObjectStatus();
             GameMgr.SnapShotObjectStatus();
@@ -168,15 +180,64 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
             HallMgr.SnapShotObjectStatus();
             UserMgr.SnapShotObjectStatus();
             RoomMgr.SnapShotObjectStatus();
+            LOG_INFO("-------------[STATUS SNAPSHOT END]-------------");
         }
 
         if (ch == 'D') {
-            LOG_INFO("-------------[DEPOSIT TEST]-------------");
+            LOG_INFO("-------------[DEPOSIT TEST BEG]-------------");
             auto userid = InvalidUserID;
             SettingMgr.GetRandomUserID(userid);
             DepositMgr.SetDepositType(userid, DepositType::kBack);
             SettingMgr.GetRandomUserID(userid);
             DepositMgr.SetDepositType(userid, DepositType::kGain);
+            LOG_INFO("-------------[DEPOSIT TEST BEG]-------------");
+        }
+
+        if (ch == 'P') {
+            LOG_INFO("-------------[PROCESS TEST BEG]-------------");
+            ProcessInfoCollect picProcessInfoCollect;
+            int nRet = 0;
+            DWORD             nMemoryUsed;                    //内存使用(Byte)    
+            DWORD            nVirtualMemoryUsed;                //虚拟内存使用(Byte)    
+            DWORD            nHandleNumber;                    //句柄数量
+            DWORD dwCurrentProcessThreadCount;        //线程数量    
+            ULONGLONG ullIo_read_bytes;                        //IO读字节数    
+            ULONGLONG ullIo_write_bytes;                    //IO写字节数    
+            ULONGLONG ullIo_wct;                            //IO写次数    
+            ULONGLONG ullIo_rct;                            //IO读次数        
+            double dCPUUserRate = 0;                        //CPU使用的百分比        
+            picProcessInfoCollect.GetCPUUserRate(dCPUUserRate);
+            picProcessInfoCollect.GetMemoryUsed(nVirtualMemoryUsed, nMemoryUsed);
+            nVirtualMemoryUsed = nVirtualMemoryUsed;
+            nMemoryUsed = nMemoryUsed;
+            picProcessInfoCollect.GetThreadCount(dwCurrentProcessThreadCount);
+            picProcessInfoCollect.GetHandleCount(nHandleNumber);
+            picProcessInfoCollect.GetIOBytes(&ullIo_read_bytes, &ullIo_write_bytes, &ullIo_wct, &ullIo_rct);
+            LOG_INFO("cpu [%d], memory [%d] MB, handler count [%d], thread count [%d]", (int) dCPUUserRate, (int) nMemoryUsed / 1024 /1024, (int) nHandleNumber, (int) dwCurrentProcessThreadCount);
+            LOG_INFO("-------------[PROCESS TEST END]-------------");
+        }
+
+        if (ch == 'T') {
+            LOG_INFO("-------------[CONNECTION COST TEST BEG]-------------");
+            auto test_count = 100;
+            for (auto i = 0; i < test_count; i++) {
+                TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
+                GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof szHallSvrIP, g_szIniFile);
+                auto nHallSvrPort = GetPrivateProfileInt(_T("hall_server"), _T("port"), 0, g_szIniFile);
+                CDefSocketClientPtr connection_ = std::make_shared<CDefSocketClient>();
+                connection_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
+                connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, GetCurrentThreadId(), 0, GetHelloData(), GetHelloLength());
+            }
+            LOG_INFO("-------------[CONNECTION COST TEST END]-------------");
+        }
+
+        if (ch == 'M') {
+            LOG_INFO("-------------[MSG COUNT TEST BEG]-------------");
+            auto copy_data = RobotUtils::send_msg_count_map;
+            for (auto& kv : copy_data) {
+                LOG_INFO("request id [%d], count [%d]", kv.first, kv.second);
+            }
+            LOG_INFO("-------------[MSG COUNT COST TEST END]-------------");
         }
 #endif
 
@@ -195,5 +256,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     UwlEndTrace();
     UwlTerm();
     WSACleanup();
+
+    _CrtDumpMemoryLeaks();
     return nRetCode;
 }

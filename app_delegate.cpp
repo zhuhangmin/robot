@@ -9,9 +9,6 @@
 #include "robot_utils.h"
 #include "user_manager.h"
 #include "room_manager.h"
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
 
 int AppDelegate::InitLanuch() const {
     LOG_FUNC("[START ROUTINE]");
@@ -41,7 +38,7 @@ int AppDelegate::InitLanuch() const {
 int AppDelegate::Init() {
     LOG_FUNC("[START ROUTINE]");
     if (S_FALSE == CoInitialize(NULL))
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
 
     if (kCommSucc != InitLanuch()) {
         LOG_ERROR(_T("InitBase() return failed"));
@@ -66,7 +63,7 @@ int AppDelegate::Init() {
     if (kCommSucc != GameMgr.Init(game_ip, game_port)) {
     LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
     ASSERT_FALSE;
-    return kCommFaild;
+    ASSERT_FALSE_RETURN;
     }*/
 
     // 机器人游戏管理类

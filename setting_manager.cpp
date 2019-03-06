@@ -29,13 +29,13 @@ int SettingManager::InitSetting() {
     std::ifstream ifile; //@zhuhangmin 20190226 RAII OBJ, NO NEED TO CLOSE
     ifile.open(filename, std::ifstream::in);
 
-    if (!reader.parse(ifile, root, false))		return kCommFaild;
+    if (!reader.parse(ifile, root, false))		ASSERT_FALSE_RETURN;
 
-    if (!root.isMember("game_id"))               return kCommFaild;
+    if (!root.isMember("game_id"))               ASSERT_FALSE_RETURN;
 
-    if (!root["rooms"].isArray())				return kCommFaild;
+    if (!root["rooms"].isArray())				ASSERT_FALSE_RETURN;
 
-    if (!root["robots"].isArray())				return kCommFaild;
+    if (!root["robots"].isArray())				ASSERT_FALSE_RETURN;
 
     game_id_ = root["game_id"].asInt();
 
@@ -111,7 +111,7 @@ const RoomSettingMap& SettingManager::GetRoomSettingMap() const {
 int SettingManager::GetRobotSetting(const UserID userid, RobotSetting& robot_setting) const {
     const auto iter = robot_setting_map_.find(userid);
     if (iter == robot_setting_map_.end()) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     robot_setting = iter->second;
     return kCommSucc;

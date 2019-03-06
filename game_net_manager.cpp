@@ -116,7 +116,7 @@ int GameNetManager::OnGameInfoNotify(const RequestID& requestid, const REQUEST &
 
     if (kCommSucc != result) {
         LOG_ERROR("requestid  = [%d], result  = [%d]", requestid, result);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     return kCommSucc;
@@ -163,12 +163,12 @@ int GameNetManager::SendValidateReqWithLock() {
     const auto ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
         LOG_ERROR("ParseFromRequest faild.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (kCommSucc != resp.code()) {
         LOG_ERROR("SendValidateReq faild. check return[%d]. req =  [%s]", resp.code(), GetStringFromPb(val).c_str());
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     return kCommSucc;
@@ -192,12 +192,12 @@ int GameNetManager::SendGetGameInfoWithLock() {
     const auto ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
         LOG_ERROR("ParseFromRequest faild.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (kCommSucc != resp.code()) {
         LOG_ERROR("SendGetGameInfo faild. check return[%d]. req =  [%s]", resp.code(), GetStringFromPb(val).c_str());
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     RoomMgr.Reset();
@@ -572,7 +572,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
 //int RobotGameInfoManager::GetUserStatus(UserID userid, UserStatus& user_status) {
 //    std::lock_guard<std::mutex> lock(game_info_connection_mutex_);
 //
-//    if (user_map_.find(userid) == user_map_.end()) return kCommFaild;
+//    if (user_map_.find(userid) == user_map_.end()) ASSERT_FALSE_RETURN;
 //    auto user = user_map_[userid];
 //    auto chairno = user.chairno();
 //
@@ -586,7 +586,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
 //
 //    // 有椅子号则查看桌子状态，桌子waiting -> 玩家waiting
 //    game::base::Table table;
-//    if (kCommSucc != FindTable(userid, table)) return kCommFaild;
+//    if (kCommSucc != FindTable(userid, table)) ASSERT_FALSE_RETURN;
 //    auto table_status = table.table_status();
 //    if (table_status == kTableWaiting) {
 //        user_status = kUserWaiting;
@@ -595,9 +595,9 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
 //
 //    // 桌子playing && 椅子playing -> 玩家playing
 //    game::base::ChairInfo chair;
-//    if (kCommSucc != FindChair(userid, chair)) return kCommFaild;
+//    if (kCommSucc != FindChair(userid, chair)) ASSERT_FALSE_RETURN;
 //    auto chair_status = chair.chair_status();
-//    if (table_status != kTablePlaying) return kCommFaild;
+//    if (table_status != kTablePlaying) ASSERT_FALSE_RETURN;
 //
 //    if (chair_status == kChairPlaying) {
 //        user_status = kUserPlaying;
@@ -610,7 +610,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
 //        return kCommSucc;
 //    }
 //
-//    return kCommFaild;
+//    ASSERT_FALSE_RETURN;
 //}
 //
 int GameNetManager::AddRoomPB(const game::base::Room& room_pb) const {
@@ -637,7 +637,7 @@ int GameNetManager::AddRoomPB(const game::base::Room& room_pb) const {
     }
 
     // ROOM
-    if (kCommSucc != RoomMgr.AddRoom(roomid, base_room)) return kCommFaild;
+    if (kCommSucc != RoomMgr.AddRoom(roomid, base_room)) ASSERT_FALSE_RETURN;
     return kCommSucc;
 }
 

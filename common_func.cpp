@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "common_func.h"
+#include "robot_define.h"
 
 
 std::string GetConfigFilePath() {
@@ -22,13 +23,13 @@ int ParseFromRequest(const REQUEST &req, google::protobuf::Message &val) {
     const auto len = req.nDataLen - repeated * sizeof(CONTEXT_HEAD);
     if (len <= 0) {
         LOG_WARN("Invalid req. repeated  = [%d], datalen  = [%d]", repeated, req.nDataLen);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     char *data = (char *) (req.pDataPtr) + repeated * sizeof(CONTEXT_HEAD);
     if (!val.ParseFromArray(data, len)) {
         LOG_WARN("ParseArray faild. req  [%d]");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     return kCommSucc;

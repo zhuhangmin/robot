@@ -5,6 +5,7 @@
 #include "robot_hall_manager.h"
 #include "robot_define.h"
 
+SendMsgCountMap RobotUtils::send_msg_count_map;
 
 int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) {
     if (!connection) {
@@ -25,13 +26,14 @@ int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const
     const auto is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
     if (!is_succ) {
         LOG_ERROR("SerializePartialToArray failed.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     REQUEST request(requestid, data.get(), val.ByteSize());
 
     BOOL timeout = false;
     const auto result = connection->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
+    send_msg_count_map[requestid] = send_msg_count_map[requestid] + 1;
 
     if (!result) {
         LOG_ERROR("send request fail");
@@ -105,8 +107,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
 int RobotUtils::GenRandInRange(const int& min_value, const int& max_value, int& random_result) {
     if (max_value < min_value) {
         LOG_ERROR("MAX VALUE %d smaller than SMALL VALUE %d", max_value, min_value);
-        assert(0);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     static std::default_random_engine default_engine(std::time(nullptr));
     const auto raw_result = default_engine();

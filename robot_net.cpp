@@ -3,10 +3,6 @@
 #include "common_func.h"
 #include "robot_utils.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 RobotNet::RobotNet(const UserID& userid) :
 userid_(userid) {
 
@@ -22,7 +18,7 @@ int RobotNet::ConnectGame(const std::string& game_ip, const int& game_port, cons
     if (kCommSucc !=InitDataWithLock()) {
         ASSERT_FALSE_RETURN;
     }
-    return kCommFaild;
+    ASSERT_FALSE_RETURN;
 }
 
 int RobotNet::OnDisconnGame() {
@@ -72,7 +68,7 @@ int RobotNet::InitDataWithLock() {
     }
 
     timestamp_ = time(0);
-    return kCommFaild;
+    ASSERT_FALSE_RETURN;
 }
 
 int RobotNet::ResetInitDataWithLock() {
@@ -121,7 +117,7 @@ int RobotNet::SendEnterGame(const RoomID& roomid) {
     const auto ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
         LOG_ERROR("ParseFromRequest faild.");
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     if (kCommSucc != resp.code()) {

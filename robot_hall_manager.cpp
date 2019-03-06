@@ -4,12 +4,6 @@
 #include "setting_manager.h"
 #include "main.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
-
-
 //外部线程调用方法
 
 int RobotHallManager::Init() {
@@ -64,7 +58,7 @@ int RobotHallManager::LogonHall(const UserID& userid) {
 
     RobotSetting setting;
     if (kCommSucc != SettingMgr.GetRobotSetting(userid, setting)) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     const auto& password = setting.password;
 
@@ -98,7 +92,7 @@ int RobotHallManager::LogonHall(const UserID& userid) {
 
     if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
         LOG_ERROR("userid  = [%d] GR_LOGON_USER_V2 FAIL", userid);
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     SetLogonStatusWithLock(userid, HallLogonStatusType::kLogon);
@@ -131,12 +125,12 @@ int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
         }
     }
 
-    if (temp_map.empty()) return kCommFaild;
+    if (temp_map.empty()) ASSERT_FALSE_RETURN;
 
     //random pick up one
     auto random_pos = 0;
     if (kCommSucc != RobotUtils::GenRandInRange(0, temp_map.size() - 1, random_pos)) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     const auto random_it = std::next(std::begin(temp_map), random_pos);
@@ -370,7 +364,7 @@ int RobotHallManager::GetLogonStatusWithLock(const UserID& userid, HallLogonStat
     CHECK_USERID(userid);
     const auto& iter = logon_status_map_.find(userid);
     if (iter == logon_status_map_.end()) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     status = iter->second;
@@ -387,7 +381,7 @@ int RobotHallManager::GetHallRoomDataWithLock(const RoomID& roomid, HallRoomData
     CHECK_ROOMID(roomid);
     const auto& iter = room_data_map_.find(roomid);
     if (iter == room_data_map_.end()) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
 
     hall_room_data = iter->second;

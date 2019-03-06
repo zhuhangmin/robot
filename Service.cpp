@@ -1,10 +1,5 @@
 #include "stdafx.h"
 #include "service.h"
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 const DWORD dwWaitFinished = 5000; // time to wait for threads to finish up
 
 CMainService::CMainService(const TCHAR* szServiceName, const TCHAR* szDisplayName,

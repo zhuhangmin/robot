@@ -4,11 +4,6 @@
 #include "robot_utils.h"
 #include "robot_define.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
-
 int RobotNetManager::Init() {
     LOG_FUNC("[START ROUTINE]");
     heart_thread_.Initial(std::thread([this] {this->ThreadRobotPulse(); }));
@@ -67,7 +62,7 @@ int RobotNetManager::GetRobotWithLock(const UserID& userid, RobotPtr& robot) con
     CHECK_USERID(userid);
     const auto& iter = robot_map_.find(userid);
     if (iter == robot_map_.end()) {
-        return kCommFaild;
+        ASSERT_FALSE_RETURN;
     }
     robot = iter->second;
     return kCommSucc;
@@ -138,7 +133,7 @@ int RobotNetManager::OnRobotNotify(const RequestID& requestid, void* ntf_data_pt
     {
         std::lock_guard<std::mutex> lock(robot_map_mutex_);
         if (kCommSucc != GetRobotByTokenWithLock(token_id, robot))
-            return kCommFaild;
+            ASSERT_FALSE_RETURN;
     }
 
     switch (requestid) {

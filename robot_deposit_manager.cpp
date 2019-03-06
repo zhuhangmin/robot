@@ -4,9 +4,6 @@
 #include "main.h"
 #include "robot_utils.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 int RobotDepositManager::Init() {

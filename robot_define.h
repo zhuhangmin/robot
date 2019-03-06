@@ -191,4 +191,8 @@ using DepositMap = std::unordered_map<UserID, DepositType>;
 
 using RoomNeedCountMap = std::unordered_map<RoomID, NeedCount>;
 
+using SendMsgCountMap = std::unordered_map<RequestID, uint64_t>;
+
+using RecvMsgCountMap = std::unordered_map<RequestID, uint64_t>;
+
 

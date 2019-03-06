@@ -53,6 +53,8 @@ public:
     // 控制方法对特定线程不可见
     static int NotThisThread(YQThread& thread);
 
+    static SendMsgCountMap send_msg_count_map;
+
 };
 
 #define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {ASSERT_FALSE_RETURN}
