@@ -13,9 +13,17 @@
 # 拓扑结构
 * 机器人工具为前置工具，依赖后端大厅, 游戏
 
+# 注意！！
+* 机器人工具网络库会启动大量线程，和网络连接成正比
+* 千量级的线程切换过多占用大量cpu，造成同机游戏服务消息堆积
+
 # 使用
 * 配置[robot.setting], [RobotTool.ini] 见配置详细说明
 * 默认提供模式是随机指定n个机器人进入m个房间，并保持数量
+* 对应的游戏服需要填入机器人工具白名单 
+  [RobotSvr]
+  Host1=xxxIP
+  Host2=xxxIP
 
 # 业务开发：
 * 在业务层 app_delegate 的定时器 [MainProcess] 中开发业务逻辑
@@ -30,10 +38,14 @@
 * resharper pvs-studio 静态分析 
 * DEBUG_NEW 检测内存泄露
 * Terminal 中输入'M' 打印进程使用的资源信息
-* Terminal 中输入'S' 打印业务类数据状态
+* Terminal 中输入'S' 打印业务类数据状态 SnapShotObjectStatus
 * Terminal 中输入'M' 打印发送消息数
 * TRACE_STACK 打印调用栈
 * TRACE_ASSERT 开启严格调试模式, 错误时打印调用栈TRACE_STACK, 并assert断言
+* CHECK_XXX 参数合法性检查
+* LOG_ROUTE 业务流程日志
+* ERR_STR(x) 详细错误码信息
+* REQ_STR(x) 协议定义
 
 # 整体设计
 * 数据层（配置，网络，运行状态）-> 资源管理类（线程安全，网络异常，数据同步）->具体业务（机器人自定义调度）
@@ -45,6 +57,8 @@
 * 数据层data为游戏服务器模板层user, room,table, chair 只读映射
 * 大厅登陆状态
 * 补银还银队列
+* 原始数据 setting.setting， robottool.ini, data
+* 衍生数据 
 
 # 网络连接
 * 大厅连接只有1个，所有机器人共用
@@ -58,6 +72,7 @@
 
 
 # 数据管理类
+* common/robot_utils             无状态类,无任何成员变量线程安全
 * RobotTool.ini                  运维配置文件，不含任何具体游戏业务
 * setting/setting_manager        机器人工具配置文件robot.setting
 * data/user_manager              管理游戏服务器所有用户数据（包括机器人）
@@ -67,6 +82,7 @@
 * net/robot_net_manager（0条）   所有机器人连接管理
 * net/robot_net        （1*n条） 单个机器人连接管理
 * net/robot_deposit_manager（http）后台补银还银管理  
+
 * app_delegate                   业务主线程管理类
 
 # 对象设计：
@@ -110,7 +126,7 @@
 * 不支持多个游戏
 * 不支持配桌等逻辑
 * 不支持ipv6
-* 不支持删除机器人
+* 不支持增加或删除内存中的机器人 robot.setting 中的robot数量不可动态增减
 * 不支持定时获得财富信息，后台数据查询压力过大
 
 # SUGGESTION
@@ -124,9 +140,12 @@
 * 不直接操作raw memory如new和delete
 * 注意智能指针pitfall
 * 多线程析构对象应用智能指针管理
+* Macro宏只用在参数检查，打印日志，不做业务逻辑
 
 
 # TODO
+* 配置文件应分3份：内网develop，外网内测candidate，正式release
+* 避免雪崩效益和状态同步的跷跷板效应，需要发状态量来校验兜底状态
 * 保证代码覆盖率在main中加入测试用例
 * 注意避免死循环 不断重新发消息 和重连 导致大厅游戏收到攻击
 * 延迟重连时间 限制重连次数

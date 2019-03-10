@@ -7,10 +7,10 @@ public:
 
 public:
     // 游戏 连接
-    int ConnectGame(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id);
+    int Connect(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id);
 
     // 游戏 断开
-    int OnDisconnGame();
+    int OnDisconnect();
 
     // 游戏 连接状态
     BOOL IsConnected() const;
@@ -21,19 +21,18 @@ public:
     // 发送心跳
     int SendGamePulse();
 
+    // 连接保活
+    int KeepConnection();
+
 public:
     // 属性接口
     UserID GetUserID() const;
 
-    TokenID GetTokenID() const;
+    int GetTokenID(TokenID& token) const;
 
     TimeStamp GetTimeStamp() const;
 
     void SetTimeStamp(const TimeStamp& val);
-
-public:
-    // 对象状态快照
-    int SnapShotObjectStatus();
 
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
@@ -43,23 +42,37 @@ private:
 
     int InitDataWithLock();
 
-    // ResetDataWithLock + InitDataWithLock
-    int ResetInitDataWithLock();
-
-
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
 
 private:
     // 配置机器人ID 初始化后不在改变,不需要锁保护
     UserID userid_{0};
 
-    // 游戏连接
+    // 数据锁
     mutable std::mutex mutex_;
-    CDefSocketClientPtr game_connection_;
+
+    // 机器人游戏服务器连接
+    CDefSocketClientPtr connection_;
+
+    // 游戏服 IP
     std::string game_ip_;
+
+    // 游戏服 PORT
     int game_port_{InvalidPort};;
+
+    // Manager中所有机器人通知消息处理线程id
     ThreadID game_notify_thread_id_{0};
-    int pulse_timeout_count_{0};
+
+    // 心跳超时计数
+    int timeout_count_{0};
+
+    // 心跳时间戳
     TimeStamp timestamp_{0};
+
+    // 重连标签
+    bool need_reconnect_{false};
 
 };
 

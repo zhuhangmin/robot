@@ -14,23 +14,23 @@ public:
     int GetRobotWithCreate(const UserID& userid, RobotPtr& robot);
 
     // 获得所有机器人接收消息的线程
-    ThreadID GetRobotNotifyThreadID() const;
-
-protected:
-    SINGLETION_CONSTRUCTOR(RobotNetManager);
+    ThreadID GetNotifyThreadID() const;
 
 private:
-    // 机器人 定时心跳
-    int ThreadRobotPulse();
+    // 机器人 定时消息
+    int ThreadTimer();
 
     // 机器人 消息接收
-    int ThreadRobotNotify();
+    int ThreadNotify();
 
     // 机器人 消息处理
-    int OnRobotNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size, const TokenID& token_id) const;
+    int OnNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size, const TokenID& token_id) const;
 
     // 机器人 发送心跳
-    int SendGamePulse();
+    int SendPulse();
+
+    // 机器人 连接保活
+    int KeepConnection();
 
 private:
     //辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
@@ -45,12 +45,17 @@ public:
     // 对象状态快照
     int SnapShotObjectStatus();
 
+    int BriefInfo() const;
+
 private:
     int CheckNotInnerThread();
 
+protected:
+    SINGLETION_CONSTRUCTOR(RobotNetManager);
+
 private:
     //机器人 数据锁
-    mutable std::mutex robot_map_mutex_;
+    mutable std::mutex mutex_;
 
     //机器人 游戏服务器连接集合 (只增不减)
     RobotMap robot_map_;

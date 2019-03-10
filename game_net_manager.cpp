@@ -7,6 +7,7 @@
 #include "user.h"
 #include "room_manager.h"
 #include "user_manager.h"
+#include "robot_statistic.h"
 
 
 int GameNetManager::Init(const std::string& game_ip, const int& game_port) {
@@ -17,18 +18,14 @@ int GameNetManager::Init(const std::string& game_ip, const int& game_port) {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
 
-    // 同步过程
     game_ip_ = game_ip;
     game_port_ = game_port;
+    notify_thread_.Initial(std::thread([this] {this->ThreadNotify(); }));
+    heart_thread_.Initial(std::thread([this] {this->ThreadTimer(); }));
 
     if (kCommSucc != InitDataWithLock()) {
         ASSERT_FALSE_RETURN;
     }
-
-    // @zhuhangmin 20190225 不可颠倒同步过程和接收消息顺序。不然前置通知消息会被SendGetGameInfo覆盖
-    notify_thread_.Initial(std::thread([this] {this->ThreadGameInfoNotify(); }));
-
-    heart_thread_.Initial(std::thread([this] {this->ThreadSendGamePulse(); }));
 
     return kCommSucc;
 }
@@ -40,7 +37,7 @@ int GameNetManager::Term() {
     }
     notify_thread_.Release();
     heart_thread_.Release();
-    LOG_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
@@ -51,8 +48,8 @@ int GameNetManager::SendRequestWithLock(const RequestID& requestid, const google
     return RobotUtils::SendRequestWithLock(connection_, requestid, val, response, need_echo);
 }
 
-int GameNetManager::ThreadGameInfoNotify() {
-    LOG_INFO("[START ROUTINE] GameNotify thread [%d] started", GetCurrentThreadId());
+int GameNetManager::ThreadNotify() {
+    LOG_INFO("[SVR START] GameNotify thread [%d] started", GetCurrentThreadId());
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
@@ -61,7 +58,7 @@ int GameNetManager::ThreadGameInfoNotify() {
             auto pRequest = reinterpret_cast<LPREQUEST>(msg.lParam);
             const auto requestid = pRequest->head.nRequest;
 
-            OnGameInfoNotify(requestid, *pRequest);
+            OnNotify(requestid, *pRequest);
 
             SAFE_DELETE(pContext);
             UwlClearRequest(pRequest);
@@ -74,12 +71,14 @@ int GameNetManager::ThreadGameInfoNotify() {
     return kCommSucc;
 }
 
-int GameNetManager::OnGameInfoNotify(const RequestID& requestid, const REQUEST &request) {
+int GameNetManager::OnNotify(const RequestID& requestid, const REQUEST &request) {
+    CHECK_REQUESTID(requestid);
+    LOG_INFO("Game Info [RECV] requestid [%d] [%s]", requestid, REQ_STR(requestid));
     int result = kCommSucc;
     switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-            result = OnDisconnGameInfo();
+            result = OnDisconnect();
             break;
         case GN_RS_PLAER_ENTERGAME:
             result = OnPlayerEnterGame(request);
@@ -113,6 +112,8 @@ int GameNetManager::OnGameInfoNotify(const RequestID& requestid, const REQUEST &
             break;
     }
 
+    EVENT_TRACK(EventType::kRecv, requestid);
+
     if (kCommSucc != result) {
         LOG_ERROR("requestid  = [%d], result  = [%d]", requestid, result);
         ASSERT_FALSE_RETURN;
@@ -121,14 +122,18 @@ int GameNetManager::OnGameInfoNotify(const RequestID& requestid, const REQUEST &
     return kCommSucc;
 }
 
-int GameNetManager::OnDisconnGameInfo() {
+int GameNetManager::OnDisconnect() {
     std::lock_guard<std::mutex> lock(mutex_);
-    ResetInitDataWithLock();
+    CHECK_THREAD(notify_thread_);
+    LOG_WARN("OnDisconnect Game Info");
+    if (kCommSucc != ResetDataWithLock()) {
+        ASSERT_FALSE_RETURN;
+    }
     return kCommSucc;
 }
 
-int GameNetManager::ThreadSendGamePulse() {
-    LOG_INFO("[START ROUTINE] Game KeepAlive thread [%d] started", GetCurrentThreadId());
+int GameNetManager::ThreadTimer() {
+    LOG_INFO("[SVR START] Game KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -136,6 +141,8 @@ int GameNetManager::ThreadSendGamePulse() {
         }
 
         if (WAIT_TIMEOUT == dwRet) {
+            if (kCommSucc != KeepConnection()) continue;
+
             SendPulse();
         }
     }
@@ -148,13 +155,13 @@ int GameNetManager::SendValidateReqWithLock() {
     game::base::RobotSvrValidateReq val;
     val.set_client_id(g_nClientID);
     REQUEST response = {};
-    const auto result = SendRequestWithLock(GR_VALID_ROBOTSVR, val, response);
+    const auto result = SendRequestWithLock(GR_RS_VALID_ROBOTSVR, val, response);
 
     if (kCommSucc != result) {
-        ASSERT_FALSE;
         if (kOperationFailed == result) {
-            ResetInitDataWithLock();
+            ResetDataWithLock();
         }
+        ASSERT_FALSE;
         return result;
     }
 
@@ -178,11 +185,11 @@ int GameNetManager::SendGetGameInfoWithLock() {
     val.set_clientid(g_nClientID);
     val.set_roomid(0);
     REQUEST response = {};
-    const auto result = SendRequestWithLock(GR_GET_GAMEUSERS, val, response);
+    const auto result = SendRequestWithLock(GR_RS_GET_GAMEUSERS, val, response);
     if (kCommSucc != result) {
         ASSERT_FALSE;
         if (kOperationFailed == result) {
-            ResetInitDataWithLock();
+            ResetDataWithLock();
         }
         return result;
     }
@@ -219,8 +226,9 @@ int GameNetManager::SendGetGameInfoWithLock() {
 }
 
 int GameNetManager::InitDataWithLock() {
-    if (kCommSucc != ConnectGameSvrWithLock(game_ip_, game_port_)) {
-        LOG_ERROR("ConnectGame failed");
+    CHECK_CONNECTION(connection_);
+    if (kCommSucc != ConnectWithLock(game_ip_, game_port_)) {
+        LOG_ERROR("[ROUTE] ConnectGame Faild! IP: [%s] Port: [%d]", game_ip_.c_str(), game_port_);
         ASSERT_FALSE_RETURN;
     }
 
@@ -233,15 +241,16 @@ int GameNetManager::InitDataWithLock() {
         LOG_ERROR("SendGetGameInfo failed");
         ASSERT_FALSE_RETURN;
     }
+
+    need_reconnect_ = false;
     return kCommSucc;
 }
 
 int GameNetManager::ResetDataWithLock() {
-    if (connection_) {
-        //@zhuhanmin 20190228 socket建立后发消息时如果连接已断失效，销毁
-        connection_->DestroyEx();
-    }
+    CHECK_CONNECTION(connection_);
+    connection_->DestroyEx();
     timeout_count_ = 0;
+    need_reconnect_ = true;
     UserMgr.Reset();
     RoomMgr.Reset();
     return kCommSucc;
@@ -249,25 +258,34 @@ int GameNetManager::ResetDataWithLock() {
 
 int GameNetManager::SendPulse() {
     std::lock_guard<std::mutex> lock(mutex_);
-
     game::base::PulseReq val;
     val.set_id(g_nClientID);
     REQUEST response = {};
 
     //@zhuhangmin 大厅模板需要支持 清僵尸机制
-    const auto result = RobotUtils::SendRequestWithLock(connection_, GR_GAME_PLUSE, val, response, false);
+    const auto result = RobotUtils::SendRequestWithLock(connection_, GR_GAME_PLUSE, val, response); // 游戏心跳需要回包
 
     if (kCommSucc != result) {
-        if (result == kConnectionTimeOut) {
+        if (result != kConnectionTimeOut) {
+            ResetDataWithLock();
+        } else {
             timeout_count_++;
             if (timeout_count_ == MaxPluseTimeOutCount) {
-                ResetInitDataWithLock();
+                ResetDataWithLock();
             }
             return kConnectionTimeOut;
         }
     }
 
     return result;
+}
+
+int GameNetManager::KeepConnection() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (need_reconnect_) {
+        return InitDataWithLock();
+    }
+    return kCommSucc;
 }
 
 int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
@@ -280,6 +298,11 @@ int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
 
     const auto& room_data = ntf.room_data();
     const auto roomid = room_data.roomid();
+
+    //TODO ntf 更新桌银限制
+    //optional int64 min_deposit = 6;	// 当前桌 最小银子数
+    //optional int64 max_deposit = 7;	// 当前桌 最大银子数
+    //optional int64 base_deposit = 8;	// 当前桌 基础银
 
     //V614 The 'user' smart pointer is utilized immediately after being declared or reset.
     //It is suspicious that no value was assigned to it.
@@ -449,8 +472,11 @@ int GameNetManager::OnStartGame(const REQUEST &request) const {
     for (auto& kv : chairs_pb_map) {
         auto chair_pb = kv.second;
         const auto chairno = chair_pb.chairno();
-        chairs[chairno].set_userid(chair_pb.userid());
-        chairs[chairno].set_chair_status(static_cast<ChairStatus>(chair_pb.chair_status()));
+        if (chairno < 1) {
+            ASSERT_FALSE_RETURN;
+        }
+        chairs[chairno-1].set_userid(chair_pb.userid());
+        chairs[chairno-1].set_chair_status(static_cast<ChairStatus>(chair_pb.chair_status()));
     }
     return kCommSucc;
 }
@@ -623,11 +649,13 @@ int GameNetManager::AddRoomPB(const game::base::Room& room_pb) const {
     base_room->set_manages(room_data_pb.manages());
     base_room->set_max_table_cout(room_data_pb.max_table_cout());
     base_room->set_chaircount_per_table(room_data_pb.chaircount_per_table());
+    base_room->set_min_playercount_per_table(room_data_pb.min_player_count());
     base_room->set_min_deposit(room_data_pb.min_deposit());
     base_room->set_max_deposit(room_data_pb.max_deposit());
 
     // TABLE
-    for (auto table_index = 0; table_index < room_pb.tables_size(); table_index++) {
+    auto size = room_pb.tables_size();
+    for (auto table_index = 0; table_index < size; table_index++) {
         const auto& table_pb = room_pb.tables(table_index);
         const auto tableno = table_pb.tableno();
         auto table = std::make_shared<Table>();
@@ -690,25 +718,14 @@ int GameNetManager::AddUserPB(const game::base::User& user_pb) const {
     return kCommSucc;
 }
 
-int GameNetManager::ResetInitDataWithLock() {
-    // 重置
-    if (kCommSucc != ResetDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-    }
-
-    // 重新初始化
-    if (kCommSucc != InitDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-    }
-    return kCommSucc;
-}
-
-int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, const int& game_port) const {
+int GameNetManager::ConnectWithLock(const std::string& game_ip, const int& game_port) const {
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
+    CHECK_CONNECTION(connection_);
     connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!connection_->Create(game_ip.c_str(), game_port, 5, 0, notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
         LOG_ERROR("[ROUTE] ConnectGame Faild! IP: [%s] Port: [%d]", game_ip.c_str(), game_port);
+        EVENT_TRACK(EventType::kErr, kCreateGameConnFailed);
         ASSERT_FALSE_RETURN;
     }
 
@@ -718,7 +735,11 @@ int GameNetManager::ConnectGameSvrWithLock(const std::string& game_ip, const int
 
 int GameNetManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG_INFO("OBJECT ADDRESS = %x", this);
+    CHECK_CONNECTION(connection_);
+    LOG_INFO("connection = %x", connection_.get());
+    LOG_INFO("game ip [%s]", game_ip_.c_str());
+    LOG_INFO("game port [%d]", game_port_);
+
     LOG_INFO("game_info_notify_thread_ [%d]", notify_thread_.GetThreadID());
     LOG_INFO("heart_timer_thread_ [%d]", heart_thread_.GetThreadID());
     LOG_INFO("token [%d]", connection_->GetTokenID());
@@ -731,4 +752,3 @@ int GameNetManager::CheckNotInnerThread() {
     CHECK_NOT_THREAD(heart_thread_);
     return kCommSucc;
 }
-

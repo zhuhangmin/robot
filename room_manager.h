@@ -21,7 +21,7 @@ protected:
     SINGLETION_CONSTRUCTOR(RoomManager);
 
 private:
-    mutable std::mutex rooms_mutex_;
+    mutable std::mutex mutex_;
     GameRoomMap rooms_;
 };
 

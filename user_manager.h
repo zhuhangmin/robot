@@ -11,8 +11,9 @@ public:
     // 获取用户的shared_ptr
     int GetUser(const UserID& userid, UserPtr& user) const;
 
-    // 获取所有的用户
-    const UserMap& GetAllUsers() const;
+    // 获取所有的用户 返回copy 不返回被mutex保护对象引用
+    // 性能问题 不使用在实时性要求高的业务
+    UserMap GetAllUsers() const;
 
     // 删除用户
     int DelUser(const UserID& userid);
@@ -29,6 +30,8 @@ public:
 public:
     // 对象状态快照
     int SnapShotObjectStatus();
+
+    int UserManager::BriefInfo() const;
 
     int SnapShotUser(const UserID& userid) const;
 
@@ -48,7 +51,7 @@ protected:
     SINGLETION_CONSTRUCTOR(UserManager);
 
 private:
-    mutable std::mutex user_map_mutex_;
+    mutable std::mutex mutex_;
     UserMap user_map_;
 };
 

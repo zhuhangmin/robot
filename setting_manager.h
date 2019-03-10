@@ -40,9 +40,14 @@ public:
     // 还银url
     std::string& GetDepositBackUrl();
 
+    // 热更新
+    int ThreadHotUpdate();
+
 public:
     // 对象状态快照
     int SnapShotObjectStatus() const;
+
+    int BriefInfo() const;
 
     // 获得随机userid
     int GetRandomUserID(UserID& random_userid) const;
@@ -54,9 +59,13 @@ protected:
     SINGLETION_CONSTRUCTOR(SettingManager);
 
 private:
-    int InitSetting();
+    int InitSettingWithLock();
 
 private:
+    mutable std::mutex mutex_;
+
+    YQThread hot_update_thread_;
+
     RobotSettingMap robot_setting_map_;
 
     RoomSettingMap room_setting_map_;

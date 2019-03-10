@@ -213,18 +213,24 @@ int Table::RefreshGameResult(const int& userid) {
 }
 
 int Table::SnapShotObjectStatus() {
-    LOG_INFO("OBJECT ADDRESS [%x]", this);
-    LOG_INFO("table_no_ [%d] table_status_ [%d] chair_count_ [%d] banker_chair_ [%d] base_deposit_ [%d] room_id_ [%d] ", table_no_, table_status_, chair_count_, banker_chair_, base_deposit_, room_id_);
+    LOG_INFO("tableno [%d] status [%d][%s] chair_count [%d] banker_chair [%d] base_deposit [%I64d] room_id [%d] ",
+             table_no_, table_status_, TABLE_STATUS_STR(table_status_), chair_count_, banker_chair_, base_deposit_, room_id_);
 
-    LOG_INFO("chairs_ size [%d]", chairs_.size());
-    for (auto& chairinfo : chairs_) {
-        LOG_INFO("chair userid [%d] status [%d]", chairinfo.get_userid(), chairinfo.get_chair_status());
+    for (auto index = 0; index < kMaxChairCountPerTable; index++) {
+        auto chairinfo = chairs_[index];
+        LOG_INFO("chair userid [%d] status [%d][%s]", chairinfo.get_userid(), chairinfo.get_chair_status(), CHAIR_STATUS_STR(chairinfo.get_chair_status()));
     }
 
-    LOG_INFO("table_users_ size [%d]", table_users_.size());
+    LOG_INFO("table_users size [%d]", table_users_.size());
     for (auto& kv: table_users_) {
         auto tableinfo = kv.second;
-        LOG_INFO("table userid [%d] user_type_ [%d] bind_timestamp_ [%d]", tableinfo.get_userid(), tableinfo.get_user_type(), tableinfo.get_bind_timestamp());
+        auto userid = tableinfo.get_userid();
+        auto type = tableinfo.get_user_type();
+        auto timestamp = tableinfo.get_bind_timestamp();
+        auto date = RobotUtils::TimeStampToDate(timestamp);
+
+        LOG_INFO("userid [%d] user_type [%d][%s] bind_timestamp [%I64d][%s]",
+                 userid, type, USER_TYPE_STR(type), timestamp, date.c_str());
     }
 
     return kCommSucc;

@@ -8,17 +8,17 @@ public:
     int Term();
 
 private:
+    // 游戏 定时消息
+    int ThreadTimer();
+
     // 游戏 消息接收
-    int ThreadGameInfoNotify();
+    int ThreadNotify();
 
     // 游戏 消息处理
-    int OnGameInfoNotify(const RequestID& requestid, const REQUEST &request);
+    int OnNotify(const RequestID& requestid, const REQUEST &request);
 
     // 游戏 断开连接
-    int OnDisconnGameInfo();
-
-    // 游戏 定时心跳
-    int ThreadSendGamePulse();
+    int OnDisconnect();
 
 private:
     // 游戏 消息发送
@@ -26,6 +26,9 @@ private:
 
     // 发送业务消息
     int SendPulse();
+
+    // 连接保活
+    int KeepConnection();
 
 private:
     // 接收业务消息
@@ -75,11 +78,8 @@ private:
     // 游戏 重置连接和数据
     int ResetDataWithLock();
 
-    // LEVEL 2 : ResetDataWithLock + InitDataWithLock
-    int ResetInitDataWithLock();
-
     // 游戏 建立连接
-    int ConnectGameSvrWithLock(const std::string& game_ip, const int& game_port) const;
+    int ConnectWithLock(const std::string& game_ip, const int& game_port) const;
 
     // 向游戏服务器 注册 为合法机器人服务器
     int SendValidateReqWithLock();
@@ -118,6 +118,9 @@ private:
 
     // 游戏服务器 PORT
     int game_port_{InvalidPort};
+
+    // 重连标签
+    bool need_reconnect_{false};
 };
 
 #define GameMgr GameNetManager::Instance()

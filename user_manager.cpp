@@ -3,18 +3,18 @@
 #include "robot_utils.h"
 
 int UserManager::GetUser(const UserID& userid, UserPtr& user) const {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     CHECK_USERID(userid);
     return GetUserWithLock(userid, user);
 }
 
-const UserMap& UserManager::GetAllUsers() const {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+UserMap UserManager::GetAllUsers() const {
+    std::lock_guard<std::mutex> users_lock(mutex_);
     return user_map_;
 }
 
 int UserManager::DelUser(const UserID& userid) {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     CHECK_USERID(userid);
     UserPtr user;
     if (kCommSucc != GetUser(userid, user)) {
@@ -28,14 +28,14 @@ int UserManager::DelUser(const UserID& userid) {
 }
 
 int UserManager::AddUser(const UserID& userid, const UserPtr &user) {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     CHECK_USERID(userid);
     user_map_[userid] = user;
     return kCommSucc;
 }
 
 int UserManager::Reset() {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     user_map_.clear();
     return kCommSucc;
 }
@@ -51,7 +51,7 @@ int UserManager::GetUserWithLock(const UserID& userid, UserPtr& user) const {
 }
 
 UserFilterMap UserManager::GetAllEnterUserID() const {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     UserFilterMap filter_map;
     for (auto& kv : user_map_) {
         auto userid = kv.first;
@@ -62,7 +62,7 @@ UserFilterMap UserManager::GetAllEnterUserID() const {
 
 
 int UserManager::GetUserCountInRoom(const RoomID& roomid, int& count) const {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         if (user->get_room_id() == roomid) {
@@ -73,7 +73,7 @@ int UserManager::GetUserCountInRoom(const RoomID& roomid, int& count) const {
 }
 
 int UserManager::GetRobotCountInRoom(const RoomID& roomid, int& count) const {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         if (user->get_room_id() == roomid) {
@@ -86,7 +86,7 @@ int UserManager::GetRobotCountInRoom(const RoomID& roomid, int& count) const {
 }
 
 int UserManager::GetNormalUserCountInRoom(const RoomID& roomid, int& count) const {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         if (user->get_room_id() == roomid) {
@@ -99,14 +99,13 @@ int UserManager::GetNormalUserCountInRoom(const RoomID& roomid, int& count) cons
 }
 
 int UserManager::SnapShotObjectStatus() {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("users_ size [%d]", user_map_.size());
 
     for (auto& kv : user_map_) {
         const auto userid = kv.first;
         auto user = kv.second;
-        LOG_INFO("userid [%d]", userid);
         user->SnapShotObjectStatus();
     }
 
@@ -115,7 +114,7 @@ int UserManager::SnapShotObjectStatus() {
 
 
 int UserManager::SnapShotUser(const UserID& userid) const {
-    std::lock_guard<std::mutex> users_lock(user_map_mutex_);
+    std::lock_guard<std::mutex> users_lock(mutex_);
     UserPtr user;
     if (kCommSucc != GetUserWithLock(userid, user)) {
         ASSERT_FALSE_RETURN;
@@ -126,3 +125,10 @@ int UserManager::SnapShotUser(const UserID& userid) const {
     return kCommSucc;
 }
 
+
+
+int UserManager::BriefInfo() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG_INFO("users_ size [%d]", user_map_.size());
+    return kCommSucc;
+}

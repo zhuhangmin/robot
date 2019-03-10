@@ -4,15 +4,12 @@
 #include "setting_manager.h"
 #include "robot_hall_manager.h"
 #include "robot_define.h"
-
-SendMsgCountMap RobotUtils::send_msg_count_map;
-
+#include "common_func.h"
+#include "robot_statistic.h"
 int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) {
-    if (!connection) {
-        ASSERT_FALSE_RETURN;
-    }
+    CHECK_CONNECTION(connection);
 
-    if (connection->IsConnected()) {
+    if (!connection->IsConnected()) {
         ASSERT_FALSE_RETURN;
     }
 
@@ -23,32 +20,43 @@ int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const
     context_head.bNeedEcho = need_echo;
 
     std::unique_ptr<char[]> data(new char[val.ByteSize()]);
-    const auto is_succ = val.SerializePartialToArray(data.get(), val.ByteSize());
-    if (!is_succ) {
-        LOG_ERROR("SerializePartialToArray failed.");
+    const auto parse_result = val.SerializePartialToArray(data.get(), val.ByteSize());
+    if (!parse_result) {
+        LOG_ERROR("parse fail requestid [%d] [%s] content [%s] failed, result [%d]", requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), parse_result);
         ASSERT_FALSE_RETURN;
     }
+
 
     REQUEST request(requestid, data.get(), val.ByteSize());
 
+    EVENT_TRACK(EventType::kSend, requestid);
     BOOL timeout = false;
     const auto result = connection->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
-    send_msg_count_map[requestid] = send_msg_count_map[requestid] + 1;
+    EVENT_TRACK(EventType::kRecv, requestid);
 
     if (!result) {
-        LOG_ERROR("send request fail");
-        ASSERT_FALSE;
+
         if (timeout) {
-            LOG_WARN("connection addr [%x] time out requestid = [%d]", connection.get(), requestid);
+            LOG_ERROR("[TIMEOUT] requestid [%d] [%s] content [%s] failed, result [%d]", requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), result);
+            EVENT_TRACK(EventType::kErr, kConnectionTimeOut);
+            ASSERT_FALSE;
             return kConnectionTimeOut;
         }
+        EVENT_TRACK(EventType::kErr, kOperationFailed);
+        ASSERT_FALSE;
         return kOperationFailed;
     }
 
-    const auto responseid = response.head.nRequest;
+    if (requestid != GR_GAME_PLUSE) {
+        LOG_INFO("connection [%x] [SEND] requestid [%d] [%s]", connection.get(), requestid, REQ_STR(requestid));
+    }
 
-    if (0 == responseid) {
-        ASSERT_FALSE_RETURN;
+    const auto responseid = response.head.nRequest;
+    if (need_echo) {
+        if (0 == responseid) {
+            EVENT_TRACK(EventType::kErr, kRespIDZero);
+            ASSERT_FALSE_RETURN;
+        }
     }
     return kCommSucc;
 }
@@ -178,6 +186,10 @@ int RobotUtils::IsValidUser(const UserPtr& user) {
     return user == nullptr ? kCommFaild : kCommSucc;
 }
 
+int RobotUtils::IsValidConnection(const CDefSocketClientPtr& connection_) {
+    return connection_ == nullptr ? kCommFaild : kCommSucc;
+}
+
 int RobotUtils::IsValidTable(const TablePtr& table) {
     return table == nullptr ? kCommFaild : kCommSucc;
 }
@@ -239,6 +251,266 @@ int RobotUtils::TraceStack() {
         }
     }
 
-    LOG_INFO("[TREAC STACK] %s", oss.str().c_str());
+    LOG_WARN("[STACK] %s", oss.str().c_str());
     return kCommSucc;
+}
+
+std::string RobotUtils::ErrorCodeInfo(int code) {
+    auto error_string = "";
+    switch (code) {
+        case kCommFaild:
+            error_string = "kCommFaild";
+            break;
+        case kInvalidParam:
+            error_string = "kInvalidParam";
+            break;
+        case kInternalErr:
+            error_string = "kInternalErr";
+            break;
+
+        case kInvalidUser:
+            error_string = "kInvalidUser";
+            break;
+        case kInvalidRoomID:
+            error_string = "kInvalidRoomID";
+            break;
+        case kAllocTableFaild:
+            error_string = "kAllocTableFaild";
+            break;
+        case kUserNotFound:
+            error_string = "kUserNotFound";
+            break;
+        case kTableNotFound:
+            error_string = "kTableNotFound";
+            break;
+        case kInvalidDeposit:
+            error_string = "kInvalidDeposit";
+            break;
+        case kHall_UserNotLogon:
+            error_string = "kHall_UserNotLogon";
+            break;
+        case kHall_InvalidHardID:
+            error_string = "kHall_InvalidHardID";
+            break;
+        case kHall_InOtherGame:
+            error_string = "kHall_InOtherGame";
+            break;
+        case kHall_InvalidRoomID:
+            error_string = "kHall_InvalidRoomID";
+            break;
+
+        case kCreateHallConnFailed:
+            error_string = "kCreateHallConnFailed";
+            break;
+        case kCreateGameConnFailed:
+            error_string = "kCreateGameConnFailed";
+            break;
+        case kConnectionTimeOut:
+            error_string = "kConnectionTimeOut";
+            break;
+        case kOperationFailed:
+            error_string = "kOperationFailed";
+            break;
+        case kRespIDZero:
+            error_string = "kRespIDZero";
+            break;
+        default:
+            LOG_WARN("UNKNOW ERROR CODE [%d]", code);
+            break;
+    }
+    return error_string;
+}
+
+std::string RobotUtils::RequestStr(const RequestID& requestid) {
+    std::string ret_string;
+    switch (requestid) {
+        case GR_ENTER_NORMAL_GAME:
+            ret_string = "GR_ENTER_NORMAL_GAME";
+            break;
+        case GR_ENTER_PRIVATE_GAME:
+            ret_string = "GR_ENTER_PRIVATE_GAME";
+            break;
+        case GR_ENTER_MATCH_GAME:
+            ret_string = "GR_ENTER_MATCH_GAME";
+            break;
+        case GR_LEAVE_GAME:
+            ret_string = "GR_LEAVE_GAME";
+            break;
+        case GR_GIVE_UP:
+            ret_string = "GR_GIVE_UP";
+            break;
+        case GR_RS_START_GAME:
+            ret_string = "GR_RS_START_GAME";
+            break;
+        case GR_GAME_PLUSE:
+            ret_string = "GR_GAME_PLUSE";
+            break;
+        case GR_SWITCH_TABLE:
+            ret_string = "GR_SWITCH_TABLE";
+            break;
+        case GR_TABLE_CHAT:
+            ret_string = "GR_TABLE_CHAT";
+            break;
+        case GR_PLAYER2LOOKER:
+            ret_string = "GR_PLAYER2LOOKER";
+            break;
+        case GR_LOOKER2PLAYER:
+            ret_string = "GR_LOOKER2PLAYER";
+            break;
+        case GR_GET_TABLE_PLAYERS:
+            ret_string = "GR_GET_TABLE_PLAYERS";
+            break;
+        case GR_MALL_SHOPING:
+            ret_string = "GR_MALL_SHOPING";
+            break;
+        case GR_GET_PRODUCTS:
+            ret_string = "GR_GET_PRODUCTS";
+            break;
+        case GN_TABLE_CHAT:
+            ret_string = "GN_TABLE_CHAT";
+            break;
+        case GN_COUNTDOWN_START:
+            ret_string = "GN_COUNTDOWN_START";
+            break;
+        case GN_COUNTDOWN_STOP:
+            ret_string = "GN_COUNTDOWN_STOP";
+            break;
+        case GN_GAME_START:
+            ret_string = "GN_GAME_START";
+            break;
+            break;
+        case GN_PLAYER_GIVEUP:
+            ret_string = "GN_PLAYER_GIVEUP";
+            break;
+        case GN_USER_SITDOWN:
+            ret_string = "GN_USER_SITDOWN";
+            break;
+        case GN_USER_STANDUP:
+            ret_string = "GN_USER_STANDUP";
+            break;
+        case GN_USER_LEAVE:
+            ret_string = "GN_USER_LEAVE";
+            break;
+        case GR_RS_VALID_ROBOTSVR:
+            ret_string = "GR_RS_VALID_ROBOTSVR";
+            break;
+        case GR_RS_GET_GAMEUSERS:
+            ret_string = "GR_RS_GET_GAMEUSERS";
+            break;
+        case GN_RS_PLAER_ENTERGAME:
+            ret_string = "GN_RS_PLAER_ENTERGAME";
+            break;
+        case GN_RS_LOOKER_ENTERGAME:
+            ret_string = "GN_RS_LOOKER_ENTERGAME";
+            break;
+        case GN_RS_LOOER2PLAYER:
+            ret_string = "GN_RS_LOOER2PLAYER";
+            break;
+        case GN_RS_PLAYER2LOOKER:
+            ret_string = "GN_RS_PLAYER2LOOKER";
+            break;
+        case GN_RS_GAME_START:
+            ret_string = "GN_RS_GAME_START";
+            break;
+        case GN_RS_USER_REFRESH_RESULT:
+            ret_string = "GN_RS_USER_REFRESH_RESULT";
+            break;
+        case GN_RS_REFRESH_RESULT:
+            ret_string = "GN_RS_REFRESH_RESULT";
+            break;
+        case GN_RS_USER_LEAVEGAME:
+            ret_string = "GN_RS_USER_LEAVEGAME";
+            break;
+        case GN_RS_SWITCH_TABLE:
+            ret_string = "GN_RS_SWITCH_TABLE";
+            break;
+        case GR_GET_ROOM:
+            ret_string = "HALL GR_GET_ROOM";
+            break;
+        case GR_HALLUSER_PULSE:
+            ret_string = "HALL GR_HALLUSER_PULSE";
+            break;
+        case GR_LOGON_USER_V2:
+            ret_string = "HALL GR_LOGON_USER_V2";
+            break;
+        case UR_SOCKET_ERROR:
+            ret_string = "UR_SOCKET_ERROR";
+            break;
+        case UR_SOCKET_CLOSE:
+            ret_string = "UR_SOCKET_CLOSE";
+            break;
+        default:
+            LOG_WARN("UNKNOW REQUEST ID [%d]", requestid);
+            break;
+    }
+    return ret_string;
+}
+
+std::string RobotUtils::UserTypeStr(const int& type) {
+    std::string ret_string;
+    switch (type) {
+        case kUserNormal:
+            ret_string = "kUserNormal";
+            break;
+        case kUserAdmin:
+            ret_string = "kUserAdmin";
+            break;
+        case kUserSuperAdmin:
+            ret_string = "kUserSuperAdmin";
+            break;
+        case kUserRobot:
+            ret_string = "kUserRobot";
+            break;
+        default:
+            break;
+    }
+
+    return ret_string;
+}
+
+std::string RobotUtils::TableStatusStr(const int& status) {
+    std::string ret_string;
+    switch (status) {
+        case kTablePlaying:
+            ret_string = "kTablePlaying";
+            break;
+        case kTableWaiting:
+            ret_string = "kTableWaiting";
+            break;
+        default:
+            break;
+    }
+
+    return ret_string;
+}
+
+std::string RobotUtils::ChairStatusStr(const int& status) {
+    std::string ret_string;
+    switch (status) {
+        case kChairPlaying:
+            ret_string = "kChairPlaying";
+            break;
+        case kChairWaiting:
+            ret_string = "kChairWaiting";
+            break;
+        default:
+            break;
+    }
+
+    return ret_string;
+}
+
+std::string RobotUtils::TimeStampToDate(int time_stamp) {
+    struct tm t;
+    time_t rawtime = time_stamp;
+    time(&rawtime);
+    localtime_s(&t, &rawtime);
+    char str[256] = {0};
+    asctime_s(str, sizeof str, &t);
+    auto ret = std::string(str);
+    auto pos = ret.find('\n');
+    if (pos != std::string::npos) {
+        ret = ret.erase(pos);
+    }
+    return ret;
 }

@@ -4,6 +4,8 @@
 #include "table.h"
 #include "base_room.h"
 #include "robot_net.h"
+
+//无状态类 不应该有任何成员变量 保持线程安全
 class RobotUtils {
 public:
     // 某个特定的connection发送协议
@@ -47,6 +49,8 @@ public:
 
     static int IsValidGamePort(const int32_t& game_port);
 
+    static int IsValidConnection(const CDefSocketClientPtr& connection_);
+
     // 控制方法对特定线程可见
     static int IsCurrentThread(YQThread& thread);
 
@@ -55,8 +59,17 @@ public:
 
     static int TraceStack();
 
-public:
-    static SendMsgCountMap send_msg_count_map;
+    static std::string ErrorCodeInfo(int code);
+
+    static std::string RequestStr(const RequestID& requestid);
+
+    static std::string UserTypeStr(const int& type);
+
+    static std::string TableStatusStr(const int& status);
+
+    static std::string ChairStatusStr(const int& status);
+
+    static std::string TimeStampToDate(int time_stamp);
 };
 
 #define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {ASSERT_FALSE_RETURN}
@@ -75,6 +88,8 @@ public:
 
 #define CHECK_USER(x)  if(kCommSucc != RobotUtils::IsValidUser(x))  {ASSERT_FALSE_RETURN}
 
+#define CHECK_CONNECTION(x)  if(kCommSucc != RobotUtils::IsValidConnection(x))  {ASSERT_FALSE_RETURN}
+
 #define CHECK_TABLE(x)  if(kCommSucc != RobotUtils::IsValidTable(x))  {ASSERT_FALSE_RETURN}
 
 #define CHECK_ROOM(x)  if(kCommSucc != RobotUtils::IsValidRoom(x))  {ASSERT_FALSE_RETURN}
@@ -89,26 +104,44 @@ public:
 
 #define CHECK_NOT_THREAD(x)  if(kCommSucc != RobotUtils::NotThisThread(x))  {ASSERT_FALSE_RETURN}
 
+#define ERR_STR(x) RobotUtils::ErrorCodeInfo(x).c_str()
+
+#define REQ_STR(x) RobotUtils::RequestStr(x).c_str()
+
+#define USER_TYPE_STR(x) RobotUtils::UserTypeStr(x).c_str()
+
+#define TABLE_STATUS_STR(x) RobotUtils::TableStatusStr(x).c_str()
+
+#define CHAIR_STATUS_STR(x) RobotUtils::ChairStatusStr(x).c_str()
+
+#define TO_DATE(x) RobotUtils::TimeStampToDate(x).c_str()
+
+#define LOG_INFO_FUNC(x) LOG_INFO(" %s [%s]", x, __FUNCTION__);
+
+#define LOG_ROUTE(x, roomid, tableno ,userid) LOG_INFO(" [%s] roomid [%d] tableno [%d] userid [%d] [%s]", "DISPATCH ROBOT", roomid, tableno, userid, x);
+//#define LOG_ROUTE(x, roomid, tableno ,userid)
+
+#define DEBUG_USER(userid) LOG_DEBUG(" [%s] userid [%d]", __FUNCTION__, userid);
+
 #ifdef _DEBUG
 #define TRACE_STACK RobotUtils::TraceStack();
 #else
 #define TRACE_STACK
 #endif
 
-#define LOG_FUNC(x) LOG_INFO(" [%s]  [%s]", x, __FUNCTION__);
-
-#define TRACE_ASSERT // 开启严格调试模式, 错误时打印调用栈 并assert 
-#ifdef TRACE_ASSERT
+//#define STRICT_ASSERT // 开启严格调试模式, 错误时打印调用栈 并assert 
+#ifdef STRICT_ASSERT
 
 #define  ASSERT_FALSE {\
                         TRACE_STACK \
                         assert(false); \
-                       }
+                                       }
 
 #define  ASSERT_FALSE_RETURN { \
+                                TRACE_STACK \
                                 ASSERT_FALSE \
                                 return kCommFaild; \
-                             }
+                                                     }
 #else
 
 #define  ASSERT_FALSE TRACE_STACK
@@ -116,6 +149,7 @@ public:
 #define  ASSERT_FALSE_RETURN {\
                                 TRACE_STACK \
                                 return kCommFaild; \
-                               }
+                                                       }
 #endif
+
 

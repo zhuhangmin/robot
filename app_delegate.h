@@ -30,8 +30,20 @@ private:
     // 获得房间此时需要的机器人数量
     int GetRoomNeedCountMap(RoomNeedCountMap& room_count_map);
 
-    // 启动时集体补银
+    // 启动时 集体补银
     int DepositGainAll();
+
+    // 启动时 为已在游戏中的机器人 立即建立大厅连接
+    int ConnectHallForAllRobot();
+
+    // 启动时 为已在游戏中的机器人 立即建立游戏连接
+    int ConnectGameForRobotInGame();
+
+    // 登陆大厅
+    int LogonHall(UserID userid);
+
+    // 进入游戏
+    int EnterGame(UserID userid, RoomID roomid, TableNO tableno = InvalidTableNO);
 
 private:
     // @zhuhangmin 20190228
@@ -39,4 +51,6 @@ private:
     // 无业务锁, 若有高并发需求，可以让机器人预先进游戏等待
     // 允许脏读数据层data, 但不允许把脏读数据写回数据层data, 只读不写
     YQThread	main_timer_thread_;
+
+    bool inited_{false};
 };

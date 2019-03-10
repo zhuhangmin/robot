@@ -252,17 +252,14 @@ int BaseRoom::GetTable(const TableNO& tableno, TablePtr& table) const {
 }
 
 int BaseRoom::SnapShotObjectStatus() {
-    LOG_INFO("OBJECT ADDRESS [%x]", this);
-
-    LOG_INFO("room_id_ [%d]", room_id_);
-    LOG_INFO("options_ [%d]", options_);
-    LOG_INFO("min_playercount_per_table_ [%d]", min_playercount_per_table_);
-    LOG_INFO("chaircount_per_table_ [%d]", chaircount_per_table_);
-
+    LOG_INFO("roomid [%d] options [%d] configs [%d] min_playercount_per_table [%d] chaircount_per_table [%d]  manages [%d] max_table_cout [%d] min_deposit [%I64d] max_deposit [%I64d]",
+             room_id_, options_, configs_, min_playercount_per_table_, chaircount_per_table_, manages_, max_table_cout_, min_deposit_, max_deposit_);
     LOG_INFO("tables_ size [%d]", tables_.size());
-    for (auto& table : tables_) {
-        table->SnapShotObjectStatus();
-    }
-
+    if (tables_[0])
+        tables_[0]->SnapShotObjectStatus();
+    if (tables_[1])
+        tables_[1]->SnapShotObjectStatus();
+    //int min_playercount_per_table_ = 0;	// 满足开局条件的最小玩家数
+    //int chaircount_per_table_ = 0;		// 桌子上的椅子数
     return kCommSucc;
 }

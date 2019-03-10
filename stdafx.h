@@ -21,15 +21,17 @@
 #include <dbghelp.h> 
 #include "google/protobuf/text_format.h" 
 
+#include <GameDef.h>
 #include "tclog.h"
 #include <xyapi.h>
 #include <DefSocketClient.h>
 #include <CommonData.h>
-#include <GameDef.h>
+
 #include <MobileReq-.h>
 #include <GameReq-.h>
 #include "game_base.pb.h"
-#include "gamedef.h"
+#include "game_hall_def.h"
+
 
 //[请勿加入任何]具体业务逻辑相关头文件在预编译
 

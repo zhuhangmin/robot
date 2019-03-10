@@ -11,14 +11,15 @@ message BytesData
 
 message RoomData
 {
-	optional int32 roomid		= 1;	
-	optional int32 options		= 2;	
-	optional int32 configs		= 3;	
-	optional int32 manages		= 4;		
+	optional int32 roomid				= 1;	
+	optional int32 options				= 2;	
+	optional int32 configs				= 3;	
+	optional int32 manages				= 4;		
 	optional int32 max_table_cout		= 5;	
 	optional int32 chaircount_per_table	= 6;	
-	optional int64 min_deposit	= 7;
-	optional int64 max_deposit	= 8;
+	optional int64 min_deposit			= 7;
+	optional int64 max_deposit			= 8;
+	optional int32 min_player_count		= 9;		// 游戏开局的最小玩家数量
 }
 
 message User
@@ -30,13 +31,14 @@ message User
 	optional int32 user_type	= 5;	
 	optional int64 deposit		= 6;	
 	optional int32 total_bout	= 7;	
-	optional int32 offline_count	= 8;
-	optional int32 enter_timestamp	= 9;
+	optional int32 win_bout		= 8;	
+	optional int32 loss_bout	= 9;	
+	optional int32 offline_count	= 10;
+	optional int32 enter_timestamp	= 11;
 	
-	optional string head_url	= 10;		// 头像url
-	optional string hardid		= 11;		// 硬件信息
-	optional string nick_name	= 12;		// 昵称
-	//optional bytes hand		= 13;		// 手牌
+	optional string head_url	= 12;		// 头像url
+	optional string hardid		= 13;		// 硬件信息
+	optional string nick_name	= 14;		// 昵称
 }
 
 message TableUserInfo
@@ -77,13 +79,25 @@ message Room
 message UserResult
 {
 	optional int32 userid		= 1;	
-	optional int32 chaino		= 2;	
+	optional int32 chairno		= 2;	
 	optional int64 old_deposit	= 3;	// 原有银子数		
 	optional int64 diff_deposit = 4;	// 银子变化值
 	optional int32 fee			= 5;	// 服务费
 }
 
+// 桌子及桌上玩家信息
+message TablePlayersInfo
+{
+	optional int32 roomid			= 1;
+	optional int32 tableno			= 2;
+	optional int32 table_status 	= 3;	// 桌子状态，定义见 TableStatus
+	optional int64 base_deposit 	= 4;	// 基础银
+	repeated User players			= 5;	// 桌上玩家的信息
+	repeated ChairInfo chairs		= 6;	// 椅子信息
+}
+
 //======================= 业务数据结构定义 ==========================
+// 心跳
 message PulseReq
 {
 	optional int32 id			= 1;	// 客户端传userid，RobotSvr传clientid
@@ -93,33 +107,27 @@ message PulseResp
 	optional int32 timestamp	= 1;	// 游戏服务启动时间
 }
 
+// 进游戏
 message EnterNormalGameReq
 {
-	optional int32 userid	= 1;
-	optional int32 roomid	= 2;
-	optional int32 flag 	= 3;			// 定义见EnterGameFlag
-	optional int32 target 	= 4;			// 根据flag不同，target有不同的含义（userid\tableno等）
-	optional string hardid	= 5;			// 硬件信息
+	optional int32 userid			= 1;
+	optional int32 gameid			= 2;
+	optional int32 roomid			= 3;
+	optional int32 flag 			= 4;	// 定义见EnterGameFlag
+	optional int32 target 			= 5;	// 根据flag不同，target有不同的含义（userid\tableno等）
+	optional string hardid			= 6;	// 硬件信息
+	optional string hall_version	= 7;	// 合集大厅版本
+	optional string game_version	= 8;	// 游戏客户端版本
 }
 
 message EnterNormalGameResp
 {
 	optional int32 code				= 1;
-	optional int32 roomid			= 2;
-	optional int32 tableno			= 3;
-	optional int32 chairno			= 4;
-	optional int64 deposit			= 5;	
-	optional int32 table_status 	= 6;
-	optional int32 flag		 		= 7;	// 定义见EnterGameRespFlag
-	repeated User others			= 8;	// 桌上其他玩家的信息
-	optional BytesData hand			= 9;	// 断线续玩的时候返回自己的手牌
-	optional int32 custom_flag		= 10;	// 标记custom_data的类型
-	optional BytesData custom_data	= 11;	// 游戏方自定义数据
-}
-
-message PlayerEnterGameNotify
-{
-	optional User player_info		= 1;
+	optional int32 flag		 		= 2;	// 定义见EnterGameRespFlag
+	optional BytesData hand			= 3;	// 断线续玩的时候返回自己的手牌
+	optional TablePlayersInfo table_players = 4;
+	optional int32 custom_flag		= 5;	// 标记custom_data的类型
+	optional BytesData custom_data	= 6;	// 游戏方自定义数据
 }
 
 message EnterPrivateGameReq
@@ -141,7 +149,7 @@ message EnterMatchGameResp
 	optional int32 code		= 1;
 }
 
-
+// 离开游戏
 message LeaveGameReq
 {
 	optional int32 userid	= 1;
@@ -151,6 +159,7 @@ message LeaveGameResp
 	optional int32 code		= 1;
 }
 
+// 放弃本局游戏
 message GiveUpReq
 {
 	optional int32 userid	= 1;
@@ -160,6 +169,7 @@ message GiveUpResp
 	optional int32 code		= 1;
 }
 
+// 旁观转玩家
 message Looker2PlayerReq
 {
 	optional int32 userid	= 1;
@@ -170,27 +180,31 @@ message Looker2PlayerResp
 	optional int32 chairno	= 2;
 }
 
+// 玩家转旁观
 message Player2LookerReq
 {
 	optional int32 userid	= 1;
+	optional int32 flag		= 2;
 }
 message Player2LookerResp
 {
 	optional int32 code		= 1;
 }
 
+// 换桌
 message SwitchTableReq
 {
 	optional int32 userid	= 1;
 }
 message SwitchTableResp
 {
-	optional int32 code		= 1;
-	optional int32 tableno	= 2;
-	optional int32 chairno	= 3;
+	optional int32 code				= 1;
+	optional TablePlayersInfo table_players	= 2;	// 桌子及桌上玩家信息
+	optional int32 custom_flag		= 3;	// 标记custom_data的类型
+	optional BytesData custom_data	= 4;	// 游戏方自定义数据
 }
 
-
+// 同桌聊天
 message TableChatReq
 {
 	optional int32 userid	= 1;
@@ -206,13 +220,28 @@ message TableChatResp
 	optional int32 code		= 1;
 }
 
-// 玩家行为通知
-message UserActionNotify
+// 开始游戏(服务内部消息)
+message StartGameReq
 {
-	optional int32 action		= 1;
-	optional User user			= 2;	// 只有kUser_SitDown时提供玩家全部信息，其他消息只提供基本信息
+	optional int32 roomid	= 1;
+	optional int32 tableno	= 2;
 }
 
+// 获取桌子及桌上玩家信息
+message GetTablePlayersInfoReq
+{
+	optional int32 userid	= 1;
+}
+message GetTablePlayersInfoResp
+{
+	optional int32 code				= 1;
+	optional TablePlayersInfo table_players	= 2;	// 桌子及桌上用户（自己和所有玩家，目前不包含其他旁观者）信息
+	optional int32 custom_flag		= 3;	// 标记custom_data的类型
+	optional BytesData custom_data	= 4;	// 游戏方自定义数据
+	optional BytesData hand			= 5;	// 断线续玩的时候返回自己的手牌
+}
+
+//==================================== 给客户端的通知 ==========================================//
 // 倒计时开始通知
 message CountdownStartNotify
 {
@@ -230,8 +259,8 @@ message CountdownStopNotify
 message GameStartNotify
 {
 	optional int32 tableno	= 1;	
-	//optional int32 flag		= 2;			// 标记custom_data的类型
-	//optional BytesData custom_data	= 3;	// 游戏方自定义数据
+	optional int32 flag		= 2;			// 标记custom_data的类型
+	optional BytesData custom_data	= 3;	// 游戏方自定义数据
 }
 
 // 玩家弃牌通知
@@ -239,14 +268,7 @@ message PlayerGiveupNotify
 {
 	optional int32 userid	= 1;
 	optional int32 chairno	= 2;	
-	optional int32 tableno	= 3;
-}
-
-// 服务内部消息
-message StartGameReq
-{
-	optional int32 roomid	= 1;
-	optional int32 tableno	= 2;
+	optional int32 next_chair	= 3;
 }
 
 // 游戏结果通知
@@ -260,10 +282,72 @@ message GameResultNotify
 	optional BytesData custom_data = 6;		// 游戏方自定义数据
 }
 
+// 玩家坐下通知
+message UserSitDownNotify
+{
+	optional User user	= 1;
+}
+
+// 玩家站起通知
+message UserStandUpNotify
+{
+	optional int32 userid	= 1;
+	optional int32 chairno	= 2;
+}
+
+// 玩家离开游戏通知
+message UserLeaveNotify
+{
+	optional int32 userid	= 1;
+	optional int32 chairno	= 2;
+}
+
+// 玩家银子变化通知
+message UserDepositChangeNotify
+{
+	optional int32 userid		= 1;
+	optional int64 diff_deposit	= 2;	// 银子变化值
+	optional int64 own_deposit	= 3;	// 银子余额
+}
+//==================================== 商城 ==========================================//
+// 商品信息
+message MallProduct
+{
+    optional int32 productid		= 1; // 商品ID
+	optional int32 currency			= 2; // 货币种类
+	optional int64 price			= 3; // 价格
+	optional string product_name	= 4; // 商品名称
+	optional string product_code	= 5; // 商品代号
+	optional int32 os_support		= 6; // 支持的操作系统
+}
+
+// 获取商品列表
+message GetMallProductsReq
+{
+    optional int32 userid			= 1; // 用户ID
+	optional int32 os				= 2; // 操作系统
+}
+message GetMallProductsResp
+{
+	optional int32 code				= 1; 
+    repeated MallProduct product	= 2; // 商品列表
+}
+
+// 商城购买道具
+message MallShopingReq
+{
+	optional int32 userid		= 1;
+	optional int32 productid	= 2;	// 商品ID
+	optional int32 count		= 3;	// 购买数量
+}
+message MallShopingResp
+{
+	optional int32 code			= 1;
+	optional int32 currency		= 2;	// 货币类型
+	optional int32 cost			= 3;	// 花费金额
+}
 
 //==================================== 机器人消息 ==========================================//
-
-
 message RobotSvrValidateReq
 {
 	optional int32 client_id	= 1;	// 机器人服务ID
@@ -293,8 +377,11 @@ message RS_UserEnterGameNotify
 	optional int32 userid		= 1;
 	optional int32 tableno		= 2;
 	optional int32 chairno		= 3;	// GN_RS_LOOKER_ENTERGAME时为0
-	optional int32 user_type	= 4;	// 普通玩家/管理员/机器人
-	optional RoomData room_data = 5;
+	optional int32 user_type	= 4;	// 普通玩家/管理员/机器人 定义见UserType
+	optional RoomData room_data = 5;	
+	optional int64 min_deposit	= 6;	// 当前桌 最小银子数
+	optional int64 max_deposit	= 7;	// 当前桌 最大银子数
+	optional int64 base_deposit	= 8;	// 当前桌 基础银
 }
 
 // GN_RS_LOOER2PLAYER/GN_RS_PLAYER2LOOKER

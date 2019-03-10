@@ -2,13 +2,15 @@
 #include "robot_net.h"
 #include "common_func.h"
 #include "robot_utils.h"
+#include "setting_manager.h"
+#include "robot_statistic.h"
 
 RobotNet::RobotNet(const UserID& userid) :
 userid_(userid) {
 
 }
 
-int RobotNet::ConnectGame(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id) {
+int RobotNet::Connect(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
@@ -18,69 +20,61 @@ int RobotNet::ConnectGame(const std::string& game_ip, const int& game_port, cons
     if (kCommSucc !=InitDataWithLock()) {
         ASSERT_FALSE_RETURN;
     }
-    ASSERT_FALSE_RETURN;
-}
-
-int RobotNet::OnDisconnGame() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    ResetInitDataWithLock();
     return kCommSucc;
 }
 
 BOOL RobotNet::IsConnected() const {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (!game_connection_) {
-        LOG_ERROR("m_ConnGame is nil");
-        ASSERT_FALSE_RETURN;
-    }
-    return game_connection_->IsConnected();
+    CHECK_CONNECTION(connection_);
+    return connection_->IsConnected();
 }
 
 int RobotNet::SendGameRequestWithLock(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) const {
     CHECK_REQUESTID(requestid);
-    if (!game_connection_) {
-        LOG_ERROR("m_ConnGame is nil");
-        ASSERT_FALSE_RETURN;
+    CHECK_CONNECTION(connection_);
+
+    if (!connection_) {
+        LOG_ERROR("connection not exist");
+        return kCommFaild;
     }
 
-    if (!game_connection_->IsConnected()) {
-        LOG_WARN("m_ConnGame not connected"); // invalid socket handle.
-        ASSERT_FALSE_RETURN;
+    if (!connection_->IsConnected()) {
+        LOG_ERROR("not connected");
+        return kCommFaild;
     }
 
-    return RobotUtils::SendRequestWithLock(game_connection_, requestid, val, response, need_echo);
+    return RobotUtils::SendRequestWithLock(connection_, requestid, val, response, need_echo);
+}
+
+int RobotNet::OnDisconnect() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG_WARN("OnDisconnect Game Robot");
+    if (kCommSucc != ResetDataWithLock()) {
+        ASSERT_FALSE_RETURN;
+    }
+    return kCommSucc;
 }
 
 int RobotNet::ResetDataWithLock() {
-    if (game_connection_) {
-        game_connection_->DestroyEx();
-    }
-    pulse_timeout_count_ = 0;
+    CHECK_CONNECTION(connection_);
+    connection_->DestroyEx();
+    timeout_count_ = 0;
+    need_reconnect_ = true;
     return kCommSucc;
 }
 
 int RobotNet::InitDataWithLock() {
-    game_connection_ = std::make_shared<CDefSocketClient>();
-    game_connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
-    if (!game_connection_->Create(game_ip_.c_str(), game_port_, 5, 0, game_notify_thread_id_, 0, GetHelloData(), GetHelloLength())) {
+    connection_.reset();
+    connection_ = std::make_shared<CDefSocketClient>();
+    connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
+    if (!connection_->Create(game_ip_.c_str(), game_port_, 5, 0, game_notify_thread_id_, 0, GetHelloData(), GetHelloLength())) {
         LOG_ERROR("ConnectGame Faild! IP: [%s] Port: [%d]", game_ip_.c_str(), game_port_);
+        EVENT_TRACK(EventType::kErr, kCreateGameConnFailed);
         ASSERT_FALSE_RETURN;
     }
 
     timestamp_ = time(0);
-    ASSERT_FALSE_RETURN;
-}
-
-int RobotNet::ResetInitDataWithLock() {
-    // 重置
-    if (kCommSucc != ResetDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-    }
-
-    // 重新初始化
-    if (kCommSucc != InitDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-    }
+    need_reconnect_ = false;
     return kCommSucc;
 }
 
@@ -95,34 +89,67 @@ int RobotNet::SendEnterGame(const RoomID& roomid) {
 
     game::base::EnterNormalGameReq val;
     val.set_userid(userid_);
+    val.set_gameid(SettingMgr.GetGameID());
     val.set_roomid(roomid);
     val.set_flag(kEnterDefault);
     val.set_hardid(hard_id);
 
     REQUEST response = {};
-
-    const auto result = SendGameRequestWithLock(GR_ENTER_NORMAL_GAME, val, response);
+    RequestID requestid = GR_ENTER_NORMAL_GAME;
+    const auto result = SendGameRequestWithLock(requestid, val, response);
     if (kCommSucc != result) {
-        LOG_ERROR("game send quest fail");
+        LOG_ERROR("userid [%d] roomid [%d] requestid [%d] [%s] content [%s] failed, result [%d]", userid_, roomid, requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), result);
         ASSERT_FALSE;
         if (result == kOperationFailed) {
-            ResetInitDataWithLock();
+            InitDataWithLock();
         }
 
+        if (result == kInvalidUser) { // 用户不合法（token和entergame时保存的token不一致）
+            LOG_ERROR("token dismatch with enter game token");
+        }
 
+        if (result == kInvalidRoomID) {
+
+        }
+
+        if (result == kAllocTableFaild) {
+
+        }
+
+        if (result == kUserNotFound) {// 用户不存在 userid <= 0
+
+        }
+
+        if (result == kTableNotFound) {
+
+        }
+
+        if (result == kHall_InvalidHardID) {
+
+        }
+
+        if (result == kHall_InOtherGame) {
+
+        }
+
+        if (result == kHall_InvalidRoomID) {
+
+        }
         return result;
     }
 
     game::base::EnterNormalGameResp resp;
     const auto ret = ParseFromRequest(response, resp);
     if (kCommSucc != ret) {
-        LOG_ERROR("ParseFromRequest faild.");
+        LOG_ERROR("userid [%d] roomid [%d] requestid [%d] [%s] content [%s] failed, result [%d]", userid_, roomid, requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), result);
         ASSERT_FALSE_RETURN;
     }
 
-    if (kCommSucc != resp.code()) {
-        LOG_ERROR("enter game faild. check return[%d]. req =  [%s]", resp.code(), GetStringFromPb(val).c_str());
-        return resp.code();
+    auto code = resp.code();
+    if (kCommSucc != code) {
+        LOG_ERROR("userid [%d] roomid [%d] requestid [%d] [%s] content [%s] failed, resp error code [%d] [%s]", userid_, roomid, requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), code, ERR_STR(code));
+        ASSERT_FALSE;
+        return code;
     }
 
     return kCommSucc;
@@ -133,23 +160,34 @@ int RobotNet::SendGamePulse() {
     game::base::PulseReq val;
     val.set_id(userid_);
     REQUEST response = {};
-    const auto result = SendGameRequestWithLock(GR_GAME_PLUSE, val, response, false);
+    const auto result = SendGameRequestWithLock(GR_GAME_PLUSE, val, response); // 游戏心跳需要回包
     if (kCommSucc != result) {
         LOG_ERROR("game send quest fail");
         ASSERT_FALSE;
         if (result == kOperationFailed) {
-            ResetInitDataWithLock();
+            InitDataWithLock();
         }
         return result;
     }
     return kCommSucc;
 }
 
+
+int RobotNet::KeepConnection() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (need_reconnect_) {
+        return InitDataWithLock();
+    }
+    return kCommSucc;
+}
+
 // 属性接口 
 
-TokenID RobotNet::GetTokenID() const {
+int RobotNet::GetTokenID(TokenID& token) const {
     std::lock_guard<std::mutex> lock(mutex_);
-    return game_connection_->GetTokenID();
+    CHECK_CONNECTION(connection_);
+    token = connection_->GetTokenID();
+    return kCommSucc;
 }
 
 // 配置机器人ID 初始化后不在改变,不需要锁保护
@@ -169,9 +207,13 @@ void RobotNet::SetTimeStamp(const TimeStamp& val) {
 
 int RobotNet::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
+    CHECK_CONNECTION(connection_);
     LOG_INFO("OBJECT ADDRESS = %x", this);
+    LOG_INFO("connection = %x", connection_.get());
+    LOG_INFO("game ip [%s]", game_ip_.c_str());
+    LOG_INFO("game port [%d]", game_port_);
     LOG_INFO("userid [%d]", userid_);
-    LOG_INFO("token [%d]", game_connection_->GetTokenID());
+    LOG_INFO("token [%d]", connection_->GetTokenID());
 
     return kCommSucc;
 }

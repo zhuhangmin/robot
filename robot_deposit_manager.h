@@ -28,7 +28,7 @@ private:
 
 private:
     // 后台补银 数据锁
-    mutable std::mutex deposit_map_mutex_;
+    mutable std::mutex mutex_;
 
     // 后台补银 任务
     DepositMap deposit_map_;

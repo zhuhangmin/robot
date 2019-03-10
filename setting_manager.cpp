@@ -4,25 +4,41 @@
 #include "robot_utils.h"
 
 int SettingManager::Init() {
-    LOG_FUNC("[START ROUTINE]");
-    if (kCommSucc != InitSetting()) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG_INFO_FUNC("[SVR START]");
+    if (kCommSucc != InitSettingWithLock()) {
         LOG_ERROR("InitSetting() failed");
         ASSERT_FALSE_RETURN;
     }
+
+    hot_update_thread_.Initial(std::thread([this] {this->ThreadHotUpdate(); }));
+
     return kCommSucc;
 }
 
 int SettingManager::Term() {
-    LOG_FUNC("[EXIT ROUTINE]");
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG_INFO_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
-std::string& SettingManager::GetDepositActiveID() {
-    return deposit_active_id_;
+int SettingManager::ThreadHotUpdate() {
+    LOG_INFO("[SVR START] SettingManager HotUpdate thread [%d] started", GetCurrentThreadId());
+    while (true) {
+        const auto dwRet = WaitForSingleObject(g_hExitServer, HotUpdateInterval);
+        if (WAIT_OBJECT_0 == dwRet) {
+            break;
+        }
+        if (WAIT_TIMEOUT == dwRet) {
+            std::lock_guard<std::mutex> lock(mutex_);
+            InitSettingWithLock();
+        }
+    }
+    LOG_INFO("[EXIT ROUTINE] SettingManager HotUpdate thread [%d] exiting", GetCurrentThreadId());
+    return kCommSucc;
 }
 
-int SettingManager::InitSetting() {
-    LOG_FUNC("[START ROUTINE]");
+int SettingManager::InitSettingWithLock() {
     const auto filename = g_curExePath + _T("robot.setting");
     Json::Value root;
     Json::Reader reader;
@@ -76,11 +92,11 @@ int SettingManager::InitSetting() {
     if (root.isMember("deposit_active_id"))
         deposit_active_id_ = root["deposit_active_id"].asString();
 
-    if (root.isMember("gain_amount"))
-        gain_amount_ = root["gain_amount"].asInt();
+    if (root.isMember("deposit_gain_amount"))
+        gain_amount_ = root["deposit_gain_amount"].asInt();
 
-    if (root.isMember("back_amount"))
-        back_amount_ = root["back_amount"].asInt();
+    if (root.isMember("deposit_back_amount"))
+        back_amount_ = root["deposit_back_amount"].asInt();
 
     if (root.isMember("deposit_gain_url"))
         deposit_gain_url_ = root["deposit_gain_url"].asString();
@@ -100,15 +116,23 @@ int SettingManager::InitSetting() {
     return kCommSucc;
 }
 
+std::string& SettingManager::GetDepositActiveID() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return deposit_active_id_;
+}
+
 const RobotSettingMap& SettingManager::GetRobotSettingMap() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return robot_setting_map_;
 }
 
 const RoomSettingMap& SettingManager::GetRoomSettingMap() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return room_setting_map_;
 }
 
 int SettingManager::GetRobotSetting(const UserID userid, RobotSetting& robot_setting) const {
+    std::lock_guard<std::mutex> lock(mutex_);
     const auto iter = robot_setting_map_.find(userid);
     if (iter == robot_setting_map_.end()) {
         ASSERT_FALSE_RETURN;
@@ -118,61 +142,42 @@ int SettingManager::GetRobotSetting(const UserID userid, RobotSetting& robot_set
 }
 
 int SettingManager::GetMainsInterval() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return main_interval_;
 }
 
 int SettingManager::GetDepositInterval() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return deposit_interval_;
 }
 
 int SettingManager::GetGainAmount() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return gain_amount_;
 }
 
 int SettingManager::GetBackAmount() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return back_amount_;
 }
 
 GameID SettingManager::GetGameID() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return game_id_;
 }
 
 std::string& SettingManager::GetDepositGainUrl() {
+    std::lock_guard<std::mutex> lock(mutex_);
     return deposit_gain_url_;
 }
 
 std::string& SettingManager::GetDepositBackUrl() {
+    std::lock_guard<std::mutex> lock(mutex_);
     return deposit_back_url_;
 }
 
-int SettingManager::SnapShotObjectStatus() const {
-    LOG_INFO("OBJECT ADDRESS = %x", this);
-    LOG_INFO("game_id_ [%d]", game_id_);
-    LOG_INFO("main_interval_ [%d]", main_interval_);
-    LOG_INFO("deposit_interval_ [%d]", deposit_interval_);
-    LOG_INFO("gain_amount_ [%d]", gain_amount_);
-    LOG_INFO("back_amount_ [%d]", back_amount_);
-
-    LOG_INFO("robot_setting_map_ size [%d]", robot_setting_map_.size());
-    std::string userid_str;
-    for (auto& kv : robot_setting_map_) {
-        const auto userid = kv.first;
-        userid_str += std::to_string(userid);
-        userid_str += ", ";
-    }
-    LOG_INFO("robot userid [ [%s]]", userid_str.c_str());
-
-    LOG_INFO("room_setting_map_ size [%d]", room_setting_map_.size());
-    for (auto& kv : room_setting_map_) {
-        const auto roomid = kv.first;
-        const auto setting = kv.second;
-        LOG_INFO("roomid [%d]  count [%d]", roomid, setting.count);
-    }
-
-    return kCommSucc;
-}
-
 int SettingManager::GetRandomUserID(UserID& random_userid) const {
+    std::lock_guard<std::mutex> lock(mutex_);
     // Ëæ»úÑ¡È¡userid
     auto random_pos = 0;
     if (kCommSucc != RobotUtils::GenRandInRange(0, robot_setting_map_.size() - 1, random_pos)) {
@@ -184,6 +189,40 @@ int SettingManager::GetRandomUserID(UserID& random_userid) const {
 }
 
 int SettingManager::GetDeposiInitGainFlag() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return deposit_init_gain_;
 }
 
+
+int SettingManager::SnapShotObjectStatus() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG_INFO("game_id_ [%d]", game_id_);
+    LOG_INFO("main_interval_ [%d]", main_interval_);
+    LOG_INFO("deposit_interval_ [%d]", deposit_interval_);
+    LOG_INFO("gain_amount_ [%d]", gain_amount_);
+    LOG_INFO("back_amount_ [%d]", back_amount_);
+    LOG_INFO("deposit_active_id_ [%s]", deposit_active_id_.c_str());
+
+    LOG_INFO("robot_setting_map_ size [%d]", robot_setting_map_.size());
+    std::string userid_str;
+    for (auto& kv : robot_setting_map_) {
+        const auto userid = kv.first;
+        userid_str += std::to_string(userid);
+        userid_str += ", ";
+    }
+
+    LOG_INFO("room_setting_map_ size [%d]", room_setting_map_.size());
+    for (auto& kv : room_setting_map_) {
+        const auto roomid = kv.first;
+        const auto setting = kv.second;
+        LOG_INFO("roomid [%d]  count [%d]", roomid, setting.count);
+    }
+
+    return kCommSucc;
+}
+
+int SettingManager::BriefInfo() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG_INFO("robot_setting_map_ size [%d]", robot_setting_map_.size());
+    return kCommSucc;
+}

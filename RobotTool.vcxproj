@@ -93,7 +93,7 @@
     <IntDir>.\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <TargetName>$(ProjectName)D</TargetName>
-    <IncludePath>$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)xyGamePb;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)tcLog\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)xyGamePb;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)tcLog\include;$(VS_CTLibPath_Sea)GameSvr3.0\common;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)tcLog\lib\Win32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseS|Win32'">
@@ -304,6 +304,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClCompile Include="robot_deposit_manager.cpp" />
     <ClCompile Include="robot_net.cpp" />
     <ClCompile Include="robot_net_manager.cpp" />
+    <ClCompile Include="robot_statistic.cpp" />
     <ClCompile Include="robot_utils.cpp" />
     <ClCompile Include="room_manager.cpp" />
     <ClCompile Include="app_delegate.cpp" />
@@ -317,7 +318,6 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   <ItemGroup>
     <ClInclude Include="base_room.h" />
     <ClInclude Include="common_func.h" />
-    <ClInclude Include="gamedef.h" />
     <ClInclude Include="game_base.pb.h" />
     <ClInclude Include="game_net_manager.h" />
     <ClInclude Include="process_info.h" />
@@ -328,6 +328,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="robot_net.h" />
     <ClInclude Include="robot_define.h" />
     <ClInclude Include="robot_net_manager.h" />
+    <ClInclude Include="robot_statistic.h" />
     <ClInclude Include="robot_utils.h" />
     <ClInclude Include="room_manager.h" />
     <ClInclude Include="app_delegate.h" />

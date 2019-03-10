@@ -11,6 +11,7 @@
 #include "room_manager.h"
 #include "process_info.h"
 #include "robot_utils.h"
+#include "robot_statistic.h"
 #pragma comment(lib,  "dbghelp.lib")
 
 #ifdef _DEBUG
@@ -34,6 +35,8 @@ string	        	g_localGameIP;
 CWinApp				theApp;
 
 HINSTANCE			g_hResDll = NULL;
+
+extern void Test(char cmd);
 
 void WriteMiniDMP(struct _EXCEPTION_POINTERS *pExp) {
     CString   strDumpFile;
@@ -62,7 +65,7 @@ LONG WINAPI ExpFilter(struct _EXCEPTION_POINTERS *pExp) {
 int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     TCLOG_INIT();
     LOG_INFO("\n ===================================SERVER START===================================");
-    LOG_INFO("[START ROUTINE] BEG");
+    LOG_INFO("[SVR START] BEG");
 
     //绑定单核运行 避免机器人本身消耗所有CPU
     BOOL success = SetProcessAffinityMask(GetCurrentProcess(), 0x00000001);
@@ -73,7 +76,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     auto nRetCode = EXIT_SUCCESS;
     SetUnhandledExceptionFilter(ExpFilter);
 
-    LOG_INFO("[START ROUTINE] AFX BEG");
+    LOG_INFO("[SVR START] AFX BEG");
     WSADATA wsa;
     WSAStartup(MAKEWORD(2, 2), &wsa);
     // 初始化 MFC 并在失败时显示错误
@@ -82,16 +85,16 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
-    LOG_INFO("[START ROUTINE] AFX END");
+    LOG_INFO("[SVR START] AFX END");
 
 
-    LOG_INFO("[START ROUTINE] UWL BEG");
+    LOG_INFO("[SVR START] UWL BEG");
     if (!UwlInit()) {
         MessageBox(NULL, _T("Fatal error: UWL initialization failed!\n"), "", MB_ICONSTOP);
         nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
-    LOG_INFO("[START ROUTINE] UWL END");
+    LOG_INFO("[SVR START] UWL END");
 
     DWORD dwTraceMode = UWL_TRACE_DATETIME | UWL_TRACE_FILELINE | UWL_TRACE_NOTFULLPATH
         | UWL_TRACE_FORCERETURN | UWL_TRACE_CONSOLE;
@@ -102,17 +105,17 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     UwlRegSocketWnd();
 
-    LOG_INFO("[START ROUTINE] AFX SOCKET BEG");
+    LOG_INFO("[SVR START] AFX SOCKET BEG");
     if (!AfxSocketInit()) {
         MessageBox(NULL, _T("Fatal error: Failed to initialize sockets!\n"), "", MB_ICONSTOP);
         nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
-    LOG_INFO("[START ROUTINE] AFX SOCKET END");
+    LOG_INFO("[SVR START] AFX SOCKET END");
 
 #ifdef UWL_SERVICE
 
-    LOG_INFO("[START ROUTINE] SERVICE BEG");
+    LOG_INFO("[SVR START] SERVICE BEG");
     TCHAR szIniFile[MAX_PATH] = {0};
     TCHAR szExeName[MAX_PATH] = {0};
     lstrcpy(szExeName, argv[0]);
@@ -149,7 +152,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     nRetCode = MainService.m_Status.dwWin32ExitCode;
 
 #else
-    LOG_INFO("[START ROUTINE] MainServer BEG");
+    LOG_INFO("[SVR START] MainServer BEG");
     AppDelegate MainServer;
 
     if (kCommSucc != MainServer.Init()) {
@@ -159,8 +162,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         return -1;
     }
 
-    LOG_INFO("[START ROUTINE] MainServer END");
-    LOG_INFO("[START ROUTINE] END");
+    LOG_INFO("[SVR START] MainServer END");
+    LOG_INFO("[SVR START] END");
 
     UwlTrace("Type 'q' when you want to exit. ");
     TCHAR ch;
@@ -168,75 +171,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         ch = _getch();
         ch = toupper(ch);
 #ifdef _DEBUG
-        // TEST CASE
-        if (ch == 'S') {
-            LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
-            SettingMgr.SnapShotObjectStatus();
-            RobotMgr.SnapShotObjectStatus();
-            GameMgr.SnapShotObjectStatus();
-            DepositMgr.SnapShotObjectStatus();
-            HallMgr.SnapShotObjectStatus();
-            UserMgr.SnapShotObjectStatus();
-            RoomMgr.SnapShotObjectStatus();
-            LOG_INFO("-------------[STATUS SNAPSHOT END]-------------");
-        }
-
-        if (ch == 'D') {
-            LOG_INFO("-------------[DEPOSIT TEST BEG]-------------");
-            auto userid = InvalidUserID;
-            SettingMgr.GetRandomUserID(userid);
-            DepositMgr.SetDepositType(userid, DepositType::kBack);
-            SettingMgr.GetRandomUserID(userid);
-            DepositMgr.SetDepositType(userid, DepositType::kGain);
-            LOG_INFO("-------------[DEPOSIT TEST BEG]-------------");
-        }
-
-        if (ch == 'P') {
-            LOG_INFO("-------------[PROCESS TEST BEG]-------------");
-            ProcessInfoCollect picProcessInfoCollect;
-            int nRet = 0;
-            DWORD             nMemoryUsed;                    //内存使用(Byte)    
-            DWORD            nVirtualMemoryUsed;                //虚拟内存使用(Byte)    
-            DWORD            nHandleNumber;                    //句柄数量
-            DWORD dwCurrentProcessThreadCount;        //线程数量    
-            ULONGLONG ullIo_read_bytes;                        //IO读字节数    
-            ULONGLONG ullIo_write_bytes;                    //IO写字节数    
-            ULONGLONG ullIo_wct;                            //IO写次数    
-            ULONGLONG ullIo_rct;                            //IO读次数        
-            double dCPUUserRate = 0;                        //CPU使用的百分比        
-            picProcessInfoCollect.GetCPUUserRate(dCPUUserRate);
-            picProcessInfoCollect.GetMemoryUsed(nVirtualMemoryUsed, nMemoryUsed);
-            nVirtualMemoryUsed = nVirtualMemoryUsed;
-            nMemoryUsed = nMemoryUsed;
-            picProcessInfoCollect.GetThreadCount(dwCurrentProcessThreadCount);
-            picProcessInfoCollect.GetHandleCount(nHandleNumber);
-            picProcessInfoCollect.GetIOBytes(&ullIo_read_bytes, &ullIo_write_bytes, &ullIo_wct, &ullIo_rct);
-            LOG_INFO("cpu [%d], memory [%d] MB, handler count [%d], thread count [%d]", (int) dCPUUserRate, (int) nMemoryUsed / 1024 /1024, (int) nHandleNumber, (int) dwCurrentProcessThreadCount);
-            LOG_INFO("-------------[PROCESS TEST END]-------------");
-        }
-
-        if (ch == 'T') {
-            LOG_INFO("-------------[CONNECTION COST TEST BEG]-------------");
-            auto test_count = 100;
-            for (auto i = 0; i < test_count; i++) {
-                TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
-                GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof szHallSvrIP, g_szIniFile);
-                auto nHallSvrPort = GetPrivateProfileInt(_T("hall_server"), _T("port"), 0, g_szIniFile);
-                CDefSocketClientPtr connection_ = std::make_shared<CDefSocketClient>();
-                connection_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
-                connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, GetCurrentThreadId(), 0, GetHelloData(), GetHelloLength());
-            }
-            LOG_INFO("-------------[CONNECTION COST TEST END]-------------");
-        }
-
-        if (ch == 'M') {
-            LOG_INFO("-------------[MSG COUNT TEST BEG]-------------");
-            auto copy_data = RobotUtils::send_msg_count_map;
-            for (auto& kv : copy_data) {
-                LOG_INFO("request id [%d], count [%d]", kv.first, kv.second);
-            }
-            LOG_INFO("-------------[MSG COUNT COST TEST END]-------------");
-        }
+        Test(ch);
 #endif
 
     } while (ch != 'Q');
@@ -257,4 +192,85 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     _CrtDumpMemoryLeaks();
     return nRetCode;
+}
+
+// TEST CASE
+void Test(char cmd) {
+    if (cmd == 'S') {
+        LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
+        SettingMgr.SnapShotObjectStatus();
+        RobotMgr.SnapShotObjectStatus();
+        GameMgr.SnapShotObjectStatus();
+        DepositMgr.SnapShotObjectStatus();
+        HallMgr.SnapShotObjectStatus();
+        UserMgr.SnapShotObjectStatus();
+        RoomMgr.SnapShotObjectStatus();
+        LOG_INFO("-------------[STATUS SNAPSHOT END]-------------");
+    }
+
+    if (cmd == 'B') {
+        LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
+        SettingMgr.BriefInfo();
+        RobotMgr.BriefInfo();
+        HallMgr.BriefInfo();
+        UserMgr.BriefInfo();
+        LOG_INFO("-------------[STATUS SNAPSHOT END]-------------");
+    }
+
+    if (cmd == 'D') {
+        LOG_INFO("-------------[DEPOSIT TEST BEG]-------------");
+        auto robot_setting_map = SettingMgr.GetRobotSettingMap();
+        for (auto& kv : robot_setting_map) {
+            auto userid = kv.first;
+            DepositMgr.SetDepositType(userid, DepositType::kGain);
+        }
+
+        LOG_INFO("-------------[DEPOSIT TEST END]-------------");
+    }
+
+    if (cmd == 'P') {
+        LOG_INFO("-------------[PROCESS TEST BEG]-------------");
+        ProcessInfoCollect picProcessInfoCollect;
+        int nRet = 0;
+        DWORD             nMemoryUsed;                    //内存使用(Byte)    
+        DWORD            nVirtualMemoryUsed;                //虚拟内存使用(Byte)    
+        DWORD            nHandleNumber;                    //句柄数量
+        DWORD dwCurrentProcessThreadCount;        //线程数量    
+        ULONGLONG ullIo_read_bytes;                        //IO读字节数    
+        ULONGLONG ullIo_write_bytes;                    //IO写字节数    
+        ULONGLONG ullIo_wct;                            //IO写次数    
+        ULONGLONG ullIo_rct;                            //IO读次数        
+        double dCPUUserRate = 0;                        //CPU使用的百分比        
+        picProcessInfoCollect.GetCPUUserRate(dCPUUserRate);
+        picProcessInfoCollect.GetMemoryUsed(nVirtualMemoryUsed, nMemoryUsed);
+        nVirtualMemoryUsed = nVirtualMemoryUsed;
+        nMemoryUsed = nMemoryUsed;
+        picProcessInfoCollect.GetThreadCount(dwCurrentProcessThreadCount);
+        picProcessInfoCollect.GetHandleCount(nHandleNumber);
+        picProcessInfoCollect.GetIOBytes(&ullIo_read_bytes, &ullIo_write_bytes, &ullIo_wct, &ullIo_rct);
+        LOG_INFO("cpu [%d], memory [%d] MB, handler count [%d], thread count [%d]", (int) dCPUUserRate, (int) nMemoryUsed / 1024 /1024, (int) nHandleNumber, (int) dwCurrentProcessThreadCount);
+        LOG_INFO("-------------[PROCESS TEST END]-------------");
+    }
+
+    if (cmd == 'T') {
+        LOG_INFO("-------------[CONNECTION COST TEST BEG]-------------");
+        auto test_count = 100;
+        for (auto i = 0; i < test_count; i++) {
+            TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
+            GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof szHallSvrIP, g_szIniFile);
+            auto nHallSvrPort = GetPrivateProfileInt(_T("hall_server"), _T("port"), 0, g_szIniFile);
+            CDefSocketClientPtr connection = std::make_shared<CDefSocketClient>();
+            connection->InitKey(KEY_HALL, ENCRYPT_AES, 0);
+            connection->Create(szHallSvrIP, nHallSvrPort, 5, 0, GetCurrentThreadId(), 0, GetHelloData(), GetHelloLength());
+        }
+        LOG_INFO("-------------[CONNECTION COST TEST END]-------------");
+    }
+
+    if (cmd == 'M') {
+        LOG_INFO("-------------[MSG COUNT TEST BEG]-------------");
+        RobotStatistic::Instance().SnapShotObjectStatus();
+        LOG_INFO("-------------[MSG COUNT TEST END]-------------");
+    }
+
+
 }

@@ -7,7 +7,7 @@
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 int RobotDepositManager::Init() {
-    LOG_FUNC("[START ROUTINE]");
+    LOG_INFO_FUNC("[SVR START]");
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
     return kCommSucc;
 }
@@ -15,12 +15,12 @@ int RobotDepositManager::Init() {
 
 int RobotDepositManager::Term() {
     deposit_timer_thread_.Release();
-    LOG_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT ROUTINE]");
     return kCommSucc;
 }
 
 int RobotDepositManager::ThreadDeposit() {
-    LOG_INFO("[START ROUTINE] RobotDepositManager Deposit thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[SVR START] RobotDepositManager Deposit thread [%d] started", GetCurrentThreadId());
 
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetDepositInterval());
@@ -31,7 +31,7 @@ int RobotDepositManager::ThreadDeposit() {
         if (WAIT_TIMEOUT == dwRet) {
             DepositMap deposit_map_temp;
             {
-                std::lock_guard<std::mutex> lock(deposit_map_mutex_);
+                std::lock_guard<std::mutex> lock(mutex_);
                 deposit_map_temp = std::move(deposit_map_);
             }
 
@@ -91,9 +91,10 @@ int RobotDepositManager::RobotGainDeposit(const UserID& userid, const int& amoun
     Json::Value _root;
     if (!reader.parse((LPCTSTR) strResult, _root)) ASSERT_FALSE_RETURN;
 
-    if (_root["Code"].asInt() != 0) {
+    auto ret_code = _root["Code"].asInt();
+    if (0 != ret_code) {
         LOG_ERROR("userid  = [%d] gain deposit fail, code  = [%d], strResult =  [%s]", userid, _root["Code"].asInt(), strResult);
-        ASSERT_FALSE_RETURN
+        //ASSERT_FALSE_RETURN
     }
     return kCommSucc;
 }
@@ -140,7 +141,7 @@ int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount)
 
 int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType& type) {
     CHECK_USERID(userid);
-    std::lock_guard<std::mutex> lock(deposit_map_mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     if (deposit_map_.find(userid) == deposit_map_.end()) {
         deposit_map_[userid] = type;
     }
@@ -149,8 +150,7 @@ int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType&
 }
 
 int RobotDepositManager::SnapShotObjectStatus() {
-    std::lock_guard<std::mutex> lock(deposit_map_mutex_);
-    LOG_INFO("OBJECT ADDRESS [%x]", this);
+    std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("deposit_timer_thread_ [%d]", deposit_timer_thread_.GetThreadID());
     LOG_INFO("deposit_map_ size [%d]", deposit_map_.size());
     for (auto& kv : deposit_map_) {

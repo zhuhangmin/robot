@@ -11,7 +11,7 @@
 #include "room_manager.h"
 
 int AppDelegate::InitLanuch() const {
-    LOG_FUNC("[START ROUTINE]");
+    LOG_INFO_FUNC("[SVR START]");
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     TCHAR szFullName[MAX_PATH];
@@ -27,19 +27,21 @@ int AppDelegate::InitLanuch() const {
 
     g_nClientID = GetPrivateProfileInt(_T("listen"), _T("clientid"), 0, g_szIniFile);
     if (0 == g_nClientID) {
-        LOG_ERROR("[START ROUTINE] invalid clientid 0!");
+        LOG_ERROR("[SVR START] invalid clientid 0!");
         ASSERT_FALSE_RETURN;
 
     }
-    LOG_INFO("[START ROUTINE] clientid = [%d]", g_nClientID);
+    LOG_INFO("[SVR START] clientid = [%d]", g_nClientID);
     return kCommSucc;
 }
 
 int AppDelegate::Init() {
-    LOG_FUNC("[START ROUTINE]");
+    LOG_INFO_FUNC("[SVR START]");
     if (S_FALSE == CoInitialize(NULL))
         ASSERT_FALSE_RETURN;
 
+    // ！！【注意】 不可调换顺序或者并行初始化 ！！
+    // 以下数据类初始化有依赖关系，故使用同步io，
     if (kCommSucc != InitLanuch()) {
         LOG_ERROR(_T("InitBase() return failed"));
         ASSERT_FALSE_RETURN;
@@ -58,16 +60,28 @@ int AppDelegate::Init() {
     }
 
     // 游戏服务数据管理类
-    /*auto game_port = RobotUtils::GetGamePort();
+    auto game_port = RobotUtils::GetGamePort();
     auto game_ip = RobotUtils::GetGameIP();
     if (kCommSucc != GameMgr.Init(game_ip, game_port)) {
-    LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
-    ASSERT_FALSE_RETURN;
-    }*/
+        LOG_ERROR(_T("RobotGameInfoManager Init Failed"));
+        ASSERT_FALSE_RETURN;
+    }
+
+    // 启动时 让所有机器人登陆大厅
+    if (kCommSucc != ConnectHallForAllRobot()) {
+        LOG_ERROR(_T("ConnectHallForAllRobot fail"));
+        ASSERT_FALSE_RETURN;
+    }
 
     // 机器人游戏管理类
     if (kCommSucc != RobotMgr.Init()) {
         LOG_ERROR(_T("RobotGameManager Init Failed"));
+        ASSERT_FALSE_RETURN;
+    }
+
+    // 启动时 为已在游戏中的机器人 建立游戏连接
+    if (kCommSucc != ConnectGameForRobotInGame()) {
+        LOG_ERROR(_T("ConnectGameForRobotInGame fail"));
         ASSERT_FALSE_RETURN;
     }
 
@@ -77,17 +91,25 @@ int AppDelegate::Init() {
         ASSERT_FALSE_RETURN;
     }
 
+    // 以上数据管理类均为线程安全
+
     // 是否启动时集体补银
     DepositGainAll();
 
-    // 主流程
+    // ！！【注意】请勿使用多线程构建业务！！
+    // 请[只在 ThreadMainProc 单线程] 实现调度
+    // 其他线程构建业务会出现线程竞争问题
     main_timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
 
+    // 初始化完毕
+    inited_ = true;
     return kCommSucc;
 }
 
 int AppDelegate::Term() {
     SetEvent(g_hExitServer);
+
+    inited_ = false;
 
     DepositMgr.Term();
     RobotMgr.Term();
@@ -100,14 +122,14 @@ int AppDelegate::Term() {
     if (g_hExitServer) { CloseHandle(g_hExitServer); g_hExitServer = NULL; }
 
     CoUninitialize();
-    LOG_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT ROUTINE]");
     LOG_INFO("\n ===================================SERVER EXIT=================================== \n");
     return kCommSucc;
 
 }
 
 int AppDelegate::ThreadMainProc() {
-    LOG_INFO("[START ROUTINE] main timer thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[SVR START] main timer thread [%d] started", GetCurrentThreadId());
 
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetMainsInterval());
@@ -124,13 +146,20 @@ int AppDelegate::ThreadMainProc() {
 }
 
 int AppDelegate::MainProcess() {
+    if (!inited_) return kCommSucc;
     // 获得此时需要多少机器人进入各个房间
     RoomNeedCountMap room_need_count_map;
     if (kCommSucc != GetRoomNeedCountMap(room_need_count_map)) {
         ASSERT_FALSE_RETURN;
     }
+
     if (room_need_count_map.empty()) {
-        ASSERT_FALSE_RETURN;
+        //LOG_INFO("NO NEED TO ROUTE ROBOT");
+        return kCommSucc;
+    } else {
+        for (auto& kv : room_need_count_map) {
+            LOG_INFO("room [%d] need robot [%d]", kv.first, kv.second);
+        }
     }
 
     // 所有房间机器人开始依次同步阻塞进入
@@ -157,51 +186,17 @@ int AppDelegate::MainProcess() {
 }
 
 int AppDelegate::RobotProcess(const UserID& userid, const RoomID& roomid) {
+    LOG_ROUTE("beg", roomid, InvalidTableNO, userid);
     CHECK_USERID(userid);
     CHECK_ROOMID(roomid);
-    // 登陆大厅
-    if (kCommSucc != HallMgr.LogonHall(userid)) {
+
+    if (kCommSucc != LogonHall(userid)) {
         ASSERT_FALSE_RETURN;
     }
 
-    HallRoomData hall_room_data = {};
-    if (kCommSucc != HallMgr.GetHallRoomData(roomid, hall_room_data)) {
+    if (kCommSucc != EnterGame(userid, roomid)) {
         ASSERT_FALSE_RETURN;
     }
-
-    // 创建游戏机器人网络部分
-    RobotPtr robot;
-    if (kCommSucc != RobotMgr.GetRobotWithCreate(userid, robot)) {
-        ASSERT_FALSE_RETURN;
-    }
-    if (!robot) {
-        ASSERT_FALSE_RETURN;
-    }
-
-    //@zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
-    const auto game_ip = RobotUtils::GetGameIP();
-    const auto game_port = RobotUtils::GetGamePort();
-    const auto game_notify_thread_id = RobotMgr.GetRobotNotifyThreadID();
-    if (kCommSucc != robot->ConnectGame(game_ip, game_port, game_notify_thread_id)) {
-        ASSERT_FALSE_RETURN;
-    }
-
-    //TODO 需要大厅提供错误码
-    const auto resp_code = robot->SendEnterGame(roomid);
-    if (kCommSucc !=resp_code) {
-        // 银子不够or太多，设置标签，补银还银线程处理
-        if (kDepositUnderFlow == resp_code) {
-            DepositMgr.SetDepositType(userid, DepositType::kGain);
-
-        } else if (kDepositOverFlow == resp_code) {
-            DepositMgr.SetDepositType(userid, DepositType::kBack);
-
-        } else {
-            ASSERT_FALSE_RETURN;
-
-        }
-    }
-
 
     return kCommSucc;
 }
@@ -241,26 +236,23 @@ int AppDelegate::GetRoomNeedCountMap(RoomNeedCountMap& room_need_count_map) {
         const auto setting = kv.second;
         const auto designed_count = setting.count;
 
-        RoomPtr room;
+        //TODO COMMENT BACK LATER
+        /*RoomPtr room;
         if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
-            ASSERT_FALSE_RETURN;
-        }
+        ASSERT_FALSE_RETURN;
+        }*/
 
-        auto inroom_count = InvalidCount;
+        auto inroom_count = 0;
         if (kCommSucc != UserMgr.GetRobotCountInRoom(roomid, inroom_count)) {
-            ASSERT_FALSE_RETURN;
-        }
-
-        if (InvalidCount == inroom_count) {
             ASSERT_FALSE_RETURN;
         }
 
         const auto need_count = designed_count - inroom_count;
         if (need_count > 0) {
-            // @zhuhangmin 20190228 每次主循环每个房间只进一个机器人
+            // 每次循环每个房间只进一个机器人
             room_need_count_map[roomid] = 1;
             // 需要一次上多个机器人使用：
-            // room_need_count_map[roomid] = need_count;
+            //room_need_count_map[roomid] = need_count;
         }
     }
 
@@ -277,5 +269,111 @@ int AppDelegate::DepositGainAll() {
         DepositMgr.SetDepositType(userid, DepositType::kGain);
     }
 
+    return kCommSucc;
+}
+
+int AppDelegate::ConnectHallForAllRobot() {
+    const auto robot_map = SettingMgr.GetRobotSettingMap();
+    for (auto& kv : robot_map) {
+        auto userid = kv.first;
+        if (kCommSucc != RobotUtils::IsValidUserID(userid)) continue;
+
+#ifndef _DEBUG
+        LOG_WARN("正式版防止大量消息冲击后端服务器 [副作用] 正式版机器人启动较慢");
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#endif
+
+        if (kCommSucc != LogonHall(userid)) {
+            LOG_ERROR("userid [userid] ConnectHallForAllRobot failed", userid);
+            continue;
+        }
+    }
+    return kCommSucc;
+}
+
+int AppDelegate::ConnectGameForRobotInGame() {
+    LOG_INFO("ConnectGameForRobotInGame");
+    const auto users = UserMgr.GetAllUsers();
+    for (auto& kv : users) {
+        auto userid = kv.first;
+        auto user = kv.second;
+        if (kCommSucc != RobotUtils::IsValidUserID(userid)) continue;
+        if (kCommSucc != RobotUtils::IsValidUser(user)) continue;
+
+        auto roomid = user->get_room_id();
+        auto tableno = user->get_table_no();
+        if (kCommSucc != RobotUtils::IsValidRoomID(roomid)) continue;
+        if (kCommSucc != RobotUtils::IsValidTableNO(tableno)) continue;
+
+        if (kCommSucc != EnterGame(userid, roomid, tableno)) {
+            LOG_ERROR("userid [userid] tableno [%d] roomid [%d]  ConnectGameForRobotInGame failed", userid, tableno, roomid);
+            continue;
+        }
+    }
+    return kCommSucc;
+}
+
+
+int AppDelegate::LogonHall(UserID userid) {
+    CHECK_USERID(userid);
+    LOG_ROUTE("ConnectHallForAllRobot", InvalidRoomID, InvalidTableNO, userid);
+
+    if (kCommSucc != HallMgr.LogonHall(userid)) {
+        ASSERT_FALSE_RETURN;
+    }
+    return kCommSucc;
+}
+
+int AppDelegate::EnterGame(UserID userid, RoomID roomid, TableNO tableno) {
+    CHECK_USERID(userid);
+    CHECK_ROOMID(roomid);
+
+    LOG_ROUTE("get robot", roomid, tableno, userid);
+    RobotPtr robot;
+    if (kCommSucc != RobotMgr.GetRobotWithCreate(userid, robot)) {
+        ASSERT_FALSE_RETURN;
+    }
+    if (!robot) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    LOG_ROUTE("connect game", roomid, tableno, userid);
+    //@zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
+    const auto game_ip = RobotUtils::GetGameIP();
+    const auto game_port = RobotUtils::GetGamePort();
+    const auto game_notify_thread_id = RobotMgr.GetNotifyThreadID();
+    if (kCommSucc != robot->Connect(game_ip, game_port, game_notify_thread_id)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    LOG_ROUTE("enter game", roomid, tableno, userid);
+    //TODO 需要大厅提供错误码
+    const auto result = robot->SendEnterGame(roomid);
+    if (kCommSucc !=result) {
+        LOG_ERROR("SendEnterGame resp error result [%d] str [%s], roomid [%d] userid [%d]", result, ERR_STR(result), roomid, userid);
+
+        // 银子不够or太多，设置标签，补银还银线程处理 TODO
+        /*if (kDepositUnderFlow == resp_code) {
+        DepositMgr.SetDepositType(userid, DepositType::kGain);
+
+        } else if (kDepositOverFlow == resp_code) {
+        DepositMgr.SetDepositType(userid, DepositType::kBack);
+
+        } else {
+        ASSERT_FALSE_RETURN;
+
+        }*/
+
+        if (kHall_UserNotLogon == result) {
+            HallMgr.SetLogonStatus(userid, HallLogonStatusType::kNotLogon);
+        }
+
+        LOG_ROUTE("!!! ENTER GAME SUCCESS !!!", roomid, tableno, userid);
+        //TODO
+        //ASSERT_FALSE_RETURN;
+        // return kCommFaild;
+        return kCommSucc;
+    }
+    LOG_ROUTE("*** ENTER GAME SUCCESS***", roomid, tableno, userid);
     return kCommSucc;
 }
