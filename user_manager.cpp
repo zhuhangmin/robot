@@ -98,6 +98,29 @@ int UserManager::GetNormalUserCountInRoom(const RoomID& roomid, int& count) cons
     return kCommSucc;
 }
 
+
+int UserManager::GetNormalUserMap(UserMap& normal_user_map) const {
+    std::lock_guard<std::mutex> users_lock(mutex_);
+    for (auto& kv : user_map_) {
+        const auto user = kv.second;
+        if (user->get_user_type() == kUserNormal) {
+            normal_user_map[kv.first] = kv.second;
+        }
+    }
+    return kCommSucc;
+}
+
+int UserManager::GetRobotUserMap(UserMap& robot_user_map) const {
+    std::lock_guard<std::mutex> users_lock(mutex_);
+    for (auto& kv : user_map_) {
+        const auto user = kv.second;
+        if (user->get_user_type() == kUserRobot) {
+            robot_user_map[kv.first] = kv.second;
+        }
+    }
+    return kCommSucc;
+}
+
 int UserManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> users_lock(mutex_);
     LOG_INFO("OBJECT ADDRESS [%x]", this);

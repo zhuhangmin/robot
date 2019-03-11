@@ -1,5 +1,6 @@
 #pragma once
 #include "robot_define.h"
+#include "user_manager.h"
 
 // 游戏业务
 class AppDelegate {
@@ -19,7 +20,7 @@ private:
     int MainProcess();
 
     // 机器人流程 登入大厅 进入游戏
-    int RobotProcess(const UserID& userid, const RoomID& roomid);
+    int RobotProcess(const UserID& userid, const RoomID& roomid, const TableNO& tableno);
 
 private:
     // 辅助函数
@@ -27,8 +28,8 @@ private:
     // 随机选一个没有进入游戏的userid
     int GetRandomUserIDNotInGame(UserID& random_userid) const;
 
-    // 获得房间此时需要的机器人数量
-    int GetRoomNeedCountMap(RoomNeedCountMap& room_count_map);
+    // 获得此房间需要机器人匹配的用户信息
+    int GetRoomNeedUserMap(UserMap& need_user_map);
 
     // 启动时 集体补银
     int DepositGainAll();
@@ -40,15 +41,20 @@ private:
     int ConnectGameForRobotInGame();
 
     // 登陆大厅
-    int LogonHall(UserID userid);
+    int LogonHall(const UserID& userid);
 
     // 进入游戏
-    int EnterGame(UserID userid, RoomID roomid, TableNO tableno = InvalidTableNO);
+    int EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno);
+
+public:
+    //TEST ONLY
+    void SendTestRobot(const UserID& userid, const RoomID& roomid, const TableNO& tableno);
+
+    //TEST ONLY
+    int TestLogonHall(const UserID& userid);
 
 private:
-    // @zhuhangmin 20190228
-    // 注意： 主流程 单线程
-    // 无业务锁, 若有高并发需求，可以让机器人预先进游戏等待
+    // 主流程 单线程 无业务锁
     // 允许脏读数据层data, 但不允许把脏读数据写回数据层data, 只读不写
     YQThread	main_timer_thread_;
 

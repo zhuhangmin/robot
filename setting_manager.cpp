@@ -5,7 +5,7 @@
 
 int SettingManager::Init() {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG_INFO_FUNC("[SVR START]");
+    LOG_INFO_FUNC("[START]");
     if (kCommSucc != InitSettingWithLock()) {
         LOG_ERROR("InitSetting() failed");
         ASSERT_FALSE_RETURN;
@@ -23,7 +23,7 @@ int SettingManager::Term() {
 }
 
 int SettingManager::ThreadHotUpdate() {
-    LOG_INFO("[SVR START] SettingManager HotUpdate thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[START] SettingManager HotUpdate thread [%d] started", GetCurrentThreadId());
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, HotUpdateInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -60,8 +60,9 @@ int SettingManager::InitSettingWithLock() {
 
     for (auto n = 0; n < size; ++n) {
         const auto roomid = rooms[n]["roomid"].asInt();
-        const auto count = rooms[n]["count"].asInt();
-        room_setting_map_[roomid] = RoomSetiing{roomid, count};
+        const auto wait_time = rooms[n]["wait_time"].asInt();
+        const auto count_per_table = rooms[n]["count_per_table"].asInt();
+        room_setting_map_[roomid] = RoomSetiing{roomid, wait_time, count_per_table};
     }
 
 
@@ -121,12 +122,12 @@ std::string& SettingManager::GetDepositActiveID() {
     return deposit_active_id_;
 }
 
-const RobotSettingMap& SettingManager::GetRobotSettingMap() const {
+RobotSettingMap SettingManager::GetRobotSettingMap() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return robot_setting_map_;
 }
 
-const RoomSettingMap& SettingManager::GetRoomSettingMap() const {
+RoomSettingMap SettingManager::GetRoomSettingMap() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return room_setting_map_;
 }
@@ -215,7 +216,7 @@ int SettingManager::SnapShotObjectStatus() const {
     for (auto& kv : room_setting_map_) {
         const auto roomid = kv.first;
         const auto setting = kv.second;
-        LOG_INFO("roomid [%d]  count [%d]", roomid, setting.count);
+        LOG_INFO("roomid [%d]  wait_time [%d]", roomid, setting.wait_time);
     }
 
     return kCommSucc;

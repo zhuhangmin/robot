@@ -114,8 +114,6 @@ public:
 
 #define CHAIR_STATUS_STR(x) RobotUtils::ChairStatusStr(x).c_str()
 
-#define TO_DATE(x) RobotUtils::TimeStampToDate(x).c_str()
-
 #define LOG_INFO_FUNC(x) LOG_INFO(" %s [%s]", x, __FUNCTION__);
 
 #define LOG_ROUTE(x, roomid, tableno ,userid) LOG_INFO(" [%s] roomid [%d] tableno [%d] userid [%d] [%s]", "DISPATCH ROBOT", roomid, tableno, userid, x);

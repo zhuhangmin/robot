@@ -7,7 +7,7 @@
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 int RobotDepositManager::Init() {
-    LOG_INFO_FUNC("[SVR START]");
+    LOG_INFO_FUNC("[START]");
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
     return kCommSucc;
 }
@@ -20,7 +20,7 @@ int RobotDepositManager::Term() {
 }
 
 int RobotDepositManager::ThreadDeposit() {
-    LOG_INFO("[SVR START] RobotDepositManager Deposit thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[START] RobotDepositManager Deposit thread [%d] started", GetCurrentThreadId());
 
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetDepositInterval());
@@ -41,13 +41,15 @@ int RobotDepositManager::ThreadDeposit() {
 
                 if (deposit_type == DepositType::kGain) {
                     if (kCommSucc != RobotGainDeposit(userid, SettingMgr.GetGainAmount())) {
-                        ASSERT_FALSE_RETURN;
+                        ASSERT_FALSE;
+                        continue;
                     }
                 }
 
                 if (deposit_type == DepositType::kBack) {
                     if (kCommSucc != RobotBackDeposit(userid, SettingMgr.GetBackAmount())) {
-                        ASSERT_FALSE_RETURN;
+                        ASSERT_FALSE;
+                        continue;
                     }
                 }
             }

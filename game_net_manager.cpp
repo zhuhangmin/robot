@@ -49,7 +49,7 @@ int GameNetManager::SendRequestWithLock(const RequestID& requestid, const google
 }
 
 int GameNetManager::ThreadNotify() {
-    LOG_INFO("[SVR START] GameNotify thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[START] GameNotify thread [%d] started", GetCurrentThreadId());
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
@@ -125,15 +125,13 @@ int GameNetManager::OnNotify(const RequestID& requestid, const REQUEST &request)
 int GameNetManager::OnDisconnect() {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_THREAD(notify_thread_);
+    ResetDataWithLock();
     LOG_WARN("OnDisconnect Game Info");
-    if (kCommSucc != ResetDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-    }
     return kCommSucc;
 }
 
 int GameNetManager::ThreadTimer() {
-    LOG_INFO("[SVR START] Game KeepAlive thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[START] Game KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -253,7 +251,7 @@ int GameNetManager::ResetDataWithLock() {
     need_reconnect_ = true;
     UserMgr.Reset();
     RoomMgr.Reset();
-    return kCommSucc;
+    return kCommFaild;
 }
 
 int GameNetManager::SendPulse() {
@@ -263,6 +261,7 @@ int GameNetManager::SendPulse() {
     REQUEST response = {};
 
     //@zhuhangmin 大厅模板需要支持 清僵尸机制
+    // TODO    GR_RS_PULSE 
     const auto result = RobotUtils::SendRequestWithLock(connection_, GR_GAME_PLUSE, val, response); // 游戏心跳需要回包
 
     if (kCommSucc != result) {
@@ -319,7 +318,7 @@ int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
         ASSERT_FALSE_RETURN;
     }
 
-    const auto ret = base_room->PlayerEnterGame(user); //Add User Manager
+    const auto ret = base_room->PlayerEnterGame(user);
     if (kCommSucc != ret) {
         LOG_WARN("PlayerEnterGame failed.");
         ASSERT_FALSE_RETURN;
@@ -473,7 +472,8 @@ int GameNetManager::OnStartGame(const REQUEST &request) const {
         auto chair_pb = kv.second;
         const auto chairno = chair_pb.chairno();
         if (chairno < 1) {
-            ASSERT_FALSE_RETURN;
+            ASSERT_FALSE;
+            continue;
         }
         chairs[chairno-1].set_userid(chair_pb.userid());
         chairs[chairno-1].set_chair_status(static_cast<ChairStatus>(chair_pb.chair_status()));
@@ -685,6 +685,9 @@ int GameNetManager::AddTablePB(const game::base::Table& table_pb, const TablePtr
         ChairInfo chair_info;
         chair_info.set_userid(chair_pb.userid());
         chair_info.set_chair_status(static_cast<ChairStatus>(chair_pb.chair_status()));
+        //TODO ADD  bind_timestamp
+        //chair_info.set_bind_timestamp(chair_pb.bind_timestamp());
+
         table->AddChair(chairno, chair_info);
     }
 
@@ -695,6 +698,7 @@ int GameNetManager::AddTablePB(const game::base::Table& table_pb, const TablePtr
         TableUserInfo table_user_info;
         table_user_info.set_userid(table_user_pb.userid());
         table_user_info.set_bind_timestamp(table_user_pb.bind_timestamp());
+        table_user_info.set_user_type(table_user_pb.user_type());
         table->AddTableUserInfo(userid, table_user_info);
     }
 
@@ -711,7 +715,6 @@ int GameNetManager::AddUserPB(const game::base::User& user_pb) const {
     user->set_deposit(user_pb.deposit());
     user->set_total_bout(user_pb.total_bout());
     user->set_offline_count(user_pb.offline_count());
-    user->set_enter_timestamp(user_pb.enter_timestamp());
     if (kCommSucc != UserMgr.AddUser(user->get_user_id(), user)) {
         ASSERT_FALSE_RETURN;
     }

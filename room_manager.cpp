@@ -26,9 +26,58 @@ int RoomManager::Reset() {
     return kCommSucc;
 }
 
+int RoomManager::GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    TablePtr table;
+    if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    if (kCommSucc != table->GetChairInfoByUserid(userid, info)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    return kCommSucc;
+}
+
+int RoomManager::GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    TablePtr table;
+    if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    if (kCommSucc != table->GetRobotCount(count)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    return kCommSucc;
+}
+
 const GameRoomMap& RoomManager::GetAllRooms() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return rooms_;
+}
+
+int RoomManager::GetRoomWithLock(const RoomID& roomid, RoomPtr& room) const {
+    const auto iter = rooms_.find(roomid);
+    if (iter == rooms_.end()) {
+        ASSERT_FALSE_RETURN;
+    }
+    room = iter->second;
+    return kCommSucc;
+}
+
+int RoomManager::GetTableWithLock(const RoomID roomid, const TableNO& tableno, TablePtr& table) const {
+    RoomPtr room;
+    if (kCommSucc != GetRoomWithLock(roomid, room)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    if (kCommSucc != room->GetTable(tableno, table)) {
+        ASSERT_FALSE_RETURN;
+    }
+    return kCommSucc;
 }
 
 int RoomManager::SnapShotObjectStatus() {

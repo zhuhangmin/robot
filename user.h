@@ -67,13 +67,6 @@ public:
         offline_count_ = val;
     }
 
-    INT64 get_enter_timestamp() const {
-        return enter_timestamp_;
-    }
-    void set_enter_timestamp(const INT64 &val) {
-        enter_timestamp_ = val;
-    }
-
     std::string get_head_url() const {
         return head_url_;
     }
@@ -129,7 +122,6 @@ private:
     int chair_no_ = 0;			// 有桌子号没有椅子号说明在旁观
 
     int offline_count_ = 0;
-    INT64 enter_timestamp_ = 0;
 
     std::string head_url_;
     std::string hard_id_;

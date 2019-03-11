@@ -5,7 +5,7 @@
 #include "robot_define.h"
 
 int RobotNetManager::Init() {
-    LOG_INFO_FUNC("[SVR START]");
+    LOG_INFO_FUNC("[START]");
     heart_thread_.Initial(std::thread([this] {this->ThreadTimer(); }));
     notify_thread_.Initial(std::thread([this] {this->ThreadNotify(); }));
     return kCommSucc;
@@ -61,7 +61,10 @@ int RobotNetManager::KeepConnection() {
     std::lock_guard<std::mutex> lock(mutex_);
     for (auto& kv : robot_map_) {
         auto robot = kv.second;
-        if (!robot) ASSERT_FALSE_RETURN;
+        if (!robot) {
+            ASSERT_FALSE;
+            continue;
+        }
         robot->KeepConnection();
     }
     return kCommSucc;
@@ -102,7 +105,7 @@ int RobotNetManager::GetRobotByTokenWithLock(const TokenID& token_id, RobotPtr& 
 }
 
 int RobotNetManager::ThreadTimer() {
-    LOG_INFO("[SVR START] RobotGameManager KeepAlive thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[START] RobotGameManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, RobotTimerInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -119,7 +122,7 @@ int RobotNetManager::ThreadTimer() {
 }
 
 int RobotNetManager::ThreadNotify() {
-    LOG_INFO("[SVR START] RobotGameManager Notify thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[START] RobotGameManager Notify thread [%d] started", GetCurrentThreadId());
 
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {

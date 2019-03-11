@@ -6,6 +6,8 @@
 #include "robot_define.h"
 #include "common_func.h"
 #include "robot_statistic.h"
+#include "PBReq.h"
+
 int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) {
     CHECK_CONNECTION(connection);
 
@@ -47,6 +49,7 @@ int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const
         return kOperationFailed;
     }
 
+    // TODO    GR_RS_PULSE 
     if (requestid != GR_GAME_PLUSE) {
         LOG_INFO("connection [%x] [SEND] requestid [%d] [%s]", connection.get(), requestid, REQ_STR(requestid));
     }
@@ -283,8 +286,11 @@ std::string RobotUtils::ErrorCodeInfo(int code) {
         case kTableNotFound:
             error_string = "kTableNotFound";
             break;
-        case kInvalidDeposit:
-            error_string = "kInvalidDeposit";
+        case kTooMuchDeposit:
+            error_string = "kTooMuchDeposit";
+            break;
+        case kTooLessDeposit:
+            error_string = "kTooLessDeposit";
             break;
         case kHall_UserNotLogon:
             error_string = "kHall_UserNotLogon";
@@ -339,9 +345,10 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
         case GR_GIVE_UP:
             ret_string = "GR_GIVE_UP";
             break;
-        case GR_RS_START_GAME:
+        case GS_START_GAME:
             ret_string = "GR_RS_START_GAME";
             break;
+            // TODO    GR_RS_PULSE 
         case GR_GAME_PLUSE:
             ret_string = "GR_GAME_PLUSE";
             break;
@@ -439,6 +446,9 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
         case UR_SOCKET_CLOSE:
             ret_string = "UR_SOCKET_CLOSE";
             break;
+        case PB_NOTIFY_TO_CLIENT:
+            ret_string = "PB_NOTIFY_TO_CLIENT"; //zxd ： 不需要处理
+            break;
         default:
             LOG_WARN("UNKNOW REQUEST ID [%d]", requestid);
             break;
@@ -501,6 +511,9 @@ std::string RobotUtils::ChairStatusStr(const int& status) {
 }
 
 std::string RobotUtils::TimeStampToDate(int time_stamp) {
+    if (time_stamp <= 0) {
+        return "";
+    }
     struct tm t;
     time_t rawtime = time_stamp;
     time(&rawtime);
@@ -513,4 +526,5 @@ std::string RobotUtils::TimeStampToDate(int time_stamp) {
         ret = ret.erase(pos);
     }
     return ret;
+
 }

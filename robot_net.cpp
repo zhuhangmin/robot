@@ -12,6 +12,11 @@ userid_(userid) {
 
 int RobotNet::Connect(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id) {
     std::lock_guard<std::mutex> lock(mutex_);
+    if (connection_) {
+        if (connection_->IsConnected()) {
+            return kCommSucc;
+        }
+    }
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     game_ip_ = game_ip;
@@ -49,9 +54,7 @@ int RobotNet::SendGameRequestWithLock(const RequestID& requestid, const google::
 int RobotNet::OnDisconnect() {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_WARN("OnDisconnect Game Robot");
-    if (kCommSucc != ResetDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-    }
+    ResetDataWithLock();
     return kCommSucc;
 }
 
@@ -60,11 +63,10 @@ int RobotNet::ResetDataWithLock() {
     connection_->DestroyEx();
     timeout_count_ = 0;
     need_reconnect_ = true;
-    return kCommSucc;
+    return kCommFaild;
 }
 
 int RobotNet::InitDataWithLock() {
-    connection_.reset();
     connection_ = std::make_shared<CDefSocketClient>();
     connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!connection_->Create(game_ip_.c_str(), game_port_, 5, 0, game_notify_thread_id_, 0, GetHelloData(), GetHelloLength())) {
@@ -81,7 +83,7 @@ int RobotNet::InitDataWithLock() {
 // 具体业务
 
 // TODO 多个机器人服务器用了同个账号 踢人警告
-int RobotNet::SendEnterGame(const RoomID& roomid) {
+int RobotNet::SendEnterGame(const RoomID& roomid, const TableNO& tableno) {
     CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(mutex_);
     TCHAR hard_id[32];
@@ -90,8 +92,9 @@ int RobotNet::SendEnterGame(const RoomID& roomid) {
     game::base::EnterNormalGameReq val;
     val.set_userid(userid_);
     val.set_gameid(SettingMgr.GetGameID());
+    val.set_target(tableno);// 
     val.set_roomid(roomid);
-    val.set_flag(kEnterDefault);
+    val.set_flag(kEnterWithTargetTable);
     val.set_hardid(hard_id);
 
     REQUEST response = {};
@@ -101,7 +104,7 @@ int RobotNet::SendEnterGame(const RoomID& roomid) {
         LOG_ERROR("userid [%d] roomid [%d] requestid [%d] [%s] content [%s] failed, result [%d]", userid_, roomid, requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), result);
         ASSERT_FALSE;
         if (result == kOperationFailed) {
-            InitDataWithLock();
+            ResetDataWithLock();
         }
 
         if (result == kInvalidUser) { // 用户不合法（token和entergame时保存的token不一致）
@@ -160,12 +163,13 @@ int RobotNet::SendGamePulse() {
     game::base::PulseReq val;
     val.set_id(userid_);
     REQUEST response = {};
+    // TODO    GR_RS_PULSE 
     const auto result = SendGameRequestWithLock(GR_GAME_PLUSE, val, response); // 游戏心跳需要回包
     if (kCommSucc != result) {
         LOG_ERROR("game send quest fail");
         ASSERT_FALSE;
         if (result == kOperationFailed) {
-            InitDataWithLock();
+            ResetDataWithLock();
         }
         return result;
     }
@@ -176,7 +180,7 @@ int RobotNet::SendGamePulse() {
 int RobotNet::KeepConnection() {
     std::lock_guard<std::mutex> lock(mutex_);
     if (need_reconnect_) {
-        return InitDataWithLock();
+        return ResetDataWithLock();
     }
     return kCommSucc;
 }

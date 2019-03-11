@@ -47,6 +47,12 @@ public:
     // 获取所有正常用户数量
     int GetNormalUserCountInRoom(const RoomID& roomid, int& count) const;
 
+    // 获取所有正常用户集合
+    int GetNormalUserMap(UserMap& normal_user_map) const;
+
+    // 获取所有机器人用户集合
+    int GetRobotUserMap(UserMap& robot_user_map) const;
+
 protected:
     SINGLETION_CONSTRUCTOR(UserManager);
 

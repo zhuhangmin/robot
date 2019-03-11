@@ -129,10 +129,6 @@ int BaseRoom::UserGiveUp(const UserID& userid, const TableNO& tableno) {
 
 int BaseRoom::Looker2Player(const UserPtr& user) {
     CHECK_USER(user);
-    if (!IsValidDeposit(user->get_deposit())) {
-        LOG_WARN("user[%d] deposit[%I64d] invalid.", user->get_user_id(), user->get_deposit());
-        return kInvalidDeposit;
-    }
 
     const auto tableno = user->get_table_no();
     TablePtr table;

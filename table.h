@@ -24,10 +24,18 @@ public:
         user_type_ = val;
     }
 
+    INT64 get_offline_timestamp() const {
+        return offline_timestamp_;
+    }
+    void set_offline_timestamp(const INT64 &val) {
+        offline_timestamp_ = val;
+    }
+
 private:
     int userid_ = 0;
     int user_type_ = kUserNormal;	// 用户类型
     INT64 bind_timestamp_ = 0;		// 用户上桌的时间戳
+    INT64 offline_timestamp_ = 0;	// 用户离线的时间戳，0表示在线
 };
 
 class ChairInfo {
@@ -46,9 +54,25 @@ public:
         chair_status_ = val;
     }
 
+    int get_bind_timestamp() const {
+        return bind_timestamp_;
+    }
+    void set_bind_timestamp(const int &val) {
+        bind_timestamp_ = val;
+    }
+
+    bool get_player2looker_next_time() const {
+        return player2looker_next_time_;
+    }
+    void set_player2looker_next_time(const bool &val) {
+        player2looker_next_time_ = val;
+    }
+
 private:
     int userid_ = 0;
+    int bind_timestamp_ = 0;					// 玩家和椅子绑定的时间戳（秒）
     ChairStatus chair_status_ = kChairWaiting;	// 椅子状态
+    bool player2looker_next_time_ = false;		// 是否需要在下局站起（变成旁观玩家）
 };
 
 class UserResult {
@@ -57,6 +81,7 @@ public:
         userid_ = 0;
         diff_deposit_ = 0;
         old_deposit_ = 0;
+        set_fee(0);
         time_cost_ = 0;
         bout_count_ = 0;
         win_count_ = 0;
@@ -128,16 +153,24 @@ public:
     void set_offline_count(const int &val) {
         offline_count_ = val;
     }
+
+    INT64 get_fee() const {
+        return fee_;
+    }
+    void set_fee(const INT64 &val) {
+        fee_ = val;
+    }
 private:
     int userid_ = 0;
     INT64 diff_deposit_ = 0;	// 银子变化
     INT64 old_deposit_ = 0;		// 原来持有银子数
+    INT64 fee_ = 0;				// 茶水费
     int time_cost_ = 0;			// 游戏耗时（秒）
     int bout_count_ = 0;		// 一次结算中 总局数
     int win_count_ = 0;			// 一次结算中 赢的局数
     int loss_count_ = 0;		// 一次结算中 输的局数
     int standoff_count_ = 0;	// 一次结算中 和的局数
-    int offline_count_ = 0;		// 掉线次数
+    int offline_count_ = 0;		// 掉线次数（暂时用不到）
 };
 
 
@@ -171,6 +204,8 @@ public:
 
     // 获取玩家数量
     virtual int GetPlayerCount();
+    // 获取机器人数量
+    virtual int GetRobotCount(int& count);
     // 获取指定椅子上的userid
     virtual int GetUserID(const int& chairno);
     // 获取桌子上的空座位数量
@@ -212,8 +247,10 @@ private:
     int banker_chair_ = 0;			// 庄家椅子号
     int min_player_count_ = 0;		// 开局的最小玩家数量
 
-    std::array<ChairInfo, kMaxChairCountPerTable> chairs_{};		// 椅子信息，下标为椅子号-1
-    std::hash_map<UserID, TableUserInfo> table_users_;					// 桌子上所有用户 包括旁观者
+    std::array<ChairInfo, kMaxChairCountPerTable> chairs_ = {};		// 椅子信息，下标为椅子号-1
+    std::array<UserResult, kMaxChairCountPerTable> user_results_ = {};	// 桌上玩家结果信息，下标为椅子号-1
+    std::vector<UserResult> commited_results_ = {};					// 已提交的结果信息（用户弃牌，自行结算后吧结算数据保存，等全桌结算的时候需要用到此信息）
+    std::hash_map<int, TableUserInfo> table_users_;					// 桌子上所有用户 包括旁观者
 
     INT64 min_deposit_ = 0;			// 最小银子数
     INT64 max_deposit_ = 0;			// 最大银子数
@@ -221,15 +258,17 @@ private:
 
     int table_status_ = kTableWaiting;	// 状态定义见TableStatus
 
+    int countdown_time_s_ = 5;		// 游戏开始 倒计时时间（默认5秒）
     int countdown_timestamp_ = 0;	// 倒计时开始时间戳
     int game_start_timestamp_ = 0;	// 游戏开始时间戳
 
 public:
     int get_table_no() const {
-        return table_no_; //start from 1 
+        return table_no_;
     }
-    void set_table_no(const int &val) {
-        table_no_ = val;
+
+    int set_table_no(const int &val) {
+        return table_no_ = val;
     }
 
     int get_room_id() const {
@@ -262,6 +301,7 @@ public:
 
     INT64 get_max_deposit() const {
         return max_deposit_;
+        //return 50000000;
     }
     void set_max_deposit(const INT64 &val) {
         max_deposit_ = val;
@@ -300,6 +340,13 @@ public:
     }
     void set_game_start_timestamp(const int &val) {
         game_start_timestamp_ = val;
+    }
+
+    int get_countdown_time_s() const {
+        return countdown_time_s_;
+    }
+    void set_countdown_time_s(const int &val) {
+        countdown_time_s_ = val;
     }
 };
 

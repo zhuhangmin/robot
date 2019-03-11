@@ -1080,24 +1080,17 @@ class TableUserInfo : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::int32 userid() const;
   void set_userid(::google::protobuf::int32 value);
 
-  // optional int32 offline_count = 2;
-  bool has_offline_count() const;
-  void clear_offline_count();
-  static const int kOfflineCountFieldNumber = 2;
-  ::google::protobuf::int32 offline_count() const;
-  void set_offline_count(::google::protobuf::int32 value);
+  // optional int32 user_type = 2;
+  bool has_user_type() const;
+  void clear_user_type();
+  static const int kUserTypeFieldNumber = 2;
+  ::google::protobuf::int32 user_type() const;
+  void set_user_type(::google::protobuf::int32 value);
 
-  // optional int32 bout_count = 3;
-  bool has_bout_count() const;
-  void clear_bout_count();
-  static const int kBoutCountFieldNumber = 3;
-  ::google::protobuf::int32 bout_count() const;
-  void set_bout_count(::google::protobuf::int32 value);
-
-  // optional int32 bind_timestamp = 4;
+  // optional int32 bind_timestamp = 3;
   bool has_bind_timestamp() const;
   void clear_bind_timestamp();
-  static const int kBindTimestampFieldNumber = 4;
+  static const int kBindTimestampFieldNumber = 3;
   ::google::protobuf::int32 bind_timestamp() const;
   void set_bind_timestamp(::google::protobuf::int32 value);
 
@@ -1105,10 +1098,8 @@ class TableUserInfo : public ::google::protobuf::Message /* @@protoc_insertion_p
  private:
   void set_has_userid();
   void clear_has_userid();
-  void set_has_offline_count();
-  void clear_has_offline_count();
-  void set_has_bout_count();
-  void clear_has_bout_count();
+  void set_has_user_type();
+  void clear_has_user_type();
   void set_has_bind_timestamp();
   void clear_has_bind_timestamp();
 
@@ -1116,8 +1107,7 @@ class TableUserInfo : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::HasBits<1> _has_bits_;
   mutable int _cached_size_;
   ::google::protobuf::int32 userid_;
-  ::google::protobuf::int32 offline_count_;
-  ::google::protobuf::int32 bout_count_;
+  ::google::protobuf::int32 user_type_;
   ::google::protobuf::int32 bind_timestamp_;
   friend struct ::protobuf_game_5fbase_2eproto::TableStruct;
   friend void ::protobuf_game_5fbase_2eproto::InitDefaultsTableUserInfoImpl();
@@ -8931,63 +8921,39 @@ inline void TableUserInfo::set_userid(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:game.base.TableUserInfo.userid)
 }
 
-// optional int32 offline_count = 2;
-inline bool TableUserInfo::has_offline_count() const {
+// optional int32 user_type = 2;
+inline bool TableUserInfo::has_user_type() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void TableUserInfo::set_has_offline_count() {
+inline void TableUserInfo::set_has_user_type() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void TableUserInfo::clear_has_offline_count() {
+inline void TableUserInfo::clear_has_user_type() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void TableUserInfo::clear_offline_count() {
-  offline_count_ = 0;
-  clear_has_offline_count();
+inline void TableUserInfo::clear_user_type() {
+  user_type_ = 0;
+  clear_has_user_type();
 }
-inline ::google::protobuf::int32 TableUserInfo::offline_count() const {
-  // @@protoc_insertion_point(field_get:game.base.TableUserInfo.offline_count)
-  return offline_count_;
+inline ::google::protobuf::int32 TableUserInfo::user_type() const {
+  // @@protoc_insertion_point(field_get:game.base.TableUserInfo.user_type)
+  return user_type_;
 }
-inline void TableUserInfo::set_offline_count(::google::protobuf::int32 value) {
-  set_has_offline_count();
-  offline_count_ = value;
-  // @@protoc_insertion_point(field_set:game.base.TableUserInfo.offline_count)
+inline void TableUserInfo::set_user_type(::google::protobuf::int32 value) {
+  set_has_user_type();
+  user_type_ = value;
+  // @@protoc_insertion_point(field_set:game.base.TableUserInfo.user_type)
 }
 
-// optional int32 bout_count = 3;
-inline bool TableUserInfo::has_bout_count() const {
+// optional int32 bind_timestamp = 3;
+inline bool TableUserInfo::has_bind_timestamp() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void TableUserInfo::set_has_bout_count() {
+inline void TableUserInfo::set_has_bind_timestamp() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void TableUserInfo::clear_has_bout_count() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void TableUserInfo::clear_bout_count() {
-  bout_count_ = 0;
-  clear_has_bout_count();
-}
-inline ::google::protobuf::int32 TableUserInfo::bout_count() const {
-  // @@protoc_insertion_point(field_get:game.base.TableUserInfo.bout_count)
-  return bout_count_;
-}
-inline void TableUserInfo::set_bout_count(::google::protobuf::int32 value) {
-  set_has_bout_count();
-  bout_count_ = value;
-  // @@protoc_insertion_point(field_set:game.base.TableUserInfo.bout_count)
-}
-
-// optional int32 bind_timestamp = 4;
-inline bool TableUserInfo::has_bind_timestamp() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void TableUserInfo::set_has_bind_timestamp() {
-  _has_bits_[0] |= 0x00000008u;
-}
 inline void TableUserInfo::clear_has_bind_timestamp() {
-  _has_bits_[0] &= ~0x00000008u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void TableUserInfo::clear_bind_timestamp() {
   bind_timestamp_ = 0;

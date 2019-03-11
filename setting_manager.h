@@ -10,11 +10,11 @@ public:
     // 游戏ID
     GameID GetGameID() const;
 
-    // 机器人账号配置
-    const RobotSettingMap& GetRobotSettingMap() const;
+    // 机器人账号配置 支持热更新，不提供受mutex保护的引用，返回copy
+    RobotSettingMap GetRobotSettingMap() const;
 
-    // 机器人房间配置
-    const RoomSettingMap& GetRoomSettingMap() const;
+    // 机器人房间配置 支持热更新，不提供受mutex保护的引用，返回copy
+    RoomSettingMap GetRoomSettingMap() const;
 
     // 获得指定机器人配置
     int GetRobotSetting(UserID userid, RobotSetting& robot_setting) const;

@@ -37,8 +37,8 @@
 * 开启Application Veritfy 检查堆错误
 * resharper pvs-studio 静态分析 
 * DEBUG_NEW 检测内存泄露
-* Terminal 中输入'M' 打印进程使用的资源信息
-* Terminal 中输入'S' 打印业务类数据状态 SnapShotObjectStatus
+* Terminal 中输入'P' 打印进程使用的资源信息
+* Terminal 中输入'S' 打印业务类数据状态
 * Terminal 中输入'M' 打印发送消息数
 * TRACE_STACK 打印调用栈
 * TRACE_ASSERT 开启严格调试模式, 错误时打印调用栈TRACE_STACK, 并assert断言
@@ -46,6 +46,18 @@
 * LOG_ROUTE 业务流程日志
 * ERR_STR(x) 详细错误码信息
 * REQ_STR(x) 协议定义
+
+# 热更新 robot.setting
+* 只有部分字段提供热更新
+* wait_time
+* count_per_table
+* main_interval
+* deposit_interval
+* deposit_active_id 
+* deposit_gain_url
+* deposit_back_url
+* deposit_gain_amount
+* deposit_back_amount
 
 # 整体设计
 * 数据层（配置，网络，运行状态）-> 资源管理类（线程安全，网络异常，数据同步）->具体业务（机器人自定义调度）

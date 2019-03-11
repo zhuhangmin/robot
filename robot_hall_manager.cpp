@@ -9,7 +9,7 @@
 
 int RobotHallManager::Init() {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG_INFO_FUNC("[SVR START]");
+    LOG_INFO_FUNC("[START]");
     if (kCommSucc != CheckNotInnerThread()) {
         ASSERT_FALSE_RETURN
     }
@@ -143,7 +143,7 @@ int RobotHallManager::SetLogonStatus(const UserID& userid, const HallLogonStatus
 }
 
 int RobotHallManager::ThreadNotify() {
-    LOG_INFO("[SVR START] RobotHallManager Notify thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[START] RobotHallManager Notify thread [%d] started", GetCurrentThreadId());
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
@@ -190,9 +190,6 @@ int RobotHallManager::OnDisconnect() {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_THREAD(notify_thread_);
     LOG_WARN("OnDisconnect Hall");
-    if (kCommSucc != ResetDataWithLock()) {
-        ASSERT_FALSE_RETURN;
-    }
     return kCommSucc;
 }
 
@@ -229,7 +226,7 @@ int RobotHallManager::SendHallPulse() {
 }
 
 int RobotHallManager::ThreadTimer() {
-    LOG_INFO("[SVR START] RobotHallManager KeepAlive thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("[START] RobotHallManager KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -346,7 +343,8 @@ int RobotHallManager::SendGetAllRoomDataWithLock() {
         const auto roomid = kv.first;
         if (kCommSucc != SendGetRoomDataWithLock(roomid)) {
             LOG_ERROR("cannnot get hall room data  = [%d]", roomid);
-            ASSERT_FALSE_RETURN;
+            ASSERT_FALSE;
+            continue;
         }
     }
 
@@ -390,7 +388,7 @@ int RobotHallManager::GetLogonStatusWithLock(const UserID& userid, HallLogonStat
     CHECK_USERID(userid);
     const auto& iter = logon_status_map_.find(userid);
     if (iter == logon_status_map_.end()) {
-        ASSERT_FALSE_RETURN;
+        return kCommFaild;
     }
 
     status = iter->second;
@@ -432,13 +430,13 @@ int RobotHallManager::ResetDataWithLock() {
     room_data_map_.clear();
     timeout_count_ = 0;
     need_reconnect_ = true;
-    return kCommSucc;
+    return kCommFaild;
 }
 
 int RobotHallManager::KeepConnection() {
     std::lock_guard<std::mutex> lock(mutex_);
     if (need_reconnect_) {
-        return InitDataWithLock();
+        return ResetDataWithLock();
     }
     return kCommSucc;
 }

@@ -16,7 +16,7 @@ public:
     BOOL IsConnected() const;
 
     // 进入游戏
-    int SendEnterGame(const RoomID& roomid);
+    int SendEnterGame(const RoomID& roomid, const TableNO& tableno);
 
     // 发送心跳
     int SendGamePulse();

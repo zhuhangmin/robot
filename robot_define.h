@@ -30,7 +30,7 @@ const int MS_PER_SECOND = 1000;  // ms
 
 const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间 4
 
-const int PulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
+const int PulseInterval = 10 * MS_PER_SECOND; // 心跳时间间隔 60
 
 const int RobotTimerInterval = 1 * MS_PER_SECOND; // 轮询1秒, 间隔 60
 
@@ -111,11 +111,18 @@ public:
 
 struct RoomSetiing {
     RoomID roomid;
-    int count;
+    int wait_time;
+    int count_per_table;
 };
 
 struct HallRoomData {
     ROOM	 room;
+};
+
+struct NeedUser {
+    UserID userid;
+    TableNO tableno;
+    RoomID roomid;
 };
 
 // 单例模板类
@@ -183,6 +190,8 @@ using HallRoomDataMap = std::unordered_map<RoomID, HallRoomData>;
 using DepositMap = std::unordered_map<UserID, DepositType>;
 
 using RoomNeedCountMap = std::unordered_map<RoomID, NeedCount>;
+
+using RoomNeedUserMap = std::unordered_map<RoomID, NeedUser>;
 
 using SendMsgCountMap = std::unordered_map<RequestID, uint64_t>;
 

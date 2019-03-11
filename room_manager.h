@@ -8,10 +8,21 @@ class RoomManager : public ISingletion<RoomManager> {
 
 public:
     int GetRoom(const RoomID& roomid, RoomPtr& room) const;
-    const GameRoomMap& GetAllRooms() const;
+
     int AddRoom(const RoomID& roomid, const RoomPtr &room);
 
     int Reset();
+
+    int GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info);
+
+    int GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count);
+
+    const GameRoomMap& GetAllRooms() const;
+
+private:
+    int GetRoomWithLock(const RoomID& roomid, RoomPtr& room) const;
+
+    int GetTableWithLock(const RoomID roomid, const TableNO& tableno, TablePtr& table) const;
 
 public:
     // ¶ÔÏó×´Ì¬¿ìÕÕ

@@ -36,7 +36,7 @@ CWinApp				theApp;
 
 HINSTANCE			g_hResDll = NULL;
 
-extern void Test(char cmd);
+extern void Test(char cmd, AppDelegate& app_delegate);
 
 void WriteMiniDMP(struct _EXCEPTION_POINTERS *pExp) {
     CString   strDumpFile;
@@ -65,7 +65,7 @@ LONG WINAPI ExpFilter(struct _EXCEPTION_POINTERS *pExp) {
 int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     TCLOG_INIT();
     LOG_INFO("\n ===================================SERVER START===================================");
-    LOG_INFO("[SVR START] BEG");
+    LOG_INFO("[START] BEG");
 
     //绑定单核运行 避免机器人本身消耗所有CPU
     BOOL success = SetProcessAffinityMask(GetCurrentProcess(), 0x00000001);
@@ -76,7 +76,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     auto nRetCode = EXIT_SUCCESS;
     SetUnhandledExceptionFilter(ExpFilter);
 
-    LOG_INFO("[SVR START] AFX BEG");
+    LOG_INFO("[START] AFX BEG");
     WSADATA wsa;
     WSAStartup(MAKEWORD(2, 2), &wsa);
     // 初始化 MFC 并在失败时显示错误
@@ -85,16 +85,16 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
-    LOG_INFO("[SVR START] AFX END");
+    LOG_INFO("[START] AFX END");
 
 
-    LOG_INFO("[SVR START] UWL BEG");
+    LOG_INFO("[START] UWL BEG");
     if (!UwlInit()) {
         MessageBox(NULL, _T("Fatal error: UWL initialization failed!\n"), "", MB_ICONSTOP);
         nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
-    LOG_INFO("[SVR START] UWL END");
+    LOG_INFO("[START] UWL END");
 
     DWORD dwTraceMode = UWL_TRACE_DATETIME | UWL_TRACE_FILELINE | UWL_TRACE_NOTFULLPATH
         | UWL_TRACE_FORCERETURN | UWL_TRACE_CONSOLE;
@@ -105,17 +105,17 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 
     UwlRegSocketWnd();
 
-    LOG_INFO("[SVR START] AFX SOCKET BEG");
+    LOG_INFO("[START] AFX SOCKET BEG");
     if (!AfxSocketInit()) {
         MessageBox(NULL, _T("Fatal error: Failed to initialize sockets!\n"), "", MB_ICONSTOP);
         nRetCode = EXIT_FAILURE;
         return nRetCode;
     }
-    LOG_INFO("[SVR START] AFX SOCKET END");
+    LOG_INFO("[START] AFX SOCKET END");
 
 #ifdef UWL_SERVICE
 
-    LOG_INFO("[SVR START] SERVICE BEG");
+    LOG_INFO("[START] SERVICE BEG");
     TCHAR szIniFile[MAX_PATH] = {0};
     TCHAR szExeName[MAX_PATH] = {0};
     lstrcpy(szExeName, argv[0]);
@@ -152,18 +152,18 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     nRetCode = MainService.m_Status.dwWin32ExitCode;
 
 #else
-    LOG_INFO("[SVR START] MainServer BEG");
-    AppDelegate MainServer;
+    LOG_INFO("[START] AppDelegate  BEG");
+    AppDelegate app_delegate;
 
-    if (kCommSucc != MainServer.Init()) {
+    if (kCommSucc != app_delegate.Init()) {
         LOG_ERROR("server initialize failed!");
         UwlTrace("server initialize failed!");
-        MainServer.Term();
+        app_delegate.Term();
         return -1;
     }
 
-    LOG_INFO("[SVR START] MainServer END");
-    LOG_INFO("[SVR START] END");
+    LOG_INFO("[START] AppDelegate END");
+    LOG_INFO("[START] END");
 
     UwlTrace("Type 'q' when you want to exit. ");
     TCHAR ch;
@@ -171,12 +171,12 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
         ch = _getch();
         ch = toupper(ch);
 #ifdef _DEBUG
-        Test(ch);
+        Test(ch, app_delegate);
 #endif
 
     } while (ch != 'Q');
 
-    MainServer.Term();
+    app_delegate.Term();
 
     nRetCode = EXIT_SUCCESS;
 #endif
@@ -195,7 +195,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
 }
 
 // TEST CASE
-void Test(char cmd) {
+extern void Test(char cmd, AppDelegate& app_delegate) {
     if (cmd == 'S') {
         LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
         SettingMgr.SnapShotObjectStatus();
@@ -272,5 +272,15 @@ void Test(char cmd) {
         LOG_INFO("-------------[MSG COUNT TEST END]-------------");
     }
 
+
+    if (cmd == 'A') {
+        LOG_INFO("-------------[ADD ROBOT TEST BEG]-------------");
+        auto userid = 685555;
+        auto roomid = 7972;
+        auto tableno = 1;
+        app_delegate.TestLogonHall(userid);
+        app_delegate.SendTestRobot(userid, roomid, tableno);
+        LOG_INFO("-------------[ADD ROBOT TEST END]-------------");
+    }
 
 }

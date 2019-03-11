@@ -43,10 +43,9 @@ message User
 
 message TableUserInfo
 {
-	optional int32 userid			= 1;			
-	optional int32 offline_count	= 2;	// 断线次数
-	optional int32 bout_count		= 3;	// 玩家在桌子上的对局次数
-	optional int32 bind_timestamp	= 4;	// 玩家上桌的时间	
+	optional int32 userid			= 1;
+	optional int32 user_type		= 2;	// 用户类型	
+	optional int32 bind_timestamp	= 3;	// 用户上桌的时间	
 }
 
 message ChairInfo
