@@ -15,12 +15,15 @@ int Table::BindPlayer(const UserPtr &user) {
     CHECK_USER(user);
     const auto userid = user->get_user_id();
     const auto chairno = user->get_chair_no();
-    chairs_[chairno].set_userid(userid);
-    chairs_[chairno].set_chair_status(kChairWaiting);
+    CHECK_CHAIRNO(chairno);
+    chairs_[chairno-1].set_userid(userid);
+    chairs_[chairno-1].set_chair_status(kChairWaiting);
+    chairs_[chairno-1].set_bind_timestamp(std::time(nullptr));
 
     TableUserInfo userinfo;
     userinfo.set_userid(userid);
     userinfo.set_user_type(user->get_user_type());
+    userinfo.set_bind_timestamp(std::time(nullptr));
     table_users_[userid] = userinfo;
 
     return kCommSucc;
@@ -31,6 +34,7 @@ int Table::BindLooker(const UserPtr &user) {
     TableUserInfo userinfo;
     userinfo.set_userid(user->get_user_id());
     userinfo.set_user_type(user->get_user_type());
+    userinfo.set_bind_timestamp(std::time(nullptr));
     table_users_[user->get_user_id()] = userinfo;
     return kCommSucc;
 }
@@ -54,12 +58,25 @@ int Table::UnbindPlayer(const int& userid) {
     CHECK_CHAIRNO(chairno);
     chairs_[chairno - 1].set_userid(0);
     chairs_[chairno - 1].set_chair_status(kChairWaiting);
+    chairs_[chairno - 1].set_bind_timestamp(0);
     return kCommSucc;
 }
 
 int Table::UnbindLooker(const int& userid) {
     CHECK_USERID(userid);
     table_users_.erase(userid);
+    return kCommSucc;
+}
+
+int Table::StartGame() {
+    // ÉèÖÃ×ÀÒÎ×´Ì¬
+    set_table_status(kTablePlaying);
+    for (int i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
+        if (chairs_.at(i).get_userid() <= 0) {
+            continue;
+        }
+        chairs_.at(i).set_chair_status(kChairPlaying);
+    }
     return kCommSucc;
 }
 
@@ -83,9 +100,11 @@ int Table::GetRobotCount(int& count) {
             if (table_users_.find(userid) == table_users_.end()) {
                 ASSERT_FALSE_RETURN;
             }
-            if (kUserRobot == table_users_[userid].get_user_type()) {
+
+            if (IS_BIT_SET(table_users_[userid].get_user_type(), kUserRobot)) {
                 ++count;
             }
+
         }
 
     }
@@ -236,7 +255,8 @@ int Table::SnapShotObjectStatus() {
 
     for (auto index = 0; index < kMaxChairCountPerTable; index++) {
         auto chairinfo = chairs_[index];
-        LOG_INFO("chair userid [%d] status [%d][%s]", chairinfo.get_userid(), chairinfo.get_chair_status(), CHAIR_STATUS_STR(chairinfo.get_chair_status()));
+        auto chairno = index + 1;
+        LOG_INFO("chairno [%d] userid [%d] status [%d][%s]", chairno, chairinfo.get_userid(), chairinfo.get_chair_status(), CHAIR_STATUS_STR(chairinfo.get_chair_status()));
     }
 
     LOG_INFO("table_users size [%d]", table_users_.size());
@@ -245,10 +265,9 @@ int Table::SnapShotObjectStatus() {
         auto userid = tableinfo.get_userid();
         auto type = tableinfo.get_user_type();
         auto timestamp = tableinfo.get_bind_timestamp();
-        auto date = RobotUtils::TimeStampToDate(timestamp).c_str();
 
-        LOG_INFO("userid [%d] user_type [%d][%s] bind_timestamp [%I64d][%s]",
-                 userid, type, USER_TYPE_STR(type), timestamp, date);
+        LOG_INFO("\t userid [%d] user_type [0x%x][%s] bind_timestamp [%d]",
+                 userid, type, USER_TYPE_STR(type), timestamp);
     }
 
     return kCommSucc;

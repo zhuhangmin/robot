@@ -54,9 +54,53 @@ int RoomManager::GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tabl
     return kCommSucc;
 }
 
+int RoomManager::GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    TablePtr table;
+    if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    auto all_users = table->GetPlayerCount();
+
+    auto robot_users = 0;
+    if (kCommSucc != table->GetRobotCount(count)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    count = all_users - robot_users;
+    if (count < 0) ASSERT_FALSE_RETURN;
+    return kCommSucc;
+}
+
 const GameRoomMap& RoomManager::GetAllRooms() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return rooms_;
+}
+
+int RoomManager::IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    TablePtr table;
+    if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    if (kTablePlaying == table->get_table_status()) {
+        result = true;
+    }
+    result = false;
+    return kCommSucc;
+}
+
+int RoomManager::GetMiniPlayers(const RoomID& roomid, int& mini) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    RoomPtr room;
+    if (kCommSucc != GetRoomWithLock(roomid, room)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    mini = room->get_min_playercount_per_table();
+    return kCommSucc;
 }
 
 int RoomManager::GetRoomWithLock(const RoomID& roomid, RoomPtr& room) const {
@@ -68,7 +112,7 @@ int RoomManager::GetRoomWithLock(const RoomID& roomid, RoomPtr& room) const {
     return kCommSucc;
 }
 
-int RoomManager::GetTableWithLock(const RoomID roomid, const TableNO& tableno, TablePtr& table) const {
+int RoomManager::GetTableWithLock(const RoomID& roomid, const TableNO& tableno, TablePtr& table) const {
     RoomPtr room;
     if (kCommSucc != GetRoomWithLock(roomid, room)) {
         ASSERT_FALSE_RETURN;
@@ -91,3 +135,4 @@ int RoomManager::SnapShotObjectStatus() {
 
     return kCommSucc;
 }
+

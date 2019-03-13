@@ -11,7 +11,7 @@
 #include "room_manager.h"
 
 int AppDelegate::InitLanuch() const {
-    LOG_INFO_FUNC("[START]");
+    LOG_INFO_FUNC("\t[START]");
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     TCHAR szFullName[MAX_PATH];
@@ -27,16 +27,16 @@ int AppDelegate::InitLanuch() const {
 
     g_nClientID = GetPrivateProfileInt(_T("listen"), _T("clientid"), 0, g_szIniFile);
     if (0 == g_nClientID) {
-        LOG_ERROR("[START] invalid clientid 0!");
+        LOG_ERROR("\t[START] invalid clientid 0!");
         ASSERT_FALSE_RETURN;
 
     }
-    LOG_INFO("[START] clientid = [%d]", g_nClientID);
+    LOG_INFO("\t[START] clientid = [%d]", g_nClientID);
     return kCommSucc;
 }
 
 int AppDelegate::Init() {
-    LOG_INFO_FUNC("[START]");
+    LOG_INFO_FUNC("\t[START]");
     if (S_FALSE == CoInitialize(NULL))
         ASSERT_FALSE_RETURN;
 
@@ -101,6 +101,12 @@ int AppDelegate::Init() {
     // 其他线程构建业务会出现线程竞争问题
     main_timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
 
+    // 当前数据状态
+    SettingMgr.BriefInfo();
+    RobotMgr.BriefInfo();
+    HallMgr.BriefInfo();
+    UserMgr.BriefInfo();
+
     // 初始化完毕
     inited_ = true;
     return kCommSucc;
@@ -122,14 +128,14 @@ int AppDelegate::Term() {
     if (g_hExitServer) { CloseHandle(g_hExitServer); g_hExitServer = NULL; }
 
     CoUninitialize();
-    LOG_INFO_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT]");
     LOG_INFO("\n ===================================SERVER EXIT=================================== \n");
     return kCommSucc;
 
 }
 
 int AppDelegate::ThreadMainProc() {
-    LOG_INFO("[START] main timer thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] main timer thread [%d] started", GetCurrentThreadId());
 
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetMainsInterval());
@@ -137,11 +143,19 @@ int AppDelegate::ThreadMainProc() {
             break;
         }
         if (WAIT_TIMEOUT == dwRet) {
-            MainProcess();
+            BOOL is_connected = true;
+            if (kCommSucc != GameMgr.IsConnected(is_connected)) {
+                continue;
+            }
+
+            if (is_connected) {
+                MainProcess();
+            }
+
         }
     }
 
-    LOG_INFO("[EXIT ROUTINE] main timer thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] main timer thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -154,7 +168,7 @@ int AppDelegate::MainProcess() {
     }
 
     if (need_user_map.empty()) {
-        LOG_INFO("NO NEED TO ROUTE ROBOT");
+        //LOG_INFO("NO NEED TO ROUTE ROBOT");
         return kCommSucc;
     }
 
@@ -292,49 +306,32 @@ int AppDelegate::GetRandomUserIDNotInGame(UserID& random_userid) const {
     return kCommSucc;
 }
 
-//TODO 当主循环MainProces时间小于机器人配桌等待时间应判断是否有机器人已经入桌
-//TODO 判断桌子状态 和 桌子上的人 和 机器人数量
-//TODO 延迟误差 如果一个玩家在一个主循环刚刚开始时进入，需要等待到下个主循环
-//TODO 缩小主循环可以减少误差，但要注意多个机器人上同一个桌
 int AppDelegate::GetRoomNeedUserMap(UserMap& need_user_map) {
-    const int now = time(nullptr);
+    const int now = std::time(nullptr);
     const auto room_setting_map = SettingMgr.GetRoomSettingMap();
 
-    //获取真实玩家集合
-    //TODO OFFICIAL
-    /*UserMap normal_user_map;
-    if (kCommSucc != UserMgr.GetNormalUserMap(normal_user_map)) {
-    ASSERT_FALSE_RETURN;
-    }*/
-
-    // TODO TEST ONLY
-    UserMap normal_user_map;
-    if (kCommSucc != UserMgr.GetRobotUserMap(normal_user_map)) {
+    UserMap filter_user_map;
+    if (kCommSucc != GetWaittingUser(filter_user_map)) {
         ASSERT_FALSE_RETURN;
     }
-    // TODO TEST ONLY
 
-    if (normal_user_map.empty()) return kCommSucc;
+    if (filter_user_map.empty()) {
+        return kCommSucc;
+    }
 
+    // 根据配置判断是否需要派机器人
     for (auto& kv: room_setting_map) {
         const auto roomid = kv.first;
         const auto setting = kv.second;
         const auto wait_time = setting.wait_time; // seconds
         const auto count_per_table = setting.count_per_table;
 
-        RoomPtr room;
-        if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
-            ASSERT_FALSE;
-            continue;
-        }
-
-        //判断每个玩家的等待时间，超过设计等待阈值的添加匹配机器人
-        for (const auto& kv : normal_user_map) {
+        for (const auto& kv : filter_user_map) {
             const auto userid = kv.first;
             const auto user = kv.second;
             const auto tableno = user->get_table_no();
 
-            //已经在桌上的机器人是否达到了设计数量
+            // 判断桌上机器人是否达到了配置数量 
             auto robot_count_on_chair = 0;
             if (kCommSucc != RoomMgr.GetRobotCountOnChairs(roomid, tableno, robot_count_on_chair)) {
                 ASSERT_FALSE;
@@ -342,40 +339,90 @@ int AppDelegate::GetRoomNeedUserMap(UserMap& need_user_map) {
             }
 
             if (robot_count_on_chair >= count_per_table) {
-                LOG_INFO("reach robot count roomid [%d], tableno [%d], already [%d], design [%d]",
+                LOG_INFO("in count down process reach robot count roomid [%d], tableno [%d], already [%d], design [%d]",
                          roomid, tableno, robot_count_on_chair, count_per_table);
                 continue;
             }
 
-
+            // 判断玩家等待时间，超过配置等待阈值
             ChairInfo info;
             if (kCommSucc != RoomMgr.GetChairInfo(roomid, tableno, userid, info)) {
                 ASSERT_FALSE;
                 continue;
             }
-            int bind = info.get_bind_timestamp();
-            if (0 == bind) {
-                //TODO OFFICIAL
-                /*    LOG_WARN("userid [%d] tableno [%d] roomid [%d] bind 0", userid, tableno, roomid);
-                    ASSERT_FALSE;
-                    continue;*/
 
-                // TEST ONLY
-                bind = 1552307211;
-                // TEST ONLY
+            int bind = info.get_bind_timestamp();
+            if (bind <= 0) {
+                assert(false);
+                LOG_WARN("userid [%d] tableno [%d] roomid [%d] bind 0", userid, tableno, roomid);
+                ASSERT_FALSE;
+                continue;
             }
+
             int elapse = now - bind;
             if (elapse >= wait_time) {
-                auto now_date = RobotUtils::TimeStampToDate(now);
-                auto bind_date = RobotUtils::TimeStampToDate(bind);
-                LOG_INFO("userid [%d] now [%d][%s] bind [%d][%s] elapse [%d]",
-                         userid, now, now_date.c_str(), bind, bind_date.c_str(), elapse);
-
+                LOG_INFO("userid [%d] now [%d] bind [%d] elapse [%d]", userid, now, bind, elapse);
                 need_user_map[userid] = user;
             }
         }
     }
 
+    return kCommSucc;
+}
+
+int AppDelegate::GetWaittingUser(UserMap& filter_user_map) {
+    // 获取真实玩家集合 
+    UserMap normal_user_map;
+    if (kCommSucc != UserMgr.GetNormalUserMap(normal_user_map)) {
+        ASSERT_FALSE_RETURN;
+    }
+    if (normal_user_map.empty()) return kCommSucc;
+
+    for (const auto& kv : normal_user_map) {
+        const auto userid = kv.first;
+        const auto user = kv.second;
+        const auto tableno = user->get_table_no();
+        const auto roomid = user->get_room_id();
+
+        // 过滤已开局
+        bool is_playing = true;
+        if (kCommSucc != RoomMgr.IsTablePlaying(roomid, tableno, is_playing)) {
+            continue;
+        }
+        if (is_playing) continue;
+
+        // 过滤非等待玩家
+        ChairInfo info;
+        if (kCommSucc != RoomMgr.GetChairInfo(roomid, tableno, userid, info)) {
+            ASSERT_FALSE;
+            continue;
+        }
+
+        if (kChairWaiting != info.get_chair_status()) {
+            continue;
+        }
+
+        // 过滤桌已经达到了最小开桌人数
+        auto normal_count_on_chair = 0;
+        if (kCommSucc != RoomMgr.GetNormalCountOnChairs(roomid, tableno, normal_count_on_chair)) {
+            ASSERT_FALSE;
+            continue;
+        }
+
+        auto min_playercount_per_table = 0;
+        if (kCommSucc != RoomMgr.GetMiniPlayers(roomid, min_playercount_per_table)) {
+            ASSERT_FALSE;
+            continue;
+        }
+
+        if (normal_count_on_chair >= min_playercount_per_table) {
+            LOG_INFO("reach  roomid[%d], tableno[%d], normal_count_on_chair[%d], min_playercount_per_table[%d]",
+                     roomid, tableno, normal_count_on_chair, min_playercount_per_table);
+            continue;
+        }
+
+        filter_user_map[userid] = user;
+    }
     return kCommSucc;
 }
 
@@ -393,7 +440,7 @@ int AppDelegate::DepositGainAll() {
 }
 
 int AppDelegate::ConnectHallForAllRobot() {
-    LOG_INFO_FUNC("[START]");
+    LOG_INFO_FUNC("\t[START]");
     const auto robot_map = SettingMgr.GetRobotSettingMap();
     for (auto& kv : robot_map) {
         auto userid = kv.first;
@@ -417,7 +464,7 @@ int AppDelegate::ConnectHallForAllRobot() {
 }
 
 int AppDelegate::ConnectGameForRobotInGame() {
-    LOG_INFO_FUNC("[START]");
+    LOG_INFO_FUNC("\t[START]");
     const auto users = UserMgr.GetAllUsers();
     for (auto& kv : users) {
         auto userid = kv.first;
@@ -433,8 +480,7 @@ int AppDelegate::ConnectGameForRobotInGame() {
         }
 
         auto user_tpye = user->get_user_type();
-        if (kUserRobot != user_tpye) {
-            ASSERT_FALSE;
+        if (!IS_BIT_SET(user_tpye, kUserRobot)) {
             continue;
         }
 

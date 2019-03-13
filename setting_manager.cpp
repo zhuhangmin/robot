@@ -5,25 +5,25 @@
 
 int SettingManager::Init() {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG_INFO_FUNC("[START]");
+    LOG_INFO_FUNC("\t[START]");
+    hot_update_thread_.Initial(std::thread([this] {this->ThreadHotUpdate(); }));
+
     if (kCommSucc != InitSettingWithLock()) {
         LOG_ERROR("InitSetting() failed");
         ASSERT_FALSE_RETURN;
     }
-
-    hot_update_thread_.Initial(std::thread([this] {this->ThreadHotUpdate(); }));
 
     return kCommSucc;
 }
 
 int SettingManager::Term() {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG_INFO_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
 }
 
 int SettingManager::ThreadHotUpdate() {
-    LOG_INFO("[START] SettingManager HotUpdate thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] hotupdate thread [%d] started", GetCurrentThreadId());
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, HotUpdateInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -34,7 +34,7 @@ int SettingManager::ThreadHotUpdate() {
             InitSettingWithLock();
         }
     }
-    LOG_INFO("[EXIT ROUTINE] SettingManager HotUpdate thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] SettingManager HotUpdate thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 

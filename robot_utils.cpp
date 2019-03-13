@@ -49,9 +49,8 @@ int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const
         return kOperationFailed;
     }
 
-    // TODO    GR_RS_PULSE 
-    if (requestid != GR_GAME_PLUSE) {
-        LOG_INFO("connection [%x] [SEND] requestid [%d] [%s]", connection.get(), requestid, REQ_STR(requestid));
+    if (requestid != GR_RS_PULSE) {
+        LOG_INFO("[%x] [SEND] [%d] [%s]", connection.get(), requestid, REQ_STR(requestid));
     }
 
     const auto responseid = response.head.nRequest;
@@ -259,7 +258,7 @@ int RobotUtils::TraceStack() {
 }
 
 std::string RobotUtils::ErrorCodeInfo(int code) {
-    auto error_string = "";
+    auto error_string = "???????????";
     switch (code) {
         case kCommFaild:
             error_string = "kCommFaild";
@@ -328,7 +327,7 @@ std::string RobotUtils::ErrorCodeInfo(int code) {
 }
 
 std::string RobotUtils::RequestStr(const RequestID& requestid) {
-    std::string ret_string;
+    std::string ret_string = "???????????";
     switch (requestid) {
         case GR_ENTER_NORMAL_GAME:
             ret_string = "GR_ENTER_NORMAL_GAME";
@@ -348,9 +347,8 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
         case GS_START_GAME:
             ret_string = "GR_RS_START_GAME";
             break;
-            // TODO    GR_RS_PULSE 
-        case GR_GAME_PLUSE:
-            ret_string = "GR_GAME_PLUSE";
+        case GR_RS_PULSE:
+            ret_string = " GR_RS_PULSE";
             break;
         case GR_SWITCH_TABLE:
             ret_string = "GR_SWITCH_TABLE";
@@ -384,7 +382,6 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
             break;
         case GN_GAME_START:
             ret_string = "GN_GAME_START";
-            break;
             break;
         case GN_PLAYER_GIVEUP:
             ret_string = "GN_PLAYER_GIVEUP";
@@ -457,7 +454,7 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
 }
 
 std::string RobotUtils::UserTypeStr(const int& type) {
-    std::string ret_string;
+    std::string ret_string = "???????????";
     switch (type) {
         case kUserNormal:
             ret_string = "kUserNormal";
@@ -471,6 +468,9 @@ std::string RobotUtils::UserTypeStr(const int& type) {
         case kUserRobot:
             ret_string = "kUserRobot";
             break;
+        case USER_TYPE_HANDPHONE:
+            ret_string = "USER_TYPE_HANDPHONE";
+            break;
         default:
             break;
     }
@@ -479,7 +479,7 @@ std::string RobotUtils::UserTypeStr(const int& type) {
 }
 
 std::string RobotUtils::TableStatusStr(const int& status) {
-    std::string ret_string;
+    std::string ret_string = "???????????";
     switch (status) {
         case kTablePlaying:
             ret_string = "kTablePlaying";
@@ -495,7 +495,7 @@ std::string RobotUtils::TableStatusStr(const int& status) {
 }
 
 std::string RobotUtils::ChairStatusStr(const int& status) {
-    std::string ret_string;
+    std::string ret_string = "???????????";
     switch (status) {
         case kChairPlaying:
             ret_string = "kChairPlaying";

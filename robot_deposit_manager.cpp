@@ -7,7 +7,7 @@
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 int RobotDepositManager::Init() {
-    LOG_INFO_FUNC("[START]");
+    LOG_INFO_FUNC("\t[START]");
     deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
     return kCommSucc;
 }
@@ -15,12 +15,12 @@ int RobotDepositManager::Init() {
 
 int RobotDepositManager::Term() {
     deposit_timer_thread_.Release();
-    LOG_INFO_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
 }
 
 int RobotDepositManager::ThreadDeposit() {
-    LOG_INFO("[START] RobotDepositManager Deposit thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] deposit thread [%d] started", GetCurrentThreadId());
 
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetDepositInterval());
@@ -56,7 +56,7 @@ int RobotDepositManager::ThreadDeposit() {
         }
     }
 
-    LOG_INFO("[EXIT ROUTINE] RobotDepositManager Deposit thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] deposit thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 

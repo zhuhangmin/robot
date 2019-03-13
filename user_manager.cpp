@@ -77,7 +77,7 @@ int UserManager::GetRobotCountInRoom(const RoomID& roomid, int& count) const {
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         if (user->get_room_id() == roomid) {
-            if (user->get_user_type() == kUserRobot) {
+            if (IS_BIT_SET(user->get_user_type(), kUserRobot)) {
                 count++;
             }
         }
@@ -103,7 +103,8 @@ int UserManager::GetNormalUserMap(UserMap& normal_user_map) const {
     std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
-        if (user->get_user_type() == kUserNormal) {
+        auto user_tpye = user->get_user_type();
+        if (!IS_BIT_SET(user_tpye, kUserRobot)) {
             normal_user_map[kv.first] = kv.second;
         }
     }

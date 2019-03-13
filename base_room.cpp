@@ -193,6 +193,38 @@ int BaseRoom::Player2Looker(const UserPtr& user) {
     return kCommSucc;
 }
 
+int BaseRoom::SwitchTable(const UserPtr& user, const TableNO& tableno) {
+    const auto userid = user->get_user_id();
+    if (kCommSucc != UnbindUser(userid, tableno)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    if (kCommSucc != BindPlayer(user)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    return kCommSucc;
+}
+
+int BaseRoom::StartGame(const TableNO& tableno) {
+    TablePtr table;
+    if (kCommSucc != GetTable(tableno, table)) {
+        LOG_WARN("GetTable faild. tableno  [%d]", tableno);
+        ASSERT_FALSE_RETURN;
+    }
+
+    if (!IsValidTable(table->get_table_no())) {
+        LOG_WARN("Get table [%d] faild", tableno);
+        ASSERT_FALSE_RETURN;
+    }
+
+    if (kCommSucc != table->StartGame()) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    return kCommSucc;
+}
+
 int BaseRoom::LookerEnterGame(const UserPtr &user) {
     CHECK_USER(user);
     const auto target_tableno = user->get_table_no();
@@ -207,6 +239,7 @@ int BaseRoom::LookerEnterGame(const UserPtr &user) {
         LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
         ASSERT_FALSE_RETURN;
     }
+
     if (kCommSucc != table->BindLooker(user)) {
         ASSERT_FALSE_RETURN;
     }

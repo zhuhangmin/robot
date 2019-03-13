@@ -59,6 +59,7 @@ int RobotNet::OnDisconnect() {
 }
 
 int RobotNet::ResetDataWithLock() {
+    TRACE_STACK;
     CHECK_CONNECTION(connection_);
     connection_->DestroyEx();
     timeout_count_ = 0;
@@ -68,15 +69,18 @@ int RobotNet::ResetDataWithLock() {
 
 int RobotNet::InitDataWithLock() {
     connection_ = std::make_shared<CDefSocketClient>();
+    LOG_INFO("\t[START] robot try connect game ... ip: [%s] port: [%d]", game_ip_.c_str(), game_port_);
     connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!connection_->Create(game_ip_.c_str(), game_port_, 5, 0, game_notify_thread_id_, 0, GetHelloData(), GetHelloLength())) {
-        LOG_ERROR("ConnectGame Faild! IP: [%s] Port: [%d]", game_ip_.c_str(), game_port_);
+        LOG_ERROR("\t[START] robot connect game failed! ip: [%s] port: [%d]", game_ip_.c_str(), game_port_);
         EVENT_TRACK(EventType::kErr, kCreateGameConnFailed);
         ASSERT_FALSE_RETURN;
     }
 
-    timestamp_ = time(0);
+    timestamp_ = std::time(nullptr);
     need_reconnect_ = false;
+    LOG_INFO("\t[START] robot userid [%d] token [%d] connect game ok! ip: [%s] port: [%d]",
+             userid_, connection_->GetTokenID(), game_ip_.c_str(), game_port_);
     return kCommSucc;
 }
 
@@ -155,6 +159,31 @@ int RobotNet::SendEnterGame(const RoomID& roomid, const TableNO& tableno) {
         return code;
     }
 
+    // TODO  更新桌银 防止桌银热更新 ，也可以用兜底机制实现桌银同步
+    //message EnterNormalGameResp
+    //{
+    //    optional int32 code = 1;
+    //    optional int32 flag = 2;	// 定义见EnterGameRespFlag
+    //    optional BytesData hand = 3;	// 断线续玩的时候返回自己的手牌
+    //    optional TablePlayersInfo table_players = 4;
+    //    optional int32 custom_flag = 5;	// 标记custom_data的类型
+    //    optional BytesData custom_data = 6;	// 游戏方自定义数据
+    //}
+
+    //    // 桌子及桌上玩家信息
+    //    message TablePlayersInfo
+    //{
+    //    optional int32 roomid = 1;
+    //    optional int64 room_min_deposit = 2;
+    //    optional int64 room_max_deposit = 3;
+    //    optional int32 tableno = 4;
+    //    optional int32 table_status = 5;	// 桌子状态，定义见 TableStatus
+    //    optional int64 table_min_deposit = 6;
+    //    optional int64 table_max_deposit = 7;
+    //    optional int64 base_deposit = 8;	// 基础银
+    //    repeated User players = 9;	// 桌上玩家的信息
+    //    repeated ChairInfo chairs = 10;	// 椅子信息
+    //}
     return kCommSucc;
 }
 
@@ -163,8 +192,7 @@ int RobotNet::SendGamePulse() {
     game::base::PulseReq val;
     val.set_id(userid_);
     REQUEST response = {};
-    // TODO    GR_RS_PULSE 
-    const auto result = SendGameRequestWithLock(GR_GAME_PLUSE, val, response); // 游戏心跳需要回包
+    const auto result = SendGameRequestWithLock(GR_RS_PULSE, val, response); // 游戏心跳需要回包
     if (kCommSucc != result) {
         LOG_ERROR("game send quest fail");
         ASSERT_FALSE;
@@ -180,7 +208,7 @@ int RobotNet::SendGamePulse() {
 int RobotNet::KeepConnection() {
     std::lock_guard<std::mutex> lock(mutex_);
     if (need_reconnect_) {
-        return ResetDataWithLock();
+        return InitDataWithLock();
     }
     return kCommSucc;
 }

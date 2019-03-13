@@ -116,7 +116,7 @@ public:
 
 #define LOG_INFO_FUNC(x) LOG_INFO(" %s [%s]", x, __FUNCTION__);
 
-#define LOG_ROUTE(x, roomid, tableno ,userid) LOG_INFO(" [%s] roomid [%d] tableno [%d] userid [%d] [%s]", "DISPATCH ROBOT", roomid, tableno, userid, x);
+#define LOG_ROUTE(x, roomid, tableno ,userid) LOG_INFO(" [%s] roomid [%d] tableno [%d] userid [%d] [%s]", "DISPATCH", roomid, tableno, userid, x);
 //#define LOG_ROUTE(x, roomid, tableno ,userid)
 
 #define DEBUG_USER(userid) LOG_DEBUG(" [%s] userid [%d]", __FUNCTION__, userid);

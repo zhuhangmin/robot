@@ -46,6 +46,9 @@ private:
     // 进入游戏
     int EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno);
 
+    // 过滤：获得未开桌+椅子等待 真实玩家集合
+    int GetWaittingUser(UserMap& filter_user_map);
+
 public:
     //TEST ONLY
     void SendTestRobot(const UserID& userid, const RoomID& roomid, const TableNO& tableno);

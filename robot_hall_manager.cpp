@@ -4,12 +4,13 @@
 #include "setting_manager.h"
 #include "main.h"
 #include "robot_statistic.h"
+#include "PBReq.h"
 
 //外部线程调用方法
 
 int RobotHallManager::Init() {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG_INFO_FUNC("[START]");
+    LOG_INFO_FUNC("\t[START]");
     if (kCommSucc != CheckNotInnerThread()) {
         ASSERT_FALSE_RETURN
     }
@@ -38,7 +39,7 @@ int RobotHallManager::Term() {
 
     notify_thread_.Release();
     heart_thread_.Release();
-    LOG_INFO_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
 }
 
@@ -143,7 +144,7 @@ int RobotHallManager::SetLogonStatus(const UserID& userid, const HallLogonStatus
 }
 
 int RobotHallManager::ThreadNotify() {
-    LOG_INFO("[START] RobotHallManager Notify thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] notify thread [%d] started", GetCurrentThreadId());
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
@@ -160,13 +161,16 @@ int RobotHallManager::ThreadNotify() {
             DispatchMessage(&msg);
         }
     }
-    LOG_INFO("[EXIT ROUTINE] RobotHallManager Notify thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] notify thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
 int RobotHallManager::OnHallNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size) {
     CHECK_REQUESTID(requestid);
-    LOG_INFO("HALL [RECV] requestid [%d] [%s]", requestid, REQ_STR(requestid));
+    if (requestid != PB_NOTIFY_TO_CLIENT) {
+        LOG_INFO("HALL [RECV] requestid [%d] [%s]", requestid, REQ_STR(requestid));
+    }
+
     int result = kCommSucc;
     switch (requestid) {
         case UR_SOCKET_ERROR:
@@ -226,9 +230,9 @@ int RobotHallManager::SendHallPulse() {
 }
 
 int RobotHallManager::ThreadTimer() {
-    LOG_INFO("[START] RobotHallManager KeepAlive thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] timer thread [%d] started", GetCurrentThreadId());
     while (true) {
-        const auto dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
+        const auto dwRet = WaitForSingleObject(g_hExitServer, HallPulseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
@@ -241,7 +245,7 @@ int RobotHallManager::ThreadTimer() {
             SendGetAllRoomData();
         }
     }
-    LOG_INFO("[EXIT ROUTINE] RobotHallManager KeepAlive thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] timer thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -293,7 +297,8 @@ int RobotHallManager::SendRequestWithLock(const RequestID& requestid, int& data_
     }
 
     if (requestid != GR_HALLUSER_PULSE &&
-        requestid != GR_LOGON_USER_V2) {
+        requestid != GR_LOGON_USER_V2 &&
+        requestid != GR_GET_ROOM) {
         LOG_INFO("connection [%x] [SEND] requestid [%d] [%s]", connection_.get(), requestid, REQ_STR(requestid));
     }
 
@@ -327,13 +332,14 @@ int RobotHallManager::ConnectWithLock() {
     TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
     GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof szHallSvrIP, g_szIniFile);
     auto nHallSvrPort = GetPrivateProfileInt(_T("hall_server"), _T("port"), 0, g_szIniFile);
+    LOG_INFO("\t[START] try connect hall ... ip [%s] port [%d]", szHallSvrIP, nHallSvrPort);
     connection_->InitKey(KEY_HALL, ENCRYPT_AES, 0);
     if (!connection_->Create(szHallSvrIP, nHallSvrPort, 5, 0, notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
-        LOG_ERROR("[ROUTE] ConnectHall Faild! IP: [%s] Port: [%d]", szHallSvrIP, nHallSvrPort);
+        LOG_ERROR("\t[START] connect hall faild! ip [%s] port [%d]", szHallSvrIP, nHallSvrPort);
         EVENT_TRACK(EventType::kErr, kCreateHallConnFailed);
         ASSERT_FALSE_RETURN;
     }
-    LOG_INFO("ConnectHall OK! IP: [%s] Port: [%d]", szHallSvrIP, nHallSvrPort);
+    LOG_INFO("\t[START] hall connect ok! token [%d] ip [%s] port [%d]", connection_->GetTokenID(), szHallSvrIP, nHallSvrPort);
     return kCommSucc;
 }
 

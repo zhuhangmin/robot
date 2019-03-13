@@ -30,7 +30,12 @@ const int MS_PER_SECOND = 1000;  // ms
 
 const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间 4
 
+// 游戏服务器兜底状态同步, 请勿减少时间间隔会触发后端服务器大量锁
+const int GameSyncInterval = 10 * 60 * MS_PER_SECOND; // 10 min  
+
 const int PulseInterval = 10 * MS_PER_SECOND; // 心跳时间间隔 60
+
+const int HallPulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
 
 const int RobotTimerInterval = 1 * MS_PER_SECOND; // 轮询1秒, 间隔 60
 

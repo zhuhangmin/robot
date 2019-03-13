@@ -7,6 +7,9 @@ public:
 
     int Term();
 
+    // 游戏 是否连接
+    int IsConnected(BOOL& is_connected);
+
 private:
     // 游戏 定时消息
     int ThreadTimer();
@@ -121,6 +124,9 @@ private:
 
     // 重连标签
     bool need_reconnect_{false};
+
+    // 兜底同步信息时间
+    int sync_time_stamp = {std::time(nullptr)};
 };
 
 #define GameMgr GameNetManager::Instance()

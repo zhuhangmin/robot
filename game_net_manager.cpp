@@ -8,6 +8,7 @@
 #include "room_manager.h"
 #include "user_manager.h"
 #include "robot_statistic.h"
+#include "PBReq.h"
 
 
 int GameNetManager::Init(const std::string& game_ip, const int& game_port) {
@@ -37,7 +38,7 @@ int GameNetManager::Term() {
     }
     notify_thread_.Release();
     heart_thread_.Release();
-    LOG_INFO_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
 }
 
@@ -49,7 +50,7 @@ int GameNetManager::SendRequestWithLock(const RequestID& requestid, const google
 }
 
 int GameNetManager::ThreadNotify() {
-    LOG_INFO("[START] GameNotify thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] GameNotify thread [%d] started", GetCurrentThreadId());
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
         if (UM_DATA_RECEIVED == msg.message) {
@@ -67,13 +68,16 @@ int GameNetManager::ThreadNotify() {
             DispatchMessage(&msg);
         }
     }
-    LOG_INFO("[EXIT ROUTINE] GameNotify thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] GameNotify thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
 int GameNetManager::OnNotify(const RequestID& requestid, const REQUEST &request) {
     CHECK_REQUESTID(requestid);
-    LOG_INFO("Game Info [RECV] requestid [%d] [%s]", requestid, REQ_STR(requestid));
+    if (PB_NOTIFY_TO_CLIENT != requestid) {
+        LOG_INFO("[RECV] [%d] [%s]", requestid, REQ_STR(requestid));
+    }
+
     int result = kCommSucc;
     switch (requestid) {
         case UR_SOCKET_ERROR:
@@ -92,7 +96,7 @@ int GameNetManager::OnNotify(const RequestID& requestid, const REQUEST &request)
         case GN_RS_PLAYER2LOOKER:
             result = OnPlayer2Looker(request);
             break;
-        case GN_RS_GAME_START:
+        case GN_RS_GAME_START: // 开桌 对称 GN_RS_REFRESH_RESULT 
             result = OnStartGame(request);
             break;
         case GN_RS_USER_REFRESH_RESULT:
@@ -131,7 +135,7 @@ int GameNetManager::OnDisconnect() {
 }
 
 int GameNetManager::ThreadTimer() {
-    LOG_INFO("[START] Game KeepAlive thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] Game KeepAlive thread [%d] started", GetCurrentThreadId());
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, PulseInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -139,12 +143,24 @@ int GameNetManager::ThreadTimer() {
         }
 
         if (WAIT_TIMEOUT == dwRet) {
+            // 保活
             if (kCommSucc != KeepConnection()) continue;
 
+            // 心跳
             SendPulse();
+
+            // 同步兜底
+            const int now = std::time(nullptr);
+            if (now - sync_time_stamp > GameSyncInterval) {
+                std::lock_guard<std::mutex> lock(mutex_);
+                if (kCommSucc != SendGetGameInfoWithLock()) {
+                    LOG_ERROR("SendGetGameInfo failed");
+                    ASSERT_FALSE;
+                }
+            }
         }
     }
-    LOG_INFO("[EXIT ROUTINE] Game KeepAlive thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] Game KeepAlive thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -226,7 +242,7 @@ int GameNetManager::SendGetGameInfoWithLock() {
 int GameNetManager::InitDataWithLock() {
     CHECK_CONNECTION(connection_);
     if (kCommSucc != ConnectWithLock(game_ip_, game_port_)) {
-        LOG_ERROR("[ROUTE] ConnectGame Faild! IP: [%s] Port: [%d]", game_ip_.c_str(), game_port_);
+        LOG_ERROR("\t[START] ConnectGame Faild! IP: [%s] Port: [%d]", game_ip_.c_str(), game_port_);
         ASSERT_FALSE_RETURN;
     }
 
@@ -261,8 +277,7 @@ int GameNetManager::SendPulse() {
     REQUEST response = {};
 
     //@zhuhangmin 大厅模板需要支持 清僵尸机制
-    // TODO    GR_RS_PULSE 
-    const auto result = RobotUtils::SendRequestWithLock(connection_, GR_GAME_PLUSE, val, response); // 游戏心跳需要回包
+    const auto result = RobotUtils::SendRequestWithLock(connection_, GR_RS_PULSE, val, response); // 游戏心跳需要回包
 
     if (kCommSucc != result) {
         if (result != kConnectionTimeOut) {
@@ -297,36 +312,63 @@ int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
 
     const auto& room_data = ntf.room_data();
     const auto roomid = room_data.roomid();
+    const auto tableno = ntf.tableno();
+    const auto userid = ntf.userid();
 
-    //TODO ntf 更新桌银限制
-    //optional int64 min_deposit = 6;	// 当前桌 最小银子数
-    //optional int64 max_deposit = 7;	// 当前桌 最大银子数
-    //optional int64 base_deposit = 8;	// 当前桌 基础银
-
-    //V614 The 'user' smart pointer is utilized immediately after being declared or reset.
-    //It is suspicious that no value was assigned to it.
     auto user = std::make_shared<User>();
-    user->set_user_id(ntf.userid());
-    user->set_table_no(ntf.tableno());
+    user->set_user_id(userid);
+    user->set_room_id(roomid);
+    user->set_table_no(tableno);
     user->set_chair_no(ntf.chairno());
     user->set_user_type(ntf.user_type());
-    user->set_room_id(roomid);
 
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
+    // 更新用户
+    if (kCommSucc != UserMgr.AddUser(userid, user)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    //更新房间
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
 
-    const auto ret = base_room->PlayerEnterGame(user);
+    const auto options = room_data.options();
+    const auto configs = room_data.configs();
+    const auto manages = room_data.manages();
+    const auto max_table_cout = room_data.max_table_cout();
+    const auto chaircount_per_table = room_data.chaircount_per_table();
+    const auto min_deposit = room_data.min_deposit();
+    const auto max_deposit = room_data.max_deposit();
+    const auto min_player_count = room_data.min_player_count();
+
+    room->set_options(options);
+    room->set_configs(configs);
+    room->set_manages(manages);
+    room->set_max_table_cout(max_table_cout);
+    room->set_chaircount_per_table(chaircount_per_table);
+    room->set_min_deposit(min_deposit);
+    room->set_max_deposit(max_deposit);
+    room->set_min_playercount_per_table(min_player_count);
+
+    // 更新桌银
+    TablePtr table;
+    if (kCommSucc != room->GetTable(tableno, table)) {
+        LOG_WARN("GetTable faild. userid  [%d], tableno [%d]", userid, tableno);
+        ASSERT_FALSE_RETURN;
+    }
+    table->set_max_deposit(ntf.max_deposit());
+    table->set_min_deposit(ntf.min_deposit());
+    table->set_base_deposit(ntf.base_deposit());
+
+    // 上桌
+    const auto ret = room->PlayerEnterGame(user);
     if (kCommSucc != ret) {
         LOG_WARN("PlayerEnterGame failed.");
         ASSERT_FALSE_RETURN;
     }
 
-    if (kCommSucc != UserMgr.AddUser(user->get_user_id(), user)) {
-        ASSERT_FALSE_RETURN;
-    }
     return kCommSucc;
 }
 
@@ -341,22 +383,33 @@ int GameNetManager::OnLookerEnterGame(const REQUEST &request) const {
     const auto& room_data = ntf.room_data();
     const auto roomid = room_data.roomid();
 
-    //V614 The 'user' smart pointer is utilized immediately after being declared or reset.
-    //It is suspicious that no value was assigned to it.
+    const auto userid = ntf.userid();
+    const auto tableno = ntf.tableno();
+
     auto user = std::make_shared<User>();
     user->set_user_id(ntf.userid());
     user->set_room_id(roomid);
-    user->set_table_no(ntf.tableno());
+    user->set_table_no(tableno);
     user->set_chair_no(ntf.chairno());
     user->set_user_type(ntf.user_type());
 
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
 
-    const auto ret = base_room->LookerEnterGame(user); //Add User To User Manager
+    // 更新桌银
+    TablePtr table;
+    if (kCommSucc != room->GetTable(tableno, table)) {
+        LOG_WARN("GetTable faild. userid  [%d], tableno [%d]", userid, tableno);
+        ASSERT_FALSE_RETURN;
+    }
+    table->set_max_deposit(ntf.max_deposit());
+    table->set_min_deposit(ntf.min_deposit());
+    table->set_base_deposit(ntf.base_deposit());
+
+    const auto ret = room->LookerEnterGame(user); //Add User To User Manager
     if (kCommSucc != ret) {
         LOG_WARN("PlayerEnterGame failed.");
         ASSERT_FALSE_RETURN;
@@ -381,8 +434,8 @@ int GameNetManager::OnLooker2Player(const REQUEST &request) const {
     const auto tableno = ntf.tableno();
     const auto chairno = ntf.chairno();
 
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
@@ -395,7 +448,7 @@ int GameNetManager::OnLooker2Player(const REQUEST &request) const {
     user->set_table_no(tableno);
     user->set_chair_no(chairno);
 
-    const auto ret = base_room->Looker2Player(user);
+    const auto ret = room->Looker2Player(user);
     if (kCommSucc != ret) {
         LOG_WARN("Looker2Player failed");
         ASSERT_FALSE_RETURN;
@@ -416,8 +469,8 @@ int GameNetManager::OnPlayer2Looker(const REQUEST &request) const {
     const auto tableno = ntf.tableno();
     const auto chairno = ntf.chairno();
 
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
@@ -430,7 +483,7 @@ int GameNetManager::OnPlayer2Looker(const REQUEST &request) const {
     user->set_table_no(tableno);
     user->set_chair_no(chairno);
 
-    const auto ret = base_room->Player2Looker(user);
+    const auto ret = room->Player2Looker(user);
     if (kCommSucc != ret) {
         LOG_WARN("Player2Looker failed");
         ASSERT_FALSE_RETURN;
@@ -449,35 +502,17 @@ int GameNetManager::OnStartGame(const REQUEST &request) const {
     const auto roomid = ntf.roomid();
     const auto tableno = ntf.tableno();
 
-    //@zhuhangmin TODO refactor into RoomMgr add param check chari
-    std::unordered_map<ChairNO, game::base::ChairInfo> chairs_pb_map;
-    for (auto index = 0; index < ntf.chairs_size(); index++) {
-        chairs_pb_map[ntf.chairs(index).chairno()] = ntf.chairs(index);
-    }
-
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
 
-    TablePtr table;
-    if (kCommSucc != base_room->GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild tableno  [%d]", tableno);
+    if (kCommSucc != room->StartGame(tableno)) {
         ASSERT_FALSE_RETURN;
     }
 
-    auto chairs = table->GetChairs();
-    for (auto& kv : chairs_pb_map) {
-        auto chair_pb = kv.second;
-        const auto chairno = chair_pb.chairno();
-        if (chairno < 1) {
-            ASSERT_FALSE;
-            continue;
-        }
-        chairs[chairno-1].set_userid(chair_pb.userid());
-        chairs[chairno-1].set_chair_status(static_cast<ChairStatus>(chair_pb.chair_status()));
-    }
+    //TODO 注意开局之后 可变桌椅还是有玩家可以上桌准备状态的
     return kCommSucc;
 }
 
@@ -493,13 +528,13 @@ int GameNetManager::OnUserFreshResult(const REQUEST &request) const {
     const auto roomid = ntf.roomid();
     const auto tableno = ntf.tableno();
 
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
     TablePtr table;
-    if (kCommSucc != base_room->GetTable(tableno, table)) {
+    if (kCommSucc != room->GetTable(tableno, table)) {
         LOG_WARN("GetTable faild. tableno  [%d]", tableno);
         ASSERT_FALSE_RETURN;
     }
@@ -519,17 +554,18 @@ int GameNetManager::OnFreshResult(const REQUEST &request) const {
     const auto roomid = ntf.roomid();
     const auto tableno = ntf.tableno();
 
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
 
     TablePtr table;
-    if (kCommSucc != base_room->GetTable(tableno, table)) {
+    if (kCommSucc != room->GetTable(tableno, table)) {
         LOG_WARN("GetTable faild.  tableno  [%d]", tableno);
         ASSERT_FALSE_RETURN;
     }
+
     table->RefreshGameResult();
     return kCommSucc;
 }
@@ -546,13 +582,13 @@ int GameNetManager::OnLeaveGame(const REQUEST &request) const {
     const auto roomid = ntf.roomid();
     const auto tableno = ntf.tableno();
 
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
-        LOG_WARN("GetRoom failed room");
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+        LOG_WARN("GetRoom failed roomid [%d]", roomid);
         ASSERT_FALSE_RETURN;
     }
 
-    base_room->UserLeaveGame(userid, tableno);
+    room->UserLeaveGame(userid, tableno);
 
     if (kCommSucc != UserMgr.DelUser(userid)) {
         ASSERT_FALSE_RETURN;
@@ -582,14 +618,16 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
     user->set_table_no(new_tableno);
     user->set_chair_no(new_chairno);
 
-    RoomPtr base_room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, base_room)) {
+    RoomPtr room;
+    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
 
-    base_room->UnbindUser(userid, old_tableno);
-    base_room->BindPlayer(user);
+    if (kCommSucc != room->SwitchTable(user, old_tableno)) {
+        ASSERT_FALSE_RETURN;
+    }
+
     return kCommSucc;
 
 }
@@ -642,16 +680,16 @@ int GameNetManager::AddRoomPB(const game::base::Room& room_pb) const {
     const auto& room_data_pb = room_pb.room_data();
     const auto roomid = room_data_pb.roomid();
 
-    auto base_room = std::make_shared<BaseRoom>();
-    base_room->set_room_id(room_data_pb.roomid());
-    base_room->set_options(room_data_pb.options());
-    base_room->set_configs(room_data_pb.configs());
-    base_room->set_manages(room_data_pb.manages());
-    base_room->set_max_table_cout(room_data_pb.max_table_cout());
-    base_room->set_chaircount_per_table(room_data_pb.chaircount_per_table());
-    base_room->set_min_playercount_per_table(room_data_pb.min_player_count());
-    base_room->set_min_deposit(room_data_pb.min_deposit());
-    base_room->set_max_deposit(room_data_pb.max_deposit());
+    auto room = std::make_shared<BaseRoom>();
+    room->set_room_id(room_data_pb.roomid());
+    room->set_options(room_data_pb.options());
+    room->set_configs(room_data_pb.configs());
+    room->set_manages(room_data_pb.manages());
+    room->set_max_table_cout(room_data_pb.max_table_cout());
+    room->set_chaircount_per_table(room_data_pb.chaircount_per_table());
+    room->set_min_playercount_per_table(room_data_pb.min_player_count());
+    room->set_min_deposit(room_data_pb.min_deposit());
+    room->set_max_deposit(room_data_pb.max_deposit());
 
     // TABLE
     auto size = room_pb.tables_size();
@@ -660,11 +698,11 @@ int GameNetManager::AddRoomPB(const game::base::Room& room_pb) const {
         const auto tableno = table_pb.tableno();
         auto table = std::make_shared<Table>();
         AddTablePB(table_pb, table);
-        base_room->AddTable(tableno, table);
+        room->AddTable(tableno, table);
     }
 
     // ROOM
-    if (kCommSucc != RoomMgr.AddRoom(roomid, base_room)) ASSERT_FALSE_RETURN;
+    if (kCommSucc != RoomMgr.AddRoom(roomid, room)) ASSERT_FALSE_RETURN;
     return kCommSucc;
 }
 
@@ -682,12 +720,15 @@ int GameNetManager::AddTablePB(const game::base::Table& table_pb, const TablePtr
     for (auto chair_index = 0; chair_index < table_pb.chairs_size(); chair_index++) {
         const auto& chair_pb = table_pb.chairs(chair_index);
         const auto chairno = chair_pb.chairno(); // chairno start from 1
+        const auto userid = chair_pb.userid();
+        if (userid < 0) ASSERT_FALSE;
+        if (0 == userid) continue;
         ChairInfo chair_info;
-        chair_info.set_userid(chair_pb.userid());
+        chair_info.set_userid(userid);
+        chair_info.set_chair_no(chairno);
         chair_info.set_chair_status(static_cast<ChairStatus>(chair_pb.chair_status()));
-        //TODO ADD  bind_timestamp
-        //chair_info.set_bind_timestamp(chair_pb.bind_timestamp());
-
+        if (chair_pb.bind_timestamp() <= 0) assert(false);
+        chair_info.set_bind_timestamp(chair_pb.bind_timestamp());
         table->AddChair(chairno, chair_info);
     }
 
@@ -695,10 +736,13 @@ int GameNetManager::AddTablePB(const game::base::Table& table_pb, const TablePtr
     for (auto table_user_index = 0; table_user_index < table_pb.table_users_size(); table_user_index++) {
         const auto& table_user_pb = table_pb.table_users(table_user_index);
         const auto userid = table_user_pb.userid();
+        if (userid < 0) ASSERT_FALSE;
+        if (0 == userid) continue;
         TableUserInfo table_user_info;
         table_user_info.set_userid(table_user_pb.userid());
-        table_user_info.set_bind_timestamp(table_user_pb.bind_timestamp());
         table_user_info.set_user_type(table_user_pb.user_type());
+        if (table_user_pb.bind_timestamp() <= 0) assert(false);
+        table_user_info.set_bind_timestamp(table_user_pb.bind_timestamp());
         table->AddTableUserInfo(userid, table_user_info);
     }
 
@@ -725,14 +769,15 @@ int GameNetManager::ConnectWithLock(const std::string& game_ip, const int& game_
     CHECK_GAMEIP(game_ip);
     CHECK_GAMEPORT(game_port);
     CHECK_CONNECTION(connection_);
+    LOG_INFO("\t[START] Try ConnectGame ... IP: [%s] Port: [%d]", game_ip.c_str(), game_port);
     connection_->InitKey(KEY_GAMESVR_2_0, ENCRYPT_AES, 0);
     if (!connection_->Create(game_ip.c_str(), game_port, 5, 0, notify_thread_.GetThreadID(), 0, GetHelloData(), GetHelloLength())) {
-        LOG_ERROR("[ROUTE] ConnectGame Faild! IP: [%s] Port: [%d]", game_ip.c_str(), game_port);
+        LOG_ERROR("\t[START] ConnectGame Faild! IP: [%s] Port: [%d]", game_ip.c_str(), game_port);
         EVENT_TRACK(EventType::kErr, kCreateGameConnFailed);
         ASSERT_FALSE_RETURN;
     }
 
-    LOG_INFO("ConnectGame OK! IP: [%s] Port: [%d]", game_ip.c_str(), game_port);
+    LOG_INFO("game manager connect ok ! token [%d] ip [%s] port: [%d]", connection_->GetTokenID(), game_ip.c_str(), game_port);
     return kCommSucc;
 }
 
@@ -755,3 +800,11 @@ int GameNetManager::CheckNotInnerThread() {
     CHECK_NOT_THREAD(heart_thread_);
     return kCommSucc;
 }
+
+int GameNetManager::IsConnected(BOOL& is_connected) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    CHECK_CONNECTION(connection_);
+    is_connected = connection_->IsConnected();
+    return kCommSucc;
+}
+

@@ -19,6 +19,7 @@ message RoomData
 	optional int32 chaircount_per_table	= 6;	
 	optional int64 min_deposit			= 7;
 	optional int64 max_deposit			= 8;
+
 	optional int32 min_player_count		= 9;		// 游戏开局的最小玩家数量
 }
 
@@ -34,11 +35,10 @@ message User
 	optional int32 win_bout		= 8;	
 	optional int32 loss_bout	= 9;	
 	optional int32 offline_count	= 10;
-	optional int32 enter_timestamp	= 11;
 	
-	optional string head_url	= 12;		// 头像url
-	optional string hardid		= 13;		// 硬件信息
-	optional string nick_name	= 14;		// 昵称
+	optional string head_url	= 11;		// 头像url
+	optional string hardid		= 12;		// 硬件信息
+	optional string nick_name	= 13;		// 昵称
 }
 
 message TableUserInfo
@@ -53,6 +53,7 @@ message ChairInfo
 	optional int32 chairno			= 1;			
 	optional int32 userid			= 2;
 	optional int32 chair_status		= 3;	// 椅子状态
+	optional int32 bind_timestamp	= 4;	// 玩家和椅子绑定的时间戳
 }
 
 message Table
@@ -88,11 +89,15 @@ message UserResult
 message TablePlayersInfo
 {
 	optional int32 roomid			= 1;
-	optional int32 tableno			= 2;
-	optional int32 table_status 	= 3;	// 桌子状态，定义见 TableStatus
-	optional int64 base_deposit 	= 4;	// 基础银
-	repeated User players			= 5;	// 桌上玩家的信息
-	repeated ChairInfo chairs		= 6;	// 椅子信息
+	optional int64 room_min_deposit	= 2;
+	optional int64 room_max_deposit	= 3;
+	optional int32 tableno			= 4;
+	optional int32 table_status 	= 5;	// 桌子状态，定义见 TableStatus
+	optional int64 table_min_deposit= 6;
+	optional int64 table_max_deposit= 7;
+	optional int64 base_deposit 	= 8;	// 基础银
+	repeated User players			= 9;	// 桌上玩家的信息
+	repeated ChairInfo chairs		= 10;	// 椅子信息
 }
 
 //======================= 业务数据结构定义 ==========================
@@ -397,7 +402,7 @@ message RS_StartGameNotify
 {
 	optional int32 roomid		= 1;
 	optional int32 tableno		= 2;
-	repeated ChairInfo chairs	= 3;
+	repeated ChairInfo chairs	= 3;	// 只是为了通知参与游戏的椅子，机器人服务不应该直接使用椅子状态
 }
 
 // GN_RS_USER_REFRESH_RESULT

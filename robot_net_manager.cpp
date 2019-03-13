@@ -5,7 +5,7 @@
 #include "robot_define.h"
 
 int RobotNetManager::Init() {
-    LOG_INFO_FUNC("[START]");
+    LOG_INFO_FUNC("\t[START]");
     heart_thread_.Initial(std::thread([this] {this->ThreadTimer(); }));
     notify_thread_.Initial(std::thread([this] {this->ThreadNotify(); }));
     return kCommSucc;
@@ -14,7 +14,7 @@ int RobotNetManager::Init() {
 int RobotNetManager::Term() {
     heart_thread_.Release();
     notify_thread_.Release();
-    LOG_INFO_FUNC("[EXIT ROUTINE]");
+    LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
 }
 
@@ -45,7 +45,7 @@ int RobotNetManager::SendPulse() {
     for (auto& kv : robot_map_) {
         auto robot = kv.second;
         const auto timestamp = robot->GetTimeStamp();
-        const auto now = time(0);
+        const auto now = std::time(nullptr);
         if (timestamp - now > PulseInterval) {
             robot->SetTimeStamp(now);
             if (robot->IsConnected()) {
@@ -105,7 +105,7 @@ int RobotNetManager::GetRobotByTokenWithLock(const TokenID& token_id, RobotPtr& 
 }
 
 int RobotNetManager::ThreadTimer() {
-    LOG_INFO("[START] RobotGameManager KeepAlive thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] timer thread [%d] started", GetCurrentThreadId());
     while (true) {
         const auto dwRet = WaitForSingleObject(g_hExitServer, RobotTimerInterval);
         if (WAIT_OBJECT_0 == dwRet) {
@@ -117,12 +117,12 @@ int RobotNetManager::ThreadTimer() {
             SendPulse();
         }
     }
-    LOG_INFO("[EXIT ROUTINE] RobotGameManager KeepAlive thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] timer thread  [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
 int RobotNetManager::ThreadNotify() {
-    LOG_INFO("[START] RobotGameManager Notify thread [%d] started", GetCurrentThreadId());
+    LOG_INFO("\t[START] notify thread [%d] started", GetCurrentThreadId());
 
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
@@ -142,7 +142,7 @@ int RobotNetManager::ThreadNotify() {
             DispatchMessage(&msg);
         }
     }
-    LOG_INFO("[EXIT ROUTINE] RobotGameManager Notify thread [%d] exiting", GetCurrentThreadId());
+    LOG_INFO("[EXIT] notify thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
 
@@ -155,6 +155,7 @@ int RobotNetManager::OnNotify(const RequestID& requestid, void* ntf_data_ptr, co
 
     if (!robot) return kCommFaild;
 
+    LOG_INFO("[RECV] [%d] [%s]", requestid, REQ_STR(requestid));
     switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:

@@ -58,6 +58,7 @@ public:
         return bind_timestamp_;
     }
     void set_bind_timestamp(const int &val) {
+        if (val < 0) assert(false);
         bind_timestamp_ = val;
     }
 
@@ -68,7 +69,16 @@ public:
         player2looker_next_time_ = val;
     }
 
+    int get_chair_no() const {
+        return chairno_;
+    }
+
+    void set_chair_no(const int &val) {
+        chairno_ = val;
+    }
+
 private:
+    int chairno_ = 0;
     int userid_ = 0;
     int bind_timestamp_ = 0;					// 玩家和椅子绑定的时间戳（秒）
     ChairStatus chair_status_ = kChairWaiting;	// 椅子状态
@@ -192,7 +202,8 @@ public:
     int UnbindPlayer(const int& userid);
     // 解除旁观者和桌子的绑定关系
     int UnbindLooker(const int& userid);
-
+    // 开始游戏
+    virtual int StartGame();
     // (游戏中)弃牌
     virtual int GiveUp(const int& userid);
     // 整桌结算

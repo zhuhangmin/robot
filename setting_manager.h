@@ -87,10 +87,6 @@ private:
     std::string deposit_gain_url_;
 
     std::string deposit_back_url_;
-
-
-
-    //TODO HOT UPDATE NEED RESET AND LOCK?
 };
 
 #define SettingMgr  SettingManager::Instance()

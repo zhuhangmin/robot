@@ -31,7 +31,10 @@ public:
     virtual int Looker2Player(const UserPtr& user);
     // 玩家转旁观者
     virtual int Player2Looker(const UserPtr& user);
-
+    // 玩家换桌
+    virtual int SwitchTable(const UserPtr& user, const TableNO& tableno);
+    // 开始游戏
+    virtual int StartGame(const TableNO& tableno);
     // 判断桌子号是否合法
     virtual bool IsValidTable(const TableNO& tableno) const;
     // 判断银子数是否合法
@@ -136,7 +139,11 @@ public:
         return min_playercount_per_table_;
     }
     void set_min_playercount_per_table(const int &val) {
-        min_playercount_per_table_ = val;
+        //min_playercount_per_table_ = val;
+        //TODO 
+
+        min_playercount_per_table_ = 2;
+
     }
 
 };

@@ -809,10 +809,10 @@ class User : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
 
   // accessors -------------------------------------------------------
 
-  // optional string head_url = 12;
+  // optional string head_url = 11;
   bool has_head_url() const;
   void clear_head_url();
-  static const int kHeadUrlFieldNumber = 12;
+  static const int kHeadUrlFieldNumber = 11;
   const ::std::string& head_url() const;
   void set_head_url(const ::std::string& value);
   #if LANG_CXX11
@@ -824,10 +824,10 @@ class User : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::std::string* release_head_url();
   void set_allocated_head_url(::std::string* head_url);
 
-  // optional string hardid = 13;
+  // optional string hardid = 12;
   bool has_hardid() const;
   void clear_hardid();
-  static const int kHardidFieldNumber = 13;
+  static const int kHardidFieldNumber = 12;
   const ::std::string& hardid() const;
   void set_hardid(const ::std::string& value);
   #if LANG_CXX11
@@ -839,10 +839,10 @@ class User : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::std::string* release_hardid();
   void set_allocated_hardid(::std::string* hardid);
 
-  // optional string nick_name = 14;
+  // optional string nick_name = 13;
   bool has_nick_name() const;
   void clear_nick_name();
-  static const int kNickNameFieldNumber = 14;
+  static const int kNickNameFieldNumber = 13;
   const ::std::string& nick_name() const;
   void set_nick_name(const ::std::string& value);
   #if LANG_CXX11
@@ -924,13 +924,6 @@ class User : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::google::protobuf::int32 offline_count() const;
   void set_offline_count(::google::protobuf::int32 value);
 
-  // optional int32 enter_timestamp = 11;
-  bool has_enter_timestamp() const;
-  void clear_enter_timestamp();
-  static const int kEnterTimestampFieldNumber = 11;
-  ::google::protobuf::int32 enter_timestamp() const;
-  void set_enter_timestamp(::google::protobuf::int32 value);
-
   // @@protoc_insertion_point(class_scope:game.base.User)
  private:
   void set_has_userid();
@@ -953,8 +946,6 @@ class User : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   void clear_has_loss_bout();
   void set_has_offline_count();
   void clear_has_offline_count();
-  void set_has_enter_timestamp();
-  void clear_has_enter_timestamp();
   void set_has_head_url();
   void clear_has_head_url();
   void set_has_hardid();
@@ -978,7 +969,6 @@ class User : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::google::protobuf::int32 win_bout_;
   ::google::protobuf::int32 loss_bout_;
   ::google::protobuf::int32 offline_count_;
-  ::google::protobuf::int32 enter_timestamp_;
   friend struct ::protobuf_game_5fbase_2eproto::TableStruct;
   friend void ::protobuf_game_5fbase_2eproto::InitDefaultsUserImpl();
 };
@@ -1224,6 +1214,13 @@ class ChairInfo : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::google::protobuf::int32 chair_status() const;
   void set_chair_status(::google::protobuf::int32 value);
 
+  // optional int32 bind_timestamp = 4;
+  bool has_bind_timestamp() const;
+  void clear_bind_timestamp();
+  static const int kBindTimestampFieldNumber = 4;
+  ::google::protobuf::int32 bind_timestamp() const;
+  void set_bind_timestamp(::google::protobuf::int32 value);
+
   // @@protoc_insertion_point(class_scope:game.base.ChairInfo)
  private:
   void set_has_chairno();
@@ -1232,6 +1229,8 @@ class ChairInfo : public ::google::protobuf::Message /* @@protoc_insertion_point
   void clear_has_userid();
   void set_has_chair_status();
   void clear_has_chair_status();
+  void set_has_bind_timestamp();
+  void clear_has_bind_timestamp();
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::HasBits<1> _has_bits_;
@@ -1239,6 +1238,7 @@ class ChairInfo : public ::google::protobuf::Message /* @@protoc_insertion_point
   ::google::protobuf::int32 chairno_;
   ::google::protobuf::int32 userid_;
   ::google::protobuf::int32 chair_status_;
+  ::google::protobuf::int32 bind_timestamp_;
   friend struct ::protobuf_game_5fbase_2eproto::TableStruct;
   friend void ::protobuf_game_5fbase_2eproto::InitDefaultsChairInfoImpl();
 };
@@ -1814,10 +1814,10 @@ class TablePlayersInfo : public ::google::protobuf::Message /* @@protoc_insertio
 
   // accessors -------------------------------------------------------
 
-  // repeated .game.base.User players = 5;
+  // repeated .game.base.User players = 9;
   int players_size() const;
   void clear_players();
-  static const int kPlayersFieldNumber = 5;
+  static const int kPlayersFieldNumber = 9;
   const ::game::base::User& players(int index) const;
   ::game::base::User* mutable_players(int index);
   ::game::base::User* add_players();
@@ -1826,10 +1826,10 @@ class TablePlayersInfo : public ::google::protobuf::Message /* @@protoc_insertio
   const ::google::protobuf::RepeatedPtrField< ::game::base::User >&
       players() const;
 
-  // repeated .game.base.ChairInfo chairs = 6;
+  // repeated .game.base.ChairInfo chairs = 10;
   int chairs_size() const;
   void clear_chairs();
-  static const int kChairsFieldNumber = 6;
+  static const int kChairsFieldNumber = 10;
   const ::game::base::ChairInfo& chairs(int index) const;
   ::game::base::ChairInfo* mutable_chairs(int index);
   ::game::base::ChairInfo* add_chairs();
@@ -1838,6 +1838,13 @@ class TablePlayersInfo : public ::google::protobuf::Message /* @@protoc_insertio
   const ::google::protobuf::RepeatedPtrField< ::game::base::ChairInfo >&
       chairs() const;
 
+  // optional int64 room_min_deposit = 2;
+  bool has_room_min_deposit() const;
+  void clear_room_min_deposit();
+  static const int kRoomMinDepositFieldNumber = 2;
+  ::google::protobuf::int64 room_min_deposit() const;
+  void set_room_min_deposit(::google::protobuf::int64 value);
+
   // optional int32 roomid = 1;
   bool has_roomid() const;
   void clear_roomid();
@@ -1845,24 +1852,45 @@ class TablePlayersInfo : public ::google::protobuf::Message /* @@protoc_insertio
   ::google::protobuf::int32 roomid() const;
   void set_roomid(::google::protobuf::int32 value);
 
-  // optional int32 tableno = 2;
+  // optional int32 tableno = 4;
   bool has_tableno() const;
   void clear_tableno();
-  static const int kTablenoFieldNumber = 2;
+  static const int kTablenoFieldNumber = 4;
   ::google::protobuf::int32 tableno() const;
   void set_tableno(::google::protobuf::int32 value);
 
-  // optional int64 base_deposit = 4;
+  // optional int64 room_max_deposit = 3;
+  bool has_room_max_deposit() const;
+  void clear_room_max_deposit();
+  static const int kRoomMaxDepositFieldNumber = 3;
+  ::google::protobuf::int64 room_max_deposit() const;
+  void set_room_max_deposit(::google::protobuf::int64 value);
+
+  // optional int64 table_min_deposit = 6;
+  bool has_table_min_deposit() const;
+  void clear_table_min_deposit();
+  static const int kTableMinDepositFieldNumber = 6;
+  ::google::protobuf::int64 table_min_deposit() const;
+  void set_table_min_deposit(::google::protobuf::int64 value);
+
+  // optional int64 table_max_deposit = 7;
+  bool has_table_max_deposit() const;
+  void clear_table_max_deposit();
+  static const int kTableMaxDepositFieldNumber = 7;
+  ::google::protobuf::int64 table_max_deposit() const;
+  void set_table_max_deposit(::google::protobuf::int64 value);
+
+  // optional int64 base_deposit = 8;
   bool has_base_deposit() const;
   void clear_base_deposit();
-  static const int kBaseDepositFieldNumber = 4;
+  static const int kBaseDepositFieldNumber = 8;
   ::google::protobuf::int64 base_deposit() const;
   void set_base_deposit(::google::protobuf::int64 value);
 
-  // optional int32 table_status = 3;
+  // optional int32 table_status = 5;
   bool has_table_status() const;
   void clear_table_status();
-  static const int kTableStatusFieldNumber = 3;
+  static const int kTableStatusFieldNumber = 5;
   ::google::protobuf::int32 table_status() const;
   void set_table_status(::google::protobuf::int32 value);
 
@@ -1870,10 +1898,18 @@ class TablePlayersInfo : public ::google::protobuf::Message /* @@protoc_insertio
  private:
   void set_has_roomid();
   void clear_has_roomid();
+  void set_has_room_min_deposit();
+  void clear_has_room_min_deposit();
+  void set_has_room_max_deposit();
+  void clear_has_room_max_deposit();
   void set_has_tableno();
   void clear_has_tableno();
   void set_has_table_status();
   void clear_has_table_status();
+  void set_has_table_min_deposit();
+  void clear_has_table_min_deposit();
+  void set_has_table_max_deposit();
+  void clear_has_table_max_deposit();
   void set_has_base_deposit();
   void clear_has_base_deposit();
 
@@ -1882,8 +1918,12 @@ class TablePlayersInfo : public ::google::protobuf::Message /* @@protoc_insertio
   mutable int _cached_size_;
   ::google::protobuf::RepeatedPtrField< ::game::base::User > players_;
   ::google::protobuf::RepeatedPtrField< ::game::base::ChairInfo > chairs_;
+  ::google::protobuf::int64 room_min_deposit_;
   ::google::protobuf::int32 roomid_;
   ::google::protobuf::int32 tableno_;
+  ::google::protobuf::int64 room_max_deposit_;
+  ::google::protobuf::int64 table_min_deposit_;
+  ::google::protobuf::int64 table_max_deposit_;
   ::google::protobuf::int64 base_deposit_;
   ::google::protobuf::int32 table_status_;
   friend struct ::protobuf_game_5fbase_2eproto::TableStruct;
@@ -8680,31 +8720,7 @@ inline void User::set_offline_count(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:game.base.User.offline_count)
 }
 
-// optional int32 enter_timestamp = 11;
-inline bool User::has_enter_timestamp() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
-}
-inline void User::set_has_enter_timestamp() {
-  _has_bits_[0] |= 0x00002000u;
-}
-inline void User::clear_has_enter_timestamp() {
-  _has_bits_[0] &= ~0x00002000u;
-}
-inline void User::clear_enter_timestamp() {
-  enter_timestamp_ = 0;
-  clear_has_enter_timestamp();
-}
-inline ::google::protobuf::int32 User::enter_timestamp() const {
-  // @@protoc_insertion_point(field_get:game.base.User.enter_timestamp)
-  return enter_timestamp_;
-}
-inline void User::set_enter_timestamp(::google::protobuf::int32 value) {
-  set_has_enter_timestamp();
-  enter_timestamp_ = value;
-  // @@protoc_insertion_point(field_set:game.base.User.enter_timestamp)
-}
-
-// optional string head_url = 12;
+// optional string head_url = 11;
 inline bool User::has_head_url() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -8767,7 +8783,7 @@ inline void User::set_allocated_head_url(::std::string* head_url) {
   // @@protoc_insertion_point(field_set_allocated:game.base.User.head_url)
 }
 
-// optional string hardid = 13;
+// optional string hardid = 12;
 inline bool User::has_hardid() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -8830,7 +8846,7 @@ inline void User::set_allocated_hardid(::std::string* hardid) {
   // @@protoc_insertion_point(field_set_allocated:game.base.User.hardid)
 }
 
-// optional string nick_name = 14;
+// optional string nick_name = 13;
 inline bool User::has_nick_name() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -9043,6 +9059,30 @@ inline void ChairInfo::set_chair_status(::google::protobuf::int32 value) {
   set_has_chair_status();
   chair_status_ = value;
   // @@protoc_insertion_point(field_set:game.base.ChairInfo.chair_status)
+}
+
+// optional int32 bind_timestamp = 4;
+inline bool ChairInfo::has_bind_timestamp() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void ChairInfo::set_has_bind_timestamp() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void ChairInfo::clear_has_bind_timestamp() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void ChairInfo::clear_bind_timestamp() {
+  bind_timestamp_ = 0;
+  clear_has_bind_timestamp();
+}
+inline ::google::protobuf::int32 ChairInfo::bind_timestamp() const {
+  // @@protoc_insertion_point(field_get:game.base.ChairInfo.bind_timestamp)
+  return bind_timestamp_;
+}
+inline void ChairInfo::set_bind_timestamp(::google::protobuf::int32 value) {
+  set_has_bind_timestamp();
+  bind_timestamp_ = value;
+  // @@protoc_insertion_point(field_set:game.base.ChairInfo.bind_timestamp)
 }
 
 // -------------------------------------------------------------------
@@ -9519,13 +9559,13 @@ inline void UserResult::set_fee(::google::protobuf::int32 value) {
 
 // optional int32 roomid = 1;
 inline bool TablePlayersInfo::has_roomid() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
 inline void TablePlayersInfo::set_has_roomid() {
-  _has_bits_[0] |= 0x00000001u;
+  _has_bits_[0] |= 0x00000002u;
 }
 inline void TablePlayersInfo::clear_has_roomid() {
-  _has_bits_[0] &= ~0x00000001u;
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline void TablePlayersInfo::clear_roomid() {
   roomid_ = 0;
@@ -9541,15 +9581,63 @@ inline void TablePlayersInfo::set_roomid(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:game.base.TablePlayersInfo.roomid)
 }
 
-// optional int32 tableno = 2;
+// optional int64 room_min_deposit = 2;
+inline bool TablePlayersInfo::has_room_min_deposit() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void TablePlayersInfo::set_has_room_min_deposit() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void TablePlayersInfo::clear_has_room_min_deposit() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void TablePlayersInfo::clear_room_min_deposit() {
+  room_min_deposit_ = GOOGLE_LONGLONG(0);
+  clear_has_room_min_deposit();
+}
+inline ::google::protobuf::int64 TablePlayersInfo::room_min_deposit() const {
+  // @@protoc_insertion_point(field_get:game.base.TablePlayersInfo.room_min_deposit)
+  return room_min_deposit_;
+}
+inline void TablePlayersInfo::set_room_min_deposit(::google::protobuf::int64 value) {
+  set_has_room_min_deposit();
+  room_min_deposit_ = value;
+  // @@protoc_insertion_point(field_set:game.base.TablePlayersInfo.room_min_deposit)
+}
+
+// optional int64 room_max_deposit = 3;
+inline bool TablePlayersInfo::has_room_max_deposit() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void TablePlayersInfo::set_has_room_max_deposit() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void TablePlayersInfo::clear_has_room_max_deposit() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void TablePlayersInfo::clear_room_max_deposit() {
+  room_max_deposit_ = GOOGLE_LONGLONG(0);
+  clear_has_room_max_deposit();
+}
+inline ::google::protobuf::int64 TablePlayersInfo::room_max_deposit() const {
+  // @@protoc_insertion_point(field_get:game.base.TablePlayersInfo.room_max_deposit)
+  return room_max_deposit_;
+}
+inline void TablePlayersInfo::set_room_max_deposit(::google::protobuf::int64 value) {
+  set_has_room_max_deposit();
+  room_max_deposit_ = value;
+  // @@protoc_insertion_point(field_set:game.base.TablePlayersInfo.room_max_deposit)
+}
+
+// optional int32 tableno = 4;
 inline bool TablePlayersInfo::has_tableno() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
 inline void TablePlayersInfo::set_has_tableno() {
-  _has_bits_[0] |= 0x00000002u;
+  _has_bits_[0] |= 0x00000004u;
 }
 inline void TablePlayersInfo::clear_has_tableno() {
-  _has_bits_[0] &= ~0x00000002u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void TablePlayersInfo::clear_tableno() {
   tableno_ = 0;
@@ -9565,15 +9653,15 @@ inline void TablePlayersInfo::set_tableno(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:game.base.TablePlayersInfo.tableno)
 }
 
-// optional int32 table_status = 3;
+// optional int32 table_status = 5;
 inline bool TablePlayersInfo::has_table_status() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+  return (_has_bits_[0] & 0x00000080u) != 0;
 }
 inline void TablePlayersInfo::set_has_table_status() {
-  _has_bits_[0] |= 0x00000008u;
+  _has_bits_[0] |= 0x00000080u;
 }
 inline void TablePlayersInfo::clear_has_table_status() {
-  _has_bits_[0] &= ~0x00000008u;
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void TablePlayersInfo::clear_table_status() {
   table_status_ = 0;
@@ -9589,15 +9677,63 @@ inline void TablePlayersInfo::set_table_status(::google::protobuf::int32 value) 
   // @@protoc_insertion_point(field_set:game.base.TablePlayersInfo.table_status)
 }
 
-// optional int64 base_deposit = 4;
+// optional int64 table_min_deposit = 6;
+inline bool TablePlayersInfo::has_table_min_deposit() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void TablePlayersInfo::set_has_table_min_deposit() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void TablePlayersInfo::clear_has_table_min_deposit() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void TablePlayersInfo::clear_table_min_deposit() {
+  table_min_deposit_ = GOOGLE_LONGLONG(0);
+  clear_has_table_min_deposit();
+}
+inline ::google::protobuf::int64 TablePlayersInfo::table_min_deposit() const {
+  // @@protoc_insertion_point(field_get:game.base.TablePlayersInfo.table_min_deposit)
+  return table_min_deposit_;
+}
+inline void TablePlayersInfo::set_table_min_deposit(::google::protobuf::int64 value) {
+  set_has_table_min_deposit();
+  table_min_deposit_ = value;
+  // @@protoc_insertion_point(field_set:game.base.TablePlayersInfo.table_min_deposit)
+}
+
+// optional int64 table_max_deposit = 7;
+inline bool TablePlayersInfo::has_table_max_deposit() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void TablePlayersInfo::set_has_table_max_deposit() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void TablePlayersInfo::clear_has_table_max_deposit() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void TablePlayersInfo::clear_table_max_deposit() {
+  table_max_deposit_ = GOOGLE_LONGLONG(0);
+  clear_has_table_max_deposit();
+}
+inline ::google::protobuf::int64 TablePlayersInfo::table_max_deposit() const {
+  // @@protoc_insertion_point(field_get:game.base.TablePlayersInfo.table_max_deposit)
+  return table_max_deposit_;
+}
+inline void TablePlayersInfo::set_table_max_deposit(::google::protobuf::int64 value) {
+  set_has_table_max_deposit();
+  table_max_deposit_ = value;
+  // @@protoc_insertion_point(field_set:game.base.TablePlayersInfo.table_max_deposit)
+}
+
+// optional int64 base_deposit = 8;
 inline bool TablePlayersInfo::has_base_deposit() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+  return (_has_bits_[0] & 0x00000040u) != 0;
 }
 inline void TablePlayersInfo::set_has_base_deposit() {
-  _has_bits_[0] |= 0x00000004u;
+  _has_bits_[0] |= 0x00000040u;
 }
 inline void TablePlayersInfo::clear_has_base_deposit() {
-  _has_bits_[0] &= ~0x00000004u;
+  _has_bits_[0] &= ~0x00000040u;
 }
 inline void TablePlayersInfo::clear_base_deposit() {
   base_deposit_ = GOOGLE_LONGLONG(0);
@@ -9613,7 +9749,7 @@ inline void TablePlayersInfo::set_base_deposit(::google::protobuf::int64 value) 
   // @@protoc_insertion_point(field_set:game.base.TablePlayersInfo.base_deposit)
 }
 
-// repeated .game.base.User players = 5;
+// repeated .game.base.User players = 9;
 inline int TablePlayersInfo::players_size() const {
   return players_.size();
 }
@@ -9643,7 +9779,7 @@ TablePlayersInfo::players() const {
   return players_;
 }
 
-// repeated .game.base.ChairInfo chairs = 6;
+// repeated .game.base.ChairInfo chairs = 10;
 inline int TablePlayersInfo::chairs_size() const {
   return chairs_.size();
 }

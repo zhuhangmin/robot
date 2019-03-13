@@ -14,8 +14,14 @@
 * 机器人工具为前置工具，依赖后端大厅, 游戏
 
 # 注意！！
+# 线程切换cpu消耗问题
 * 机器人工具网络库会启动大量线程，和网络连接成正比
 * 千量级的线程切换过多占用大量cpu，造成同机游戏服务消息堆积
+# 网络库reponse
+* 如果网络库sessionid解析成负数。检查后端服务器是否发了一个不存在的response给机器人服务器
+* 如果游戏服务模拟发了需要应答的request的消息, 最后需要过滤掉reponse, 不用发给机器人服务器。
+* 发送不存在的response会造成机器人网络库触发onError，应用层收到【UR_SOCKET_ERROR】消息。
+* 机器人除了进房间调度消息以外，应该只接受通知
 
 # 使用
 * 配置[robot.setting], [RobotTool.ini] 见配置详细说明
@@ -46,6 +52,10 @@
 * LOG_ROUTE 业务流程日志
 * ERR_STR(x) 详细错误码信息
 * REQ_STR(x) 协议定义
+* 协议以及各种错误统计
+* 开启多核编译
+* Properties -> Configuration Properties -> C/C++ -> Code Generation -> Enable Minimal Rebuild -> No(/Gm-)
+* Properties -> Configuration Properties -> C/C++ -> Geneal -> Multi-processor Compilation -> Yes(/MP)
 
 # 热更新 robot.setting
 * 只有部分字段提供热更新
@@ -58,6 +68,9 @@
 * deposit_back_url
 * deposit_gain_amount
 * deposit_back_amount
+
+# 部署运维
+* 如果机器人和游戏服部署在不同时区 需要矫正时区(TODO)
 
 # 整体设计
 * 数据层（配置，网络，运行状态）-> 资源管理类（线程安全，网络异常，数据同步）->具体业务（机器人自定义调度）
@@ -94,7 +107,6 @@
 * net/robot_net_manager（0条）   所有机器人连接管理
 * net/robot_net        （1*n条） 单个机器人连接管理
 * net/robot_deposit_manager（http）后台补银还银管理  
-
 * app_delegate                   业务主线程管理类
 
 # 对象设计：
@@ -113,13 +125,13 @@
 # 数据时效性 网络异常自恢复
 * Init自动获取必要数据初始化对象数据
 * 通过Notify同步后端服务器实时状态
+* 10min一次的游戏服务器所有用户和房间桌椅数据同步兜底
 * 连接心跳保活，自动Reset对象数据，并重新Init初始化
 * 独立机器人服通知接收线程，维护只读数据层
 * 独立心跳线程，阻塞过程会让心跳超时
 * 均匀的心跳发送，避免500个心跳集中发送造成压力
 * 消息发送错误后，自动Reset对象数据，并重新初始化
 * 提供对象状态快照API : SnapShotObjectStatus
-
 
 # OPTION
 * 启动时所有机器人自动补银
@@ -132,6 +144,16 @@
 * ini文件读写非线程安全
 * ini文件为启动参数文件，不应加入任何业务配置 
 * 游戏服务器提供明确数据状态，不自己推导衍生状态
+* game net manager类不应该出现具体业务字段
+* 业务定义字段应出现在room table chair user 具体数据类
+* 具体数据类负责如room table chair user跟踪游戏服务器数据状态的变化
+* 游戏模板默认游戏开始后有倒计时5秒
+* 注意游戏开始后，会有桌子上的玩家下局准备玩的玩家，状态是waitting
+* TableUserInfo 包括旁观
+
+
+# SUPPORT
+* 支持通过游戏服务器断线续玩DXXW
 
 # NOT_SUPPORT
 * 不支持多个游戏服务器
@@ -154,35 +176,27 @@
 * 多线程析构对象应用智能指针管理
 * Macro宏只用在参数检查，打印日志，不做业务逻辑
 
+# FAQ:
 
 # TODO
+* 玩家状态推导
 * 配置文件应分3份：内网develop，外网内测candidate，正式release
-* 避免雪崩效益和状态同步的跷跷板效应，需要发状态量来校验兜底状态
 * 保证代码覆盖率在main中加入测试用例
 * 注意避免死循环 不断重新发消息 和重连 导致大厅游戏收到攻击
-* 延迟重连时间 限制重连次数
 * 机器人消息做限流机制，防止攻击后端服务器
 * 总消息的记录，避免消息过多攻击服务器
-* 玩家状态推导
 * 大厅，游戏服务器崩溃后, 状态恢复
 * 测试大量重连对游戏大厅的瞬时压力，是否有雪崩效应
 * 机器人获得银子信息，及时自动补银
-* 兜底机制，定时去同步游戏服务器的数据状态如10min
 * 异常分支，打印LOG_ERROR或LOG_WARN级别日志和断言
+* robot.setting 字段说明
+* 发布release release release releaserelease release release 相关
 * 加注释
 * 每个消息的入口和出口的地方都要有调试级别的日志
-* 僵尸回收策略 TickRecoverByDeposit,TickRecoverByTimeout 需要模板支持兜底
-* 卡桌子需要游戏支持兜底
-* robot.setting 字段说明
-* relase版编译调试
-* DXXW
-* 横向扩展方案
-* 热更新robot.setting
-* gamedef 是新模板copy,后期等模板分离
 * 调度效率测试
 * socket如断线次数
-* 协议各种错误统计
+* 接入钉钉报警 如cpu,机器人消耗完等
 
-# FAQ:
+
 
 
