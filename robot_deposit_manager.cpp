@@ -3,6 +3,7 @@
 #include "setting_manager.h"
 #include "main.h"
 #include "robot_utils.h"
+#include "game_net_manager.h"
 
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
@@ -164,6 +165,8 @@ int RobotDepositManager::RobotBackDeposit(const UserID& userid, const int64_t& a
 }
 
 int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType& type, const int64_t& amount) {
+    // 处理游戏服务器断线 但业务后台正常的情况
+    if (!GameMgr.IsGameDataInited()) return kExceptionGameDataNotInited;
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
     if (amount < 0) ASSERT_FALSE_RETURN;

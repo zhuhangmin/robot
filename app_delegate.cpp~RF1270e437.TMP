@@ -683,6 +683,9 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
         // 随机选择1个机器人进行
         // 补银
         if (too_less_map.size() > 0) {
+            // 处理游戏服务器断线 但业务后台正常的情况
+            if (!GameMgr.IsGameDataInited()) return kExceptionGameDataNotInited;
+
             int64_t random_pos = 0;
             if (kCommSucc != RobotUtils::GenRandInRange(0, too_less_map.size() - 1, random_pos)) {
                 ASSERT_FALSE_RETURN;
@@ -713,6 +716,10 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
 
         // 还银
         if (too_much_map.size() > 0) {
+
+            // 处理游戏服务器断线 但业务后台正常的情况
+            if (!GameMgr.IsGameDataInited()) return kExceptionGameDataNotInited;
+
             int64_t amount = 0;
             int64_t random_pos = 0;
             if (kCommSucc != RobotUtils::GenRandInRange(0, too_much_map.size() - 1, random_pos)) {
