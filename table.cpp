@@ -55,7 +55,7 @@ int Table::UnbindUser(const int& userid) {
 int Table::UnbindPlayer(const int& userid) {
     CHECK_USERID(userid);
     const auto chairno = GetUserChair(userid);
-    CHECK_CHAIRNO(chairno);
+    if (chairno == 0) return kCommSucc; //TODO 偶发 有时后椅子数据已被清除又清除一次
     chairs_[chairno - 1].set_userid(0);
     chairs_[chairno - 1].set_chair_status(kChairWaiting);
     chairs_[chairno - 1].set_bind_timestamp(0);
@@ -71,7 +71,7 @@ int Table::UnbindLooker(const int& userid) {
 int Table::StartGame() {
     // 设置桌椅状态
     set_table_status(kTablePlaying);
-    for (int i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
+    for (auto i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
         if (chairs_.at(i).get_userid() <= 0) {
             continue;
         }
@@ -93,7 +93,7 @@ int Table::GetPlayerCount() {
 }
 
 int Table::GetRobotCount(int& count) {
-    for (int i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
+    for (auto i = 0; i < get_chair_count() && i < chairs_.size(); ++i) {
         auto chair_info = chairs_[i];
         auto userid = chair_info.get_userid();
         if (userid>0) {
@@ -174,6 +174,9 @@ int Table::GetChairInfoByChairno(const int& chairno, ChairInfo& info) {
 int Table::GetChairInfoByUserid(const int& userid, ChairInfo& info) {
     CHECK_USERID(userid);
     const auto chairno = GetUserChair(userid);
+    if (chairno == 0) {
+        return kExceptionUserNotOnChair;
+    }
     if (kCommSucc != GetChairInfoByChairno(chairno, info)) {
         ASSERT_FALSE_RETURN;
     }
@@ -250,23 +253,23 @@ int Table::RefreshGameResult(const int& userid) {
 }
 
 int Table::SnapShotObjectStatus() {
-    LOG_INFO("tableno [%d] status [%d][%s] chair_count [%d] banker_chair [%d] base_deposit [%I64d] room_id [%d] ",
-             table_no_, table_status_, TABLE_STATUS_STR(table_status_), chair_count_, banker_chair_, base_deposit_, room_id_);
+    LOG_INFO("tableno [%d] min_deposit [%I64d] max_deposit [%I64d] status [%d][%s] chair_count [%d] banker_chair [%d] base_deposit [%I64d] room_id [%d] ",
+             table_no_, min_deposit_, max_deposit_, table_status_%10, TABLE_STATUS_STR(table_status_%10), chair_count_, banker_chair_, base_deposit_, room_id_);
 
     for (auto index = 0; index < kMaxChairCountPerTable; index++) {
         auto chairinfo = chairs_[index];
-        auto chairno = index + 1;
-        LOG_INFO("chairno [%d] userid [%d] status [%d][%s]", chairno, chairinfo.get_userid(), chairinfo.get_chair_status(), CHAIR_STATUS_STR(chairinfo.get_chair_status()));
+        const auto chairno = index + 1;
+        LOG_INFO("\tchairno [%d] userid [%d]\t status [%d][%s]", chairno, chairinfo.get_userid(), chairinfo.get_chair_status(), CHAIR_STATUS_STR(chairinfo.get_chair_status()));
     }
 
-    LOG_INFO("table_users size [%d]", table_users_.size());
+    LOG_INFO("TableUserInfo size [%d]", table_users_.size());
     for (auto& kv: table_users_) {
         auto tableinfo = kv.second;
-        auto userid = tableinfo.get_userid();
-        auto type = tableinfo.get_user_type();
-        auto timestamp = tableinfo.get_bind_timestamp();
+        const auto userid = tableinfo.get_userid();
+        const auto type = tableinfo.get_user_type();
+        const auto timestamp = tableinfo.get_bind_timestamp();
 
-        LOG_INFO("\t userid [%d] user_type [0x%x][%s] bind_timestamp [%d]",
+        LOG_INFO("\t userid [%d]\t user_type [0x%x][%s]\t bind_timestamp [%d]",
                  userid, type, USER_TYPE_STR(type), timestamp);
     }
 

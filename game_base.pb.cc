@@ -311,6 +311,11 @@ namespace game {
             ::google::protobuf::internal::ExplicitlyConstructed<RS_SwitchTableNotify>
                 _instance;
         } _RS_SwitchTableNotify_default_instance_;
+        class RS_NewRoomNotifyDefaultTypeInternal {
+        public:
+            ::google::protobuf::internal::ExplicitlyConstructed<RS_NewRoomNotify>
+                _instance;
+        } _RS_NewRoomNotify_default_instance_;
     }  // namespace base
 }  // namespace game
 namespace protobuf_game_5fbase_2eproto {
@@ -1414,6 +1419,7 @@ namespace protobuf_game_5fbase_2eproto {
 #else
         ::google::protobuf::internal::InitProtobufDefaults();
 #endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+        protobuf_game_5fbase_2eproto::InitDefaultsUser();
         protobuf_game_5fbase_2eproto::InitDefaultsRoomData();
         {
             void* ptr = &::game::base::_RS_UserEnterGameNotify_default_instance_;
@@ -1521,6 +1527,7 @@ namespace protobuf_game_5fbase_2eproto {
 #else
         ::google::protobuf::internal::InitProtobufDefaults();
 #endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+        protobuf_game_5fbase_2eproto::InitDefaultsUser();
         {
             void* ptr = &::game::base::_RS_UserLeaveGameNotify_default_instance_;
             new (ptr) ::game::base::RS_UserLeaveGameNotify();
@@ -1555,7 +1562,29 @@ namespace protobuf_game_5fbase_2eproto {
         ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsRS_SwitchTableNotifyImpl);
     }
 
-    ::google::protobuf::Metadata file_level_metadata[58];
+    void InitDefaultsRS_NewRoomNotifyImpl() {
+        GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+        ::google::protobuf::internal::InitProtobufDefaultsForceUnique();
+#else
+        ::google::protobuf::internal::InitProtobufDefaults();
+#endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+        protobuf_game_5fbase_2eproto::InitDefaultsRoom();
+        {
+            void* ptr = &::game::base::_RS_NewRoomNotify_default_instance_;
+            new (ptr) ::game::base::RS_NewRoomNotify();
+            ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+        }
+        ::game::base::RS_NewRoomNotify::InitAsDefaultInstance();
+    }
+
+    void InitDefaultsRS_NewRoomNotify() {
+        static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
+        ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsRS_NewRoomNotifyImpl);
+    }
+
+    ::google::protobuf::Metadata file_level_metadata[59];
 
     const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::BytesData, _has_bits_),
@@ -1765,12 +1794,14 @@ namespace protobuf_game_5fbase_2eproto {
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::EnterNormalGameResp, table_players_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::EnterNormalGameResp, custom_flag_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::EnterNormalGameResp, custom_data_),
+        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::EnterNormalGameResp, gameid_),
         3,
         4,
         0,
         1,
         5,
         2,
+        6,
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::EnterPrivateGameReq, _has_bits_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::EnterPrivateGameReq, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -2122,22 +2153,16 @@ namespace protobuf_game_5fbase_2eproto {
         ~0u,  // no _extensions_
         ~0u,  // no _oneof_case_
         ~0u,  // no _weak_field_map_
-        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, userid_),
-        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, tableno_),
-        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, chairno_),
-        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, user_type_),
+        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, user_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, room_data_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, min_deposit_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, max_deposit_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserEnterGameNotify, base_deposit_),
+        0,
         1,
         2,
         3,
         4,
-        0,
-        5,
-        6,
-        7,
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_SwitchLookerPlayerNotify, _has_bits_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_SwitchLookerPlayerNotify, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -2189,12 +2214,8 @@ namespace protobuf_game_5fbase_2eproto {
         ~0u,  // no _extensions_
         ~0u,  // no _oneof_case_
         ~0u,  // no _weak_field_map_
-        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserLeaveGameNotify, userid_),
-        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserLeaveGameNotify, roomid_),
-        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserLeaveGameNotify, tableno_),
+        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_UserLeaveGameNotify, user_),
         0,
-        1,
-        2,
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_SwitchTableNotify, _has_bits_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_SwitchTableNotify, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -2210,6 +2231,13 @@ namespace protobuf_game_5fbase_2eproto {
         2,
         3,
         4,
+        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_NewRoomNotify, _has_bits_),
+        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_NewRoomNotify, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RS_NewRoomNotify, room_),
+        0,
     };
     static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         {0, 7, sizeof(::game::base::BytesData)},
@@ -2224,52 +2252,53 @@ namespace protobuf_game_5fbase_2eproto {
         {161, 167, sizeof(::game::base::PulseReq)},
         {168, 174, sizeof(::game::base::PulseResp)},
         {175, 188, sizeof(::game::base::EnterNormalGameReq)},
-        {196, 207, sizeof(::game::base::EnterNormalGameResp)},
-        {213, 219, sizeof(::game::base::EnterPrivateGameReq)},
-        {220, 226, sizeof(::game::base::EnterPrivateGameResp)},
-        {227, 233, sizeof(::game::base::EnterMatchGameReq)},
-        {234, 240, sizeof(::game::base::EnterMatchGameResp)},
-        {241, 247, sizeof(::game::base::LeaveGameReq)},
-        {248, 254, sizeof(::game::base::LeaveGameResp)},
-        {255, 261, sizeof(::game::base::GiveUpReq)},
-        {262, 268, sizeof(::game::base::GiveUpResp)},
-        {269, 275, sizeof(::game::base::Looker2PlayerReq)},
-        {276, 283, sizeof(::game::base::Looker2PlayerResp)},
-        {285, 292, sizeof(::game::base::Player2LookerReq)},
-        {294, 300, sizeof(::game::base::Player2LookerResp)},
-        {301, 307, sizeof(::game::base::SwitchTableReq)},
-        {308, 317, sizeof(::game::base::SwitchTableResp)},
-        {321, 328, sizeof(::game::base::TableChatReq)},
-        {330, 337, sizeof(::game::base::TableChatNotify)},
-        {339, 345, sizeof(::game::base::TableChatResp)},
-        {346, 353, sizeof(::game::base::StartGameReq)},
-        {355, 361, sizeof(::game::base::GetTablePlayersInfoReq)},
-        {362, 372, sizeof(::game::base::GetTablePlayersInfoResp)},
-        {377, 384, sizeof(::game::base::CountdownStartNotify)},
-        {386, 392, sizeof(::game::base::CountdownStopNotify)},
-        {393, 401, sizeof(::game::base::GameStartNotify)},
-        {404, 412, sizeof(::game::base::PlayerGiveupNotify)},
-        {415, 426, sizeof(::game::base::GameResultNotify)},
-        {432, 438, sizeof(::game::base::UserSitDownNotify)},
-        {439, 446, sizeof(::game::base::UserStandUpNotify)},
-        {448, 455, sizeof(::game::base::UserLeaveNotify)},
-        {457, 465, sizeof(::game::base::UserDepositChangeNotify)},
-        {468, 479, sizeof(::game::base::MallProduct)},
-        {485, 492, sizeof(::game::base::GetMallProductsReq)},
-        {494, 501, sizeof(::game::base::GetMallProductsResp)},
-        {503, 511, sizeof(::game::base::MallShopingReq)},
-        {514, 522, sizeof(::game::base::MallShopingResp)},
-        {525, 531, sizeof(::game::base::RobotSvrValidateReq)},
-        {532, 538, sizeof(::game::base::RobotSvrValidateResp)},
-        {539, 546, sizeof(::game::base::GetGameUsersReq)},
-        {548, 556, sizeof(::game::base::GetGameUsersResp)},
-        {559, 572, sizeof(::game::base::RS_UserEnterGameNotify)},
-        {580, 589, sizeof(::game::base::RS_SwitchLookerPlayerNotify)},
-        {593, 601, sizeof(::game::base::RS_StartGameNotify)},
-        {604, 613, sizeof(::game::base::RS_UserRefreshResultNotify)},
-        {617, 624, sizeof(::game::base::RS_RefreshResultNotify)},
-        {626, 634, sizeof(::game::base::RS_UserLeaveGameNotify)},
-        {637, 647, sizeof(::game::base::RS_SwitchTableNotify)},
+        {196, 208, sizeof(::game::base::EnterNormalGameResp)},
+        {215, 221, sizeof(::game::base::EnterPrivateGameReq)},
+        {222, 228, sizeof(::game::base::EnterPrivateGameResp)},
+        {229, 235, sizeof(::game::base::EnterMatchGameReq)},
+        {236, 242, sizeof(::game::base::EnterMatchGameResp)},
+        {243, 249, sizeof(::game::base::LeaveGameReq)},
+        {250, 256, sizeof(::game::base::LeaveGameResp)},
+        {257, 263, sizeof(::game::base::GiveUpReq)},
+        {264, 270, sizeof(::game::base::GiveUpResp)},
+        {271, 277, sizeof(::game::base::Looker2PlayerReq)},
+        {278, 285, sizeof(::game::base::Looker2PlayerResp)},
+        {287, 294, sizeof(::game::base::Player2LookerReq)},
+        {296, 302, sizeof(::game::base::Player2LookerResp)},
+        {303, 309, sizeof(::game::base::SwitchTableReq)},
+        {310, 319, sizeof(::game::base::SwitchTableResp)},
+        {323, 330, sizeof(::game::base::TableChatReq)},
+        {332, 339, sizeof(::game::base::TableChatNotify)},
+        {341, 347, sizeof(::game::base::TableChatResp)},
+        {348, 355, sizeof(::game::base::StartGameReq)},
+        {357, 363, sizeof(::game::base::GetTablePlayersInfoReq)},
+        {364, 374, sizeof(::game::base::GetTablePlayersInfoResp)},
+        {379, 386, sizeof(::game::base::CountdownStartNotify)},
+        {388, 394, sizeof(::game::base::CountdownStopNotify)},
+        {395, 403, sizeof(::game::base::GameStartNotify)},
+        {406, 414, sizeof(::game::base::PlayerGiveupNotify)},
+        {417, 428, sizeof(::game::base::GameResultNotify)},
+        {434, 440, sizeof(::game::base::UserSitDownNotify)},
+        {441, 448, sizeof(::game::base::UserStandUpNotify)},
+        {450, 457, sizeof(::game::base::UserLeaveNotify)},
+        {459, 467, sizeof(::game::base::UserDepositChangeNotify)},
+        {470, 481, sizeof(::game::base::MallProduct)},
+        {487, 494, sizeof(::game::base::GetMallProductsReq)},
+        {496, 503, sizeof(::game::base::GetMallProductsResp)},
+        {505, 513, sizeof(::game::base::MallShopingReq)},
+        {516, 524, sizeof(::game::base::MallShopingResp)},
+        {527, 533, sizeof(::game::base::RobotSvrValidateReq)},
+        {534, 540, sizeof(::game::base::RobotSvrValidateResp)},
+        {541, 548, sizeof(::game::base::GetGameUsersReq)},
+        {550, 558, sizeof(::game::base::GetGameUsersResp)},
+        {561, 571, sizeof(::game::base::RS_UserEnterGameNotify)},
+        {576, 585, sizeof(::game::base::RS_SwitchLookerPlayerNotify)},
+        {589, 597, sizeof(::game::base::RS_StartGameNotify)},
+        {600, 609, sizeof(::game::base::RS_UserRefreshResultNotify)},
+        {613, 620, sizeof(::game::base::RS_RefreshResultNotify)},
+        {622, 628, sizeof(::game::base::RS_UserLeaveGameNotify)},
+        {629, 639, sizeof(::game::base::RS_SwitchTableNotify)},
+        {644, 650, sizeof(::game::base::RS_NewRoomNotify)},
     };
 
     static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -2331,6 +2360,7 @@ namespace protobuf_game_5fbase_2eproto {
         reinterpret_cast<const ::google::protobuf::Message*>(&::game::base::_RS_RefreshResultNotify_default_instance_),
         reinterpret_cast<const ::google::protobuf::Message*>(&::game::base::_RS_UserLeaveGameNotify_default_instance_),
         reinterpret_cast<const ::google::protobuf::Message*>(&::game::base::_RS_SwitchTableNotify_default_instance_),
+        reinterpret_cast<const ::google::protobuf::Message*>(&::game::base::_RS_NewRoomNotify_default_instance_),
     };
 
     void protobuf_AssignDescriptors() {
@@ -2349,7 +2379,7 @@ namespace protobuf_game_5fbase_2eproto {
     void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
     void protobuf_RegisterTypes(const ::std::string&) {
         protobuf_AssignDescriptorsOnce();
-        ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 58);
+        ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 59);
     }
 
     void AddDescriptorsImpl() {
@@ -2395,94 +2425,95 @@ namespace protobuf_game_5fbase_2eproto {
             "eReq\022\016\n\006userid\030\001 \001(\005\022\016\n\006gameid\030\002 \001(\005\022\016\n\006"
             "roomid\030\003 \001(\005\022\014\n\004flag\030\004 \001(\005\022\016\n\006target\030\005 \001"
             "(\005\022\016\n\006hardid\030\006 \001(\t\022\024\n\014hall_version\030\007 \001(\t"
-            "\022\024\n\014game_version\030\010 \001(\t\"\311\001\n\023EnterNormalGa"
+            "\022\024\n\014game_version\030\010 \001(\t\"\331\001\n\023EnterNormalGa"
             "meResp\022\014\n\004code\030\001 \001(\005\022\014\n\004flag\030\002 \001(\005\022\"\n\004ha"
             "nd\030\003 \001(\0132\024.game.base.BytesData\0222\n\rtable_"
             "players\030\004 \001(\0132\033.game.base.TablePlayersIn"
             "fo\022\023\n\013custom_flag\030\005 \001(\005\022)\n\013custom_data\030\006"
-            " \001(\0132\024.game.base.BytesData\"H\n\023EnterPriva"
-            "teGameReq\0221\n\nbase_enter\030\001 \001(\0132\035.game.bas"
-            "e.EnterNormalGameReq\"$\n\024EnterPrivateGame"
-            "Resp\022\014\n\004code\030\001 \001(\005\"F\n\021EnterMatchGameReq\022"
-            "1\n\nbase_enter\030\001 \001(\0132\035.game.base.EnterNor"
-            "malGameReq\"\"\n\022EnterMatchGameResp\022\014\n\004code"
-            "\030\001 \001(\005\"\036\n\014LeaveGameReq\022\016\n\006userid\030\001 \001(\005\"\035"
-            "\n\rLeaveGameResp\022\014\n\004code\030\001 \001(\005\"\033\n\tGiveUpR"
-            "eq\022\016\n\006userid\030\001 \001(\005\"\032\n\nGiveUpResp\022\014\n\004code"
-            "\030\001 \001(\005\"\"\n\020Looker2PlayerReq\022\016\n\006userid\030\001 \001"
-            "(\005\"2\n\021Looker2PlayerResp\022\014\n\004code\030\001 \001(\005\022\017\n"
-            "\007chairno\030\002 \001(\005\"0\n\020Player2LookerReq\022\016\n\006us"
-            "erid\030\001 \001(\005\022\014\n\004flag\030\002 \001(\005\"!\n\021Player2Looke"
-            "rResp\022\014\n\004code\030\001 \001(\005\" \n\016SwitchTableReq\022\016\n"
-            "\006userid\030\001 \001(\005\"\223\001\n\017SwitchTableResp\022\014\n\004cod"
-            "e\030\001 \001(\005\0222\n\rtable_players\030\002 \001(\0132\033.game.ba"
-            "se.TablePlayersInfo\022\023\n\013custom_flag\030\003 \001(\005"
-            "\022)\n\013custom_data\030\004 \001(\0132\024.game.base.BytesD"
-            "ata\"+\n\014TableChatReq\022\016\n\006userid\030\001 \001(\005\022\013\n\003m"
-            "sg\030\002 \001(\t\".\n\017TableChatNotify\022\016\n\006userid\030\001 "
-            "\001(\005\022\013\n\003msg\030\002 \001(\t\"\035\n\rTableChatResp\022\014\n\004cod"
-            "e\030\001 \001(\005\"/\n\014StartGameReq\022\016\n\006roomid\030\001 \001(\005\022"
-            "\017\n\007tableno\030\002 \001(\005\"(\n\026GetTablePlayersInfoR"
-            "eq\022\016\n\006userid\030\001 \001(\005\"\277\001\n\027GetTablePlayersIn"
-            "foResp\022\014\n\004code\030\001 \001(\005\0222\n\rtable_players\030\002 "
-            "\001(\0132\033.game.base.TablePlayersInfo\022\023\n\013cust"
-            "om_flag\030\003 \001(\005\022)\n\013custom_data\030\004 \001(\0132\024.gam"
-            "e.base.BytesData\022\"\n\004hand\030\005 \001(\0132\024.game.ba"
-            "se.BytesData\"<\n\024CountdownStartNotify\022\017\n\007"
-            "tableno\030\001 \001(\005\022\023\n\013countdown_s\030\002 \001(\005\"&\n\023Co"
-            "untdownStopNotify\022\017\n\007tableno\030\001 \001(\005\"[\n\017Ga"
-            "meStartNotify\022\017\n\007tableno\030\001 \001(\005\022\014\n\004flag\030\002"
-            " \001(\005\022)\n\013custom_data\030\003 \001(\0132\024.game.base.By"
-            "tesData\"I\n\022PlayerGiveupNotify\022\016\n\006userid\030"
-            "\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\022\022\n\nnext_chair\030\003 \001"
-            "(\005\"\273\001\n\020GameResultNotify\022\017\n\007tableno\030\001 \001(\005"
-            "\022\022\n\nbout_count\030\002 \001(\005\022\024\n\014banker_chair\030\003 \001"
-            "(\005\022\024\n\014base_deposit\030\004 \001(\003\022+\n\014user_results"
-            "\030\005 \003(\0132\025.game.base.UserResult\022)\n\013custom_"
-            "data\030\006 \001(\0132\024.game.base.BytesData\"2\n\021User"
-            "SitDownNotify\022\035\n\004user\030\001 \001(\0132\017.game.base."
-            "User\"4\n\021UserStandUpNotify\022\016\n\006userid\030\001 \001("
-            "\005\022\017\n\007chairno\030\002 \001(\005\"2\n\017UserLeaveNotify\022\016\n"
-            "\006userid\030\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\"T\n\027UserDe"
-            "positChangeNotify\022\016\n\006userid\030\001 \001(\005\022\024\n\014dif"
-            "f_deposit\030\002 \001(\003\022\023\n\013own_deposit\030\003 \001(\003\"\201\001\n"
-            "\013MallProduct\022\021\n\tproductid\030\001 \001(\005\022\020\n\010curre"
-            "ncy\030\002 \001(\005\022\r\n\005price\030\003 \001(\003\022\024\n\014product_name"
-            "\030\004 \001(\t\022\024\n\014product_code\030\005 \001(\t\022\022\n\nos_suppo"
-            "rt\030\006 \001(\005\"0\n\022GetMallProductsReq\022\016\n\006userid"
-            "\030\001 \001(\005\022\n\n\002os\030\002 \001(\005\"L\n\023GetMallProductsRes"
-            "p\022\014\n\004code\030\001 \001(\005\022\'\n\007product\030\002 \003(\0132\026.game."
-            "base.MallProduct\"B\n\016MallShopingReq\022\016\n\006us"
-            "erid\030\001 \001(\005\022\021\n\tproductid\030\002 \001(\005\022\r\n\005count\030\003"
-            " \001(\005\"\?\n\017MallShopingResp\022\014\n\004code\030\001 \001(\005\022\020\n"
-            "\010currency\030\002 \001(\005\022\014\n\004cost\030\003 \001(\005\"(\n\023RobotSv"
-            "rValidateReq\022\021\n\tclient_id\030\001 \001(\005\"$\n\024Robot"
-            "SvrValidateResp\022\014\n\004code\030\001 \001(\005\"3\n\017GetGame"
-            "UsersReq\022\020\n\010clientid\030\001 \001(\005\022\016\n\006roomid\030\002 \001"
-            "(\005\"`\n\020GetGameUsersResp\022\014\n\004code\030\001 \001(\005\022\036\n\005"
-            "rooms\030\002 \003(\0132\017.game.base.Room\022\036\n\005users\030\003 "
-            "\003(\0132\017.game.base.User\"\305\001\n\026RS_UserEnterGam"
-            "eNotify\022\016\n\006userid\030\001 \001(\005\022\017\n\007tableno\030\002 \001(\005"
-            "\022\017\n\007chairno\030\003 \001(\005\022\021\n\tuser_type\030\004 \001(\005\022&\n\t"
-            "room_data\030\005 \001(\0132\023.game.base.RoomData\022\023\n\013"
-            "min_deposit\030\006 \001(\003\022\023\n\013max_deposit\030\007 \001(\003\022\024"
-            "\n\014base_deposit\030\010 \001(\003\"_\n\033RS_SwitchLookerP"
-            "layerNotify\022\016\n\006userid\030\001 \001(\005\022\016\n\006roomid\030\002 "
-            "\001(\005\022\017\n\007tableno\030\003 \001(\005\022\017\n\007chairno\030\004 \001(\005\"[\n"
-            "\022RS_StartGameNotify\022\016\n\006roomid\030\001 \001(\005\022\017\n\007t"
-            "ableno\030\002 \001(\005\022$\n\006chairs\030\003 \003(\0132\024.game.base"
-            ".ChairInfo\"^\n\032RS_UserRefreshResultNotify"
-            "\022\016\n\006userid\030\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\017\n\007tabl"
-            "eno\030\003 \001(\005\022\017\n\007chairno\030\004 \001(\005\"9\n\026RS_Refresh"
-            "ResultNotify\022\016\n\006roomid\030\001 \001(\005\022\017\n\007tableno\030"
-            "\002 \001(\005\"I\n\026RS_UserLeaveGameNotify\022\016\n\006useri"
-            "d\030\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\017\n\007tableno\030\003 \001(\005"
+            " \001(\0132\024.game.base.BytesData\022\016\n\006gameid\030\007 \001"
+            "(\005\"H\n\023EnterPrivateGameReq\0221\n\nbase_enter\030"
+            "\001 \001(\0132\035.game.base.EnterNormalGameReq\"$\n\024"
+            "EnterPrivateGameResp\022\014\n\004code\030\001 \001(\005\"F\n\021En"
+            "terMatchGameReq\0221\n\nbase_enter\030\001 \001(\0132\035.ga"
+            "me.base.EnterNormalGameReq\"\"\n\022EnterMatch"
+            "GameResp\022\014\n\004code\030\001 \001(\005\"\036\n\014LeaveGameReq\022\016"
+            "\n\006userid\030\001 \001(\005\"\035\n\rLeaveGameResp\022\014\n\004code\030"
+            "\001 \001(\005\"\033\n\tGiveUpReq\022\016\n\006userid\030\001 \001(\005\"\032\n\nGi"
+            "veUpResp\022\014\n\004code\030\001 \001(\005\"\"\n\020Looker2PlayerR"
+            "eq\022\016\n\006userid\030\001 \001(\005\"2\n\021Looker2PlayerResp\022"
+            "\014\n\004code\030\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\"0\n\020Player"
+            "2LookerReq\022\016\n\006userid\030\001 \001(\005\022\014\n\004flag\030\002 \001(\005"
+            "\"!\n\021Player2LookerResp\022\014\n\004code\030\001 \001(\005\" \n\016S"
+            "witchTableReq\022\016\n\006userid\030\001 \001(\005\"\223\001\n\017Switch"
+            "TableResp\022\014\n\004code\030\001 \001(\005\0222\n\rtable_players"
+            "\030\002 \001(\0132\033.game.base.TablePlayersInfo\022\023\n\013c"
+            "ustom_flag\030\003 \001(\005\022)\n\013custom_data\030\004 \001(\0132\024."
+            "game.base.BytesData\"+\n\014TableChatReq\022\016\n\006u"
+            "serid\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t\".\n\017TableChatNot"
+            "ify\022\016\n\006userid\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t\"\035\n\rTabl"
+            "eChatResp\022\014\n\004code\030\001 \001(\005\"/\n\014StartGameReq\022"
+            "\016\n\006roomid\030\001 \001(\005\022\017\n\007tableno\030\002 \001(\005\"(\n\026GetT"
+            "ablePlayersInfoReq\022\016\n\006userid\030\001 \001(\005\"\277\001\n\027G"
+            "etTablePlayersInfoResp\022\014\n\004code\030\001 \001(\005\0222\n\r"
+            "table_players\030\002 \001(\0132\033.game.base.TablePla"
+            "yersInfo\022\023\n\013custom_flag\030\003 \001(\005\022)\n\013custom_"
+            "data\030\004 \001(\0132\024.game.base.BytesData\022\"\n\004hand"
+            "\030\005 \001(\0132\024.game.base.BytesData\"<\n\024Countdow"
+            "nStartNotify\022\017\n\007tableno\030\001 \001(\005\022\023\n\013countdo"
+            "wn_s\030\002 \001(\005\"&\n\023CountdownStopNotify\022\017\n\007tab"
+            "leno\030\001 \001(\005\"[\n\017GameStartNotify\022\017\n\007tableno"
+            "\030\001 \001(\005\022\014\n\004flag\030\002 \001(\005\022)\n\013custom_data\030\003 \001("
+            "\0132\024.game.base.BytesData\"I\n\022PlayerGiveupN"
+            "otify\022\016\n\006userid\030\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\022\022"
+            "\n\nnext_chair\030\003 \001(\005\"\273\001\n\020GameResultNotify\022"
+            "\017\n\007tableno\030\001 \001(\005\022\022\n\nbout_count\030\002 \001(\005\022\024\n\014"
+            "banker_chair\030\003 \001(\005\022\024\n\014base_deposit\030\004 \001(\003"
+            "\022+\n\014user_results\030\005 \003(\0132\025.game.base.UserR"
+            "esult\022)\n\013custom_data\030\006 \001(\0132\024.game.base.B"
+            "ytesData\"2\n\021UserSitDownNotify\022\035\n\004user\030\001 "
+            "\001(\0132\017.game.base.User\"4\n\021UserStandUpNotif"
+            "y\022\016\n\006userid\030\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\"2\n\017Us"
+            "erLeaveNotify\022\016\n\006userid\030\001 \001(\005\022\017\n\007chairno"
+            "\030\002 \001(\005\"T\n\027UserDepositChangeNotify\022\016\n\006use"
+            "rid\030\001 \001(\005\022\024\n\014diff_deposit\030\002 \001(\003\022\023\n\013own_d"
+            "eposit\030\003 \001(\003\"\201\001\n\013MallProduct\022\021\n\tproducti"
+            "d\030\001 \001(\005\022\020\n\010currency\030\002 \001(\005\022\r\n\005price\030\003 \001(\003"
+            "\022\024\n\014product_name\030\004 \001(\t\022\024\n\014product_code\030\005"
+            " \001(\t\022\022\n\nos_support\030\006 \001(\005\"0\n\022GetMallProdu"
+            "ctsReq\022\016\n\006userid\030\001 \001(\005\022\n\n\002os\030\002 \001(\005\"L\n\023Ge"
+            "tMallProductsResp\022\014\n\004code\030\001 \001(\005\022\'\n\007produ"
+            "ct\030\002 \003(\0132\026.game.base.MallProduct\"B\n\016Mall"
+            "ShopingReq\022\016\n\006userid\030\001 \001(\005\022\021\n\tproductid\030"
+            "\002 \001(\005\022\r\n\005count\030\003 \001(\005\"\?\n\017MallShopingResp\022"
+            "\014\n\004code\030\001 \001(\005\022\020\n\010currency\030\002 \001(\005\022\014\n\004cost\030"
+            "\003 \001(\005\"(\n\023RobotSvrValidateReq\022\021\n\tclient_i"
+            "d\030\001 \001(\005\"$\n\024RobotSvrValidateResp\022\014\n\004code\030"
+            "\001 \001(\005\"3\n\017GetGameUsersReq\022\020\n\010clientid\030\001 \001"
+            "(\005\022\016\n\006roomid\030\002 \001(\005\"`\n\020GetGameUsersResp\022\014"
+            "\n\004code\030\001 \001(\005\022\036\n\005rooms\030\002 \003(\0132\017.game.base."
+            "Room\022\036\n\005users\030\003 \003(\0132\017.game.base.User\"\237\001\n"
+            "\026RS_UserEnterGameNotify\022\035\n\004user\030\001 \001(\0132\017."
+            "game.base.User\022&\n\troom_data\030\002 \001(\0132\023.game"
+            ".base.RoomData\022\023\n\013min_deposit\030\003 \001(\003\022\023\n\013m"
+            "ax_deposit\030\004 \001(\003\022\024\n\014base_deposit\030\005 \001(\003\"_"
+            "\n\033RS_SwitchLookerPlayerNotify\022\016\n\006userid\030"
+            "\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\017\n\007tableno\030\003 \001(\005\022\017"
+            "\n\007chairno\030\004 \001(\005\"[\n\022RS_StartGameNotify\022\016\n"
+            "\006roomid\030\001 \001(\005\022\017\n\007tableno\030\002 \001(\005\022$\n\006chairs"
+            "\030\003 \003(\0132\024.game.base.ChairInfo\"^\n\032RS_UserR"
+            "efreshResultNotify\022\016\n\006userid\030\001 \001(\005\022\016\n\006ro"
+            "omid\030\002 \001(\005\022\017\n\007tableno\030\003 \001(\005\022\017\n\007chairno\030\004"
+            " \001(\005\"9\n\026RS_RefreshResultNotify\022\016\n\006roomid"
+            "\030\001 \001(\005\022\017\n\007tableno\030\002 \001(\005\"7\n\026RS_UserLeaveG"
+            "ameNotify\022\035\n\004user\030\001 \001(\0132\017.game.base.User"
             "\"u\n\024RS_SwitchTableNotify\022\016\n\006userid\030\001 \001(\005"
             "\022\016\n\006roomid\030\002 \001(\005\022\023\n\013old_tableno\030\003 \001(\005\022\023\n"
-            "\013new_tableno\030\004 \001(\005\022\023\n\013new_chairno\030\005 \001(\005"
+            "\013new_tableno\030\004 \001(\005\022\023\n\013new_chairno\030\005 \001(\005\""
+            "1\n\020RS_NewRoomNotify\022\035\n\004room\030\001 \001(\0132\017.game"
+            ".base.Room"
         };
         ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-            descriptor, 4999);
+            descriptor, 5010);
         ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
             "game_base.proto", &protobuf_RegisterTypes);
     }
@@ -7771,6 +7802,7 @@ failure:
         const int EnterNormalGameResp::kTablePlayersFieldNumber;
         const int EnterNormalGameResp::kCustomFlagFieldNumber;
         const int EnterNormalGameResp::kCustomDataFieldNumber;
+        const int EnterNormalGameResp::kGameidFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
         EnterNormalGameResp::EnterNormalGameResp()
@@ -7803,16 +7835,16 @@ failure:
                 custom_data_ = NULL;
             }
             ::memcpy(&code_, &from.code_,
-                     static_cast<size_t>(reinterpret_cast<char*>(&custom_flag_) -
-                     reinterpret_cast<char*>(&code_)) + sizeof(custom_flag_));
+                     static_cast<size_t>(reinterpret_cast<char*>(&gameid_) -
+                     reinterpret_cast<char*>(&code_)) + sizeof(gameid_));
             // @@protoc_insertion_point(copy_constructor:game.base.EnterNormalGameResp)
         }
 
         void EnterNormalGameResp::SharedCtor() {
             _cached_size_ = 0;
             ::memset(&hand_, 0, static_cast<size_t>(
-                reinterpret_cast<char*>(&custom_flag_) -
-                reinterpret_cast<char*>(&hand_)) + sizeof(custom_flag_));
+                reinterpret_cast<char*>(&gameid_) -
+                reinterpret_cast<char*>(&hand_)) + sizeof(gameid_));
         }
 
         EnterNormalGameResp::~EnterNormalGameResp() {
@@ -7870,10 +7902,10 @@ failure:
                     custom_data_->Clear();
                 }
             }
-            if (cached_has_bits & 56u) {
+            if (cached_has_bits & 120u) {
                 ::memset(&code_, 0, static_cast<size_t>(
-                    reinterpret_cast<char*>(&custom_flag_) -
-                    reinterpret_cast<char*>(&code_)) + sizeof(custom_flag_));
+                    reinterpret_cast<char*>(&gameid_) -
+                    reinterpret_cast<char*>(&code_)) + sizeof(gameid_));
             }
             _has_bits_.Clear();
             _internal_metadata_.Clear();
@@ -7967,6 +7999,20 @@ failure:
                         break;
                     }
 
+                            // optional int32 gameid = 7;
+                    case 7: {
+                        if (static_cast<::google::protobuf::uint8>(tag) ==
+                            static_cast<::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
+                            set_has_gameid();
+                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                                input, &gameid_)));
+                        } else {
+                            goto handle_unusual;
+                        }
+                        break;
+                    }
+
                     default: {
 handle_unusual:
                         if (tag == 0) {
@@ -8027,6 +8073,11 @@ failure:
                     6, *this->custom_data_, output);
             }
 
+            // optional int32 gameid = 7;
+            if (cached_has_bits & 0x00000040u) {
+                ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->gameid(), output);
+            }
+
             if (_internal_metadata_.have_unknown_fields()) {
                 ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
                     _internal_metadata_.unknown_fields(), output);
@@ -8078,6 +8129,11 @@ failure:
                     6, *this->custom_data_, deterministic, target);
             }
 
+            // optional int32 gameid = 7;
+            if (cached_has_bits & 0x00000040u) {
+                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(7, this->gameid(), target);
+            }
+
             if (_internal_metadata_.have_unknown_fields()) {
                 target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
                     _internal_metadata_.unknown_fields(), target);
@@ -8095,7 +8151,7 @@ failure:
                     ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
                     _internal_metadata_.unknown_fields());
             }
-            if (_has_bits_[0 / 32] & 63u) {
+            if (_has_bits_[0 / 32] & 127u) {
                 // optional .game.base.BytesData hand = 3;
                 if (has_hand()) {
                     total_size += 1 +
@@ -8138,6 +8194,13 @@ failure:
                         this->custom_flag());
                 }
 
+                // optional int32 gameid = 7;
+                if (has_gameid()) {
+                    total_size += 1 +
+                        ::google::protobuf::internal::WireFormatLite::Int32Size(
+                        this->gameid());
+                }
+
             }
             int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
             GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -8169,7 +8232,7 @@ failure:
             (void) cached_has_bits;
 
             cached_has_bits = from._has_bits_[0];
-            if (cached_has_bits & 63u) {
+            if (cached_has_bits & 127u) {
                 if (cached_has_bits & 0x00000001u) {
                     mutable_hand()->::game::base::BytesData::MergeFrom(from.hand());
                 }
@@ -8187,6 +8250,9 @@ failure:
                 }
                 if (cached_has_bits & 0x00000020u) {
                     custom_flag_ = from.custom_flag_;
+                }
+                if (cached_has_bits & 0x00000040u) {
+                    gameid_ = from.gameid_;
                 }
                 _has_bits_[0] |= cached_has_bits;
             }
@@ -8222,6 +8288,7 @@ failure:
             swap(code_, other->code_);
             swap(flag_, other->flag_);
             swap(custom_flag_, other->custom_flag_);
+            swap(gameid_, other->gameid_);
             swap(_has_bits_[0], other->_has_bits_[0]);
             _internal_metadata_.Swap(&other->_internal_metadata_);
             swap(_cached_size_, other->_cached_size_);
@@ -19373,14 +19440,13 @@ failure:
         // ===================================================================
 
         void RS_UserEnterGameNotify::InitAsDefaultInstance() {
+            ::game::base::_RS_UserEnterGameNotify_default_instance_._instance.get_mutable()->user_ = const_cast<::game::base::User*>(
+                ::game::base::User::internal_default_instance());
             ::game::base::_RS_UserEnterGameNotify_default_instance_._instance.get_mutable()->room_data_ = const_cast<::game::base::RoomData*>(
                 ::game::base::RoomData::internal_default_instance());
         }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-        const int RS_UserEnterGameNotify::kUseridFieldNumber;
-        const int RS_UserEnterGameNotify::kTablenoFieldNumber;
-        const int RS_UserEnterGameNotify::kChairnoFieldNumber;
-        const int RS_UserEnterGameNotify::kUserTypeFieldNumber;
+        const int RS_UserEnterGameNotify::kUserFieldNumber;
         const int RS_UserEnterGameNotify::kRoomDataFieldNumber;
         const int RS_UserEnterGameNotify::kMinDepositFieldNumber;
         const int RS_UserEnterGameNotify::kMaxDepositFieldNumber;
@@ -19401,22 +19467,27 @@ failure:
             _has_bits_(from._has_bits_),
             _cached_size_(0) {
             _internal_metadata_.MergeFrom(from._internal_metadata_);
+            if (from.has_user()) {
+                user_ = new ::game::base::User(*from.user_);
+            } else {
+                user_ = NULL;
+            }
             if (from.has_room_data()) {
                 room_data_ = new ::game::base::RoomData(*from.room_data_);
             } else {
                 room_data_ = NULL;
             }
-            ::memcpy(&userid_, &from.userid_,
+            ::memcpy(&min_deposit_, &from.min_deposit_,
                      static_cast<size_t>(reinterpret_cast<char*>(&base_deposit_) -
-                     reinterpret_cast<char*>(&userid_)) + sizeof(base_deposit_));
+                     reinterpret_cast<char*>(&min_deposit_)) + sizeof(base_deposit_));
             // @@protoc_insertion_point(copy_constructor:game.base.RS_UserEnterGameNotify)
         }
 
         void RS_UserEnterGameNotify::SharedCtor() {
             _cached_size_ = 0;
-            ::memset(&room_data_, 0, static_cast<size_t>(
+            ::memset(&user_, 0, static_cast<size_t>(
                 reinterpret_cast<char*>(&base_deposit_) -
-                reinterpret_cast<char*>(&room_data_)) + sizeof(base_deposit_));
+                reinterpret_cast<char*>(&user_)) + sizeof(base_deposit_));
         }
 
         RS_UserEnterGameNotify::~RS_UserEnterGameNotify() {
@@ -19425,6 +19496,7 @@ failure:
         }
 
         void RS_UserEnterGameNotify::SharedDtor() {
+            if (this != internal_default_instance()) delete user_;
             if (this != internal_default_instance()) delete room_data_;
         }
 
@@ -19458,14 +19530,20 @@ failure:
             (void) cached_has_bits;
 
             cached_has_bits = _has_bits_[0];
-            if (cached_has_bits & 0x00000001u) {
-                GOOGLE_DCHECK(room_data_ != NULL);
-                room_data_->Clear();
+            if (cached_has_bits & 3u) {
+                if (cached_has_bits & 0x00000001u) {
+                    GOOGLE_DCHECK(user_ != NULL);
+                    user_->Clear();
+                }
+                if (cached_has_bits & 0x00000002u) {
+                    GOOGLE_DCHECK(room_data_ != NULL);
+                    room_data_->Clear();
+                }
             }
-            if (cached_has_bits & 254u) {
-                ::memset(&userid_, 0, static_cast<size_t>(
+            if (cached_has_bits & 28u) {
+                ::memset(&min_deposit_, 0, static_cast<size_t>(
                     reinterpret_cast<char*>(&base_deposit_) -
-                    reinterpret_cast<char*>(&userid_)) + sizeof(base_deposit_));
+                    reinterpret_cast<char*>(&min_deposit_)) + sizeof(base_deposit_));
             }
             _has_bits_.Clear();
             _internal_metadata_.Clear();
@@ -19481,66 +19559,22 @@ failure:
                 tag = p.first;
                 if (!p.second) goto handle_unusual;
                 switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-                    // optional int32 userid = 1;
+                    // optional .game.base.User user = 1;
                     case 1: {
                         if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-                            set_has_userid();
-                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                                input, &userid_)));
+                            static_cast<::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+                            DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                                input, mutable_user()));
                         } else {
                             goto handle_unusual;
                         }
                         break;
                     }
 
-                            // optional int32 tableno = 2;
+                            // optional .game.base.RoomData room_data = 2;
                     case 2: {
                         if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-                            set_has_tableno();
-                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                                input, &tableno_)));
-                        } else {
-                            goto handle_unusual;
-                        }
-                        break;
-                    }
-
-                            // optional int32 chairno = 3;
-                    case 3: {
-                        if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-                            set_has_chairno();
-                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                                input, &chairno_)));
-                        } else {
-                            goto handle_unusual;
-                        }
-                        break;
-                    }
-
-                            // optional int32 user_type = 4;
-                    case 4: {
-                        if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
-                            set_has_user_type();
-                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                                input, &user_type_)));
-                        } else {
-                            goto handle_unusual;
-                        }
-                        break;
-                    }
-
-                            // optional .game.base.RoomData room_data = 5;
-                    case 5: {
-                        if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
+                            static_cast<::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
                             DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
                                 input, mutable_room_data()));
                         } else {
@@ -19549,10 +19583,10 @@ failure:
                         break;
                     }
 
-                            // optional int64 min_deposit = 6;
-                    case 6: {
+                            // optional int64 min_deposit = 3;
+                    case 3: {
                         if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
+                            static_cast<::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
                             set_has_min_deposit();
                             DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                                 ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
@@ -19563,10 +19597,10 @@ failure:
                         break;
                     }
 
-                            // optional int64 max_deposit = 7;
-                    case 7: {
+                            // optional int64 max_deposit = 4;
+                    case 4: {
                         if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
+                            static_cast<::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
                             set_has_max_deposit();
                             DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                                 ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
@@ -19577,10 +19611,10 @@ failure:
                         break;
                     }
 
-                            // optional int64 base_deposit = 8;
-                    case 8: {
+                            // optional int64 base_deposit = 5;
+                    case 5: {
                         if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
+                            static_cast<::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
                             set_has_base_deposit();
                             DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                                 ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
@@ -19618,45 +19652,31 @@ failure:
             (void) cached_has_bits;
 
             cached_has_bits = _has_bits_[0];
-            // optional int32 userid = 1;
-            if (cached_has_bits & 0x00000002u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->userid(), output);
-            }
-
-            // optional int32 tableno = 2;
-            if (cached_has_bits & 0x00000004u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->tableno(), output);
-            }
-
-            // optional int32 chairno = 3;
-            if (cached_has_bits & 0x00000008u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->chairno(), output);
-            }
-
-            // optional int32 user_type = 4;
-            if (cached_has_bits & 0x00000010u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->user_type(), output);
-            }
-
-            // optional .game.base.RoomData room_data = 5;
+            // optional .game.base.User user = 1;
             if (cached_has_bits & 0x00000001u) {
                 ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-                    5, *this->room_data_, output);
+                    1, *this->user_, output);
             }
 
-            // optional int64 min_deposit = 6;
-            if (cached_has_bits & 0x00000020u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt64(6, this->min_deposit(), output);
+            // optional .game.base.RoomData room_data = 2;
+            if (cached_has_bits & 0x00000002u) {
+                ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+                    2, *this->room_data_, output);
             }
 
-            // optional int64 max_deposit = 7;
-            if (cached_has_bits & 0x00000040u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt64(7, this->max_deposit(), output);
+            // optional int64 min_deposit = 3;
+            if (cached_has_bits & 0x00000004u) {
+                ::google::protobuf::internal::WireFormatLite::WriteInt64(3, this->min_deposit(), output);
             }
 
-            // optional int64 base_deposit = 8;
-            if (cached_has_bits & 0x00000080u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt64(8, this->base_deposit(), output);
+            // optional int64 max_deposit = 4;
+            if (cached_has_bits & 0x00000008u) {
+                ::google::protobuf::internal::WireFormatLite::WriteInt64(4, this->max_deposit(), output);
+            }
+
+            // optional int64 base_deposit = 5;
+            if (cached_has_bits & 0x00000010u) {
+                ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->base_deposit(), output);
             }
 
             if (_internal_metadata_.have_unknown_fields()) {
@@ -19674,46 +19694,33 @@ failure:
             (void) cached_has_bits;
 
             cached_has_bits = _has_bits_[0];
-            // optional int32 userid = 1;
-            if (cached_has_bits & 0x00000002u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->userid(), target);
-            }
-
-            // optional int32 tableno = 2;
-            if (cached_has_bits & 0x00000004u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->tableno(), target);
-            }
-
-            // optional int32 chairno = 3;
-            if (cached_has_bits & 0x00000008u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->chairno(), target);
-            }
-
-            // optional int32 user_type = 4;
-            if (cached_has_bits & 0x00000010u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(4, this->user_type(), target);
-            }
-
-            // optional .game.base.RoomData room_data = 5;
+            // optional .game.base.User user = 1;
             if (cached_has_bits & 0x00000001u) {
                 target = ::google::protobuf::internal::WireFormatLite::
                     InternalWriteMessageToArray(
-                    5, *this->room_data_, deterministic, target);
+                    1, *this->user_, deterministic, target);
             }
 
-            // optional int64 min_deposit = 6;
-            if (cached_has_bits & 0x00000020u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(6, this->min_deposit(), target);
+            // optional .game.base.RoomData room_data = 2;
+            if (cached_has_bits & 0x00000002u) {
+                target = ::google::protobuf::internal::WireFormatLite::
+                    InternalWriteMessageToArray(
+                    2, *this->room_data_, deterministic, target);
             }
 
-            // optional int64 max_deposit = 7;
-            if (cached_has_bits & 0x00000040u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(7, this->max_deposit(), target);
+            // optional int64 min_deposit = 3;
+            if (cached_has_bits & 0x00000004u) {
+                target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(3, this->min_deposit(), target);
             }
 
-            // optional int64 base_deposit = 8;
-            if (cached_has_bits & 0x00000080u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(8, this->base_deposit(), target);
+            // optional int64 max_deposit = 4;
+            if (cached_has_bits & 0x00000008u) {
+                target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(4, this->max_deposit(), target);
+            }
+
+            // optional int64 base_deposit = 5;
+            if (cached_has_bits & 0x00000010u) {
+                target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(5, this->base_deposit(), target);
             }
 
             if (_internal_metadata_.have_unknown_fields()) {
@@ -19733,57 +19740,36 @@ failure:
                     ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
                     _internal_metadata_.unknown_fields());
             }
-            if (_has_bits_[0 / 32] & 255u) {
-                // optional .game.base.RoomData room_data = 5;
+            if (_has_bits_[0 / 32] & 31u) {
+                // optional .game.base.User user = 1;
+                if (has_user()) {
+                    total_size += 1 +
+                        ::google::protobuf::internal::WireFormatLite::MessageSize(
+                        *this->user_);
+                }
+
+                // optional .game.base.RoomData room_data = 2;
                 if (has_room_data()) {
                     total_size += 1 +
                         ::google::protobuf::internal::WireFormatLite::MessageSize(
                         *this->room_data_);
                 }
 
-                // optional int32 userid = 1;
-                if (has_userid()) {
-                    total_size += 1 +
-                        ::google::protobuf::internal::WireFormatLite::Int32Size(
-                        this->userid());
-                }
-
-                // optional int32 tableno = 2;
-                if (has_tableno()) {
-                    total_size += 1 +
-                        ::google::protobuf::internal::WireFormatLite::Int32Size(
-                        this->tableno());
-                }
-
-                // optional int32 chairno = 3;
-                if (has_chairno()) {
-                    total_size += 1 +
-                        ::google::protobuf::internal::WireFormatLite::Int32Size(
-                        this->chairno());
-                }
-
-                // optional int32 user_type = 4;
-                if (has_user_type()) {
-                    total_size += 1 +
-                        ::google::protobuf::internal::WireFormatLite::Int32Size(
-                        this->user_type());
-                }
-
-                // optional int64 min_deposit = 6;
+                // optional int64 min_deposit = 3;
                 if (has_min_deposit()) {
                     total_size += 1 +
                         ::google::protobuf::internal::WireFormatLite::Int64Size(
                         this->min_deposit());
                 }
 
-                // optional int64 max_deposit = 7;
+                // optional int64 max_deposit = 4;
                 if (has_max_deposit()) {
                     total_size += 1 +
                         ::google::protobuf::internal::WireFormatLite::Int64Size(
                         this->max_deposit());
                 }
 
-                // optional int64 base_deposit = 8;
+                // optional int64 base_deposit = 5;
                 if (has_base_deposit()) {
                     total_size += 1 +
                         ::google::protobuf::internal::WireFormatLite::Int64Size(
@@ -19821,29 +19807,20 @@ failure:
             (void) cached_has_bits;
 
             cached_has_bits = from._has_bits_[0];
-            if (cached_has_bits & 255u) {
+            if (cached_has_bits & 31u) {
                 if (cached_has_bits & 0x00000001u) {
-                    mutable_room_data()->::game::base::RoomData::MergeFrom(from.room_data());
+                    mutable_user()->::game::base::User::MergeFrom(from.user());
                 }
                 if (cached_has_bits & 0x00000002u) {
-                    userid_ = from.userid_;
+                    mutable_room_data()->::game::base::RoomData::MergeFrom(from.room_data());
                 }
                 if (cached_has_bits & 0x00000004u) {
-                    tableno_ = from.tableno_;
-                }
-                if (cached_has_bits & 0x00000008u) {
-                    chairno_ = from.chairno_;
-                }
-                if (cached_has_bits & 0x00000010u) {
-                    user_type_ = from.user_type_;
-                }
-                if (cached_has_bits & 0x00000020u) {
                     min_deposit_ = from.min_deposit_;
                 }
-                if (cached_has_bits & 0x00000040u) {
+                if (cached_has_bits & 0x00000008u) {
                     max_deposit_ = from.max_deposit_;
                 }
-                if (cached_has_bits & 0x00000080u) {
+                if (cached_has_bits & 0x00000010u) {
                     base_deposit_ = from.base_deposit_;
                 }
                 _has_bits_[0] |= cached_has_bits;
@@ -19874,11 +19851,8 @@ failure:
         }
         void RS_UserEnterGameNotify::InternalSwap(RS_UserEnterGameNotify* other) {
             using std::swap;
+            swap(user_, other->user_);
             swap(room_data_, other->room_data_);
-            swap(userid_, other->userid_);
-            swap(tableno_, other->tableno_);
-            swap(chairno_, other->chairno_);
-            swap(user_type_, other->user_type_);
             swap(min_deposit_, other->min_deposit_);
             swap(max_deposit_, other->max_deposit_);
             swap(base_deposit_, other->base_deposit_);
@@ -21249,11 +21223,12 @@ failure:
 
         // ===================================================================
 
-        void RS_UserLeaveGameNotify::InitAsDefaultInstance() {}
+        void RS_UserLeaveGameNotify::InitAsDefaultInstance() {
+            ::game::base::_RS_UserLeaveGameNotify_default_instance_._instance.get_mutable()->user_ = const_cast<::game::base::User*>(
+                ::game::base::User::internal_default_instance());
+        }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-        const int RS_UserLeaveGameNotify::kUseridFieldNumber;
-        const int RS_UserLeaveGameNotify::kRoomidFieldNumber;
-        const int RS_UserLeaveGameNotify::kTablenoFieldNumber;
+        const int RS_UserLeaveGameNotify::kUserFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
         RS_UserLeaveGameNotify::RS_UserLeaveGameNotify()
@@ -21270,17 +21245,17 @@ failure:
             _has_bits_(from._has_bits_),
             _cached_size_(0) {
             _internal_metadata_.MergeFrom(from._internal_metadata_);
-            ::memcpy(&userid_, &from.userid_,
-                     static_cast<size_t>(reinterpret_cast<char*>(&tableno_) -
-                     reinterpret_cast<char*>(&userid_)) + sizeof(tableno_));
+            if (from.has_user()) {
+                user_ = new ::game::base::User(*from.user_);
+            } else {
+                user_ = NULL;
+            }
             // @@protoc_insertion_point(copy_constructor:game.base.RS_UserLeaveGameNotify)
         }
 
         void RS_UserLeaveGameNotify::SharedCtor() {
             _cached_size_ = 0;
-            ::memset(&userid_, 0, static_cast<size_t>(
-                reinterpret_cast<char*>(&tableno_) -
-                reinterpret_cast<char*>(&userid_)) + sizeof(tableno_));
+            user_ = NULL;
         }
 
         RS_UserLeaveGameNotify::~RS_UserLeaveGameNotify() {
@@ -21288,7 +21263,9 @@ failure:
             SharedDtor();
         }
 
-        void RS_UserLeaveGameNotify::SharedDtor() {}
+        void RS_UserLeaveGameNotify::SharedDtor() {
+            if (this != internal_default_instance()) delete user_;
+        }
 
         void RS_UserLeaveGameNotify::SetCachedSize(int size) const {
             GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
@@ -21320,10 +21297,9 @@ failure:
             (void) cached_has_bits;
 
             cached_has_bits = _has_bits_[0];
-            if (cached_has_bits & 7u) {
-                ::memset(&userid_, 0, static_cast<size_t>(
-                    reinterpret_cast<char*>(&tableno_) -
-                    reinterpret_cast<char*>(&userid_)) + sizeof(tableno_));
+            if (cached_has_bits & 0x00000001u) {
+                GOOGLE_DCHECK(user_ != NULL);
+                user_->Clear();
             }
             _has_bits_.Clear();
             _internal_metadata_.Clear();
@@ -21339,42 +21315,12 @@ failure:
                 tag = p.first;
                 if (!p.second) goto handle_unusual;
                 switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-                    // optional int32 userid = 1;
+                    // optional .game.base.User user = 1;
                     case 1: {
                         if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-                            set_has_userid();
-                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                                input, &userid_)));
-                        } else {
-                            goto handle_unusual;
-                        }
-                        break;
-                    }
-
-                            // optional int32 roomid = 2;
-                    case 2: {
-                        if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-                            set_has_roomid();
-                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                                input, &roomid_)));
-                        } else {
-                            goto handle_unusual;
-                        }
-                        break;
-                    }
-
-                            // optional int32 tableno = 3;
-                    case 3: {
-                        if (static_cast<::google::protobuf::uint8>(tag) ==
-                            static_cast<::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-                            set_has_tableno();
-                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                                input, &tableno_)));
+                            static_cast<::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+                            DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                                input, mutable_user()));
                         } else {
                             goto handle_unusual;
                         }
@@ -21408,19 +21354,10 @@ failure:
             (void) cached_has_bits;
 
             cached_has_bits = _has_bits_[0];
-            // optional int32 userid = 1;
+            // optional .game.base.User user = 1;
             if (cached_has_bits & 0x00000001u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->userid(), output);
-            }
-
-            // optional int32 roomid = 2;
-            if (cached_has_bits & 0x00000002u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->roomid(), output);
-            }
-
-            // optional int32 tableno = 3;
-            if (cached_has_bits & 0x00000004u) {
-                ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->tableno(), output);
+                ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+                    1, *this->user_, output);
             }
 
             if (_internal_metadata_.have_unknown_fields()) {
@@ -21438,19 +21375,11 @@ failure:
             (void) cached_has_bits;
 
             cached_has_bits = _has_bits_[0];
-            // optional int32 userid = 1;
+            // optional .game.base.User user = 1;
             if (cached_has_bits & 0x00000001u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->userid(), target);
-            }
-
-            // optional int32 roomid = 2;
-            if (cached_has_bits & 0x00000002u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->roomid(), target);
-            }
-
-            // optional int32 tableno = 3;
-            if (cached_has_bits & 0x00000004u) {
-                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->tableno(), target);
+                target = ::google::protobuf::internal::WireFormatLite::
+                    InternalWriteMessageToArray(
+                    1, *this->user_, deterministic, target);
             }
 
             if (_internal_metadata_.have_unknown_fields()) {
@@ -21470,29 +21399,13 @@ failure:
                     ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
                     _internal_metadata_.unknown_fields());
             }
-            if (_has_bits_[0 / 32] & 7u) {
-                // optional int32 userid = 1;
-                if (has_userid()) {
-                    total_size += 1 +
-                        ::google::protobuf::internal::WireFormatLite::Int32Size(
-                        this->userid());
-                }
-
-                // optional int32 roomid = 2;
-                if (has_roomid()) {
-                    total_size += 1 +
-                        ::google::protobuf::internal::WireFormatLite::Int32Size(
-                        this->roomid());
-                }
-
-                // optional int32 tableno = 3;
-                if (has_tableno()) {
-                    total_size += 1 +
-                        ::google::protobuf::internal::WireFormatLite::Int32Size(
-                        this->tableno());
-                }
-
+            // optional .game.base.User user = 1;
+            if (has_user()) {
+                total_size += 1 +
+                    ::google::protobuf::internal::WireFormatLite::MessageSize(
+                    *this->user_);
             }
+
             int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
             GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
             _cached_size_ = cached_size;
@@ -21522,18 +21435,8 @@ failure:
             ::google::protobuf::uint32 cached_has_bits = 0;
             (void) cached_has_bits;
 
-            cached_has_bits = from._has_bits_[0];
-            if (cached_has_bits & 7u) {
-                if (cached_has_bits & 0x00000001u) {
-                    userid_ = from.userid_;
-                }
-                if (cached_has_bits & 0x00000002u) {
-                    roomid_ = from.roomid_;
-                }
-                if (cached_has_bits & 0x00000004u) {
-                    tableno_ = from.tableno_;
-                }
-                _has_bits_[0] |= cached_has_bits;
+            if (from.has_user()) {
+                mutable_user()->::game::base::User::MergeFrom(from.user());
             }
         }
 
@@ -21561,9 +21464,7 @@ failure:
         }
         void RS_UserLeaveGameNotify::InternalSwap(RS_UserLeaveGameNotify* other) {
             using std::swap;
-            swap(userid_, other->userid_);
-            swap(roomid_, other->roomid_);
-            swap(tableno_, other->tableno_);
+            swap(user_, other->user_);
             swap(_has_bits_[0], other->_has_bits_[0]);
             _internal_metadata_.Swap(&other->_internal_metadata_);
             swap(_cached_size_, other->_cached_size_);
@@ -21970,6 +21871,261 @@ failure:
         }
 
         ::google::protobuf::Metadata RS_SwitchTableNotify::GetMetadata() const {
+            protobuf_game_5fbase_2eproto::protobuf_AssignDescriptorsOnce();
+            return ::protobuf_game_5fbase_2eproto::file_level_metadata[kIndexInFileMessages];
+        }
+
+
+        // ===================================================================
+
+        void RS_NewRoomNotify::InitAsDefaultInstance() {
+            ::game::base::_RS_NewRoomNotify_default_instance_._instance.get_mutable()->room_ = const_cast<::game::base::Room*>(
+                ::game::base::Room::internal_default_instance());
+        }
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+        const int RS_NewRoomNotify::kRoomFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+        RS_NewRoomNotify::RS_NewRoomNotify()
+            : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+            if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+                ::protobuf_game_5fbase_2eproto::InitDefaultsRS_NewRoomNotify();
+            }
+            SharedCtor();
+            // @@protoc_insertion_point(constructor:game.base.RS_NewRoomNotify)
+        }
+        RS_NewRoomNotify::RS_NewRoomNotify(const RS_NewRoomNotify& from)
+            : ::google::protobuf::Message(),
+            _internal_metadata_(NULL),
+            _has_bits_(from._has_bits_),
+            _cached_size_(0) {
+            _internal_metadata_.MergeFrom(from._internal_metadata_);
+            if (from.has_room()) {
+                room_ = new ::game::base::Room(*from.room_);
+            } else {
+                room_ = NULL;
+            }
+            // @@protoc_insertion_point(copy_constructor:game.base.RS_NewRoomNotify)
+        }
+
+        void RS_NewRoomNotify::SharedCtor() {
+            _cached_size_ = 0;
+            room_ = NULL;
+        }
+
+        RS_NewRoomNotify::~RS_NewRoomNotify() {
+            // @@protoc_insertion_point(destructor:game.base.RS_NewRoomNotify)
+            SharedDtor();
+        }
+
+        void RS_NewRoomNotify::SharedDtor() {
+            if (this != internal_default_instance()) delete room_;
+        }
+
+        void RS_NewRoomNotify::SetCachedSize(int size) const {
+            GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+            _cached_size_ = size;
+            GOOGLE_SAFE_CONCURRENT_WRITES_END();
+        }
+        const ::google::protobuf::Descriptor* RS_NewRoomNotify::descriptor() {
+            ::protobuf_game_5fbase_2eproto::protobuf_AssignDescriptorsOnce();
+            return ::protobuf_game_5fbase_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+        }
+
+        const RS_NewRoomNotify& RS_NewRoomNotify::default_instance() {
+            ::protobuf_game_5fbase_2eproto::InitDefaultsRS_NewRoomNotify();
+            return *internal_default_instance();
+        }
+
+        RS_NewRoomNotify* RS_NewRoomNotify::New(::google::protobuf::Arena* arena) const {
+            RS_NewRoomNotify* n = new RS_NewRoomNotify;
+            if (arena != NULL) {
+                arena->Own(n);
+            }
+            return n;
+        }
+
+        void RS_NewRoomNotify::Clear() {
+            // @@protoc_insertion_point(message_clear_start:game.base.RS_NewRoomNotify)
+            ::google::protobuf::uint32 cached_has_bits = 0;
+            // Prevent compiler warnings about cached_has_bits being unused
+            (void) cached_has_bits;
+
+            cached_has_bits = _has_bits_[0];
+            if (cached_has_bits & 0x00000001u) {
+                GOOGLE_DCHECK(room_ != NULL);
+                room_->Clear();
+            }
+            _has_bits_.Clear();
+            _internal_metadata_.Clear();
+        }
+
+        bool RS_NewRoomNotify::MergePartialFromCodedStream(
+            ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+            ::google::protobuf::uint32 tag;
+            // @@protoc_insertion_point(parse_start:game.base.RS_NewRoomNotify)
+            for (;;) {
+                ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+                tag = p.first;
+                if (!p.second) goto handle_unusual;
+                switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+                    // optional .game.base.Room room = 1;
+                    case 1: {
+                        if (static_cast<::google::protobuf::uint8>(tag) ==
+                            static_cast<::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+                            DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                                input, mutable_room()));
+                        } else {
+                            goto handle_unusual;
+                        }
+                        break;
+                    }
+
+                    default: {
+handle_unusual:
+                        if (tag == 0) {
+                            goto success;
+                        }
+                        DO_(::google::protobuf::internal::WireFormat::SkipField(
+                            input, tag, _internal_metadata_.mutable_unknown_fields()));
+                        break;
+                    }
+                }
+            }
+success:
+            // @@protoc_insertion_point(parse_success:game.base.RS_NewRoomNotify)
+            return true;
+failure:
+            // @@protoc_insertion_point(parse_failure:game.base.RS_NewRoomNotify)
+            return false;
+#undef DO_
+        }
+
+        void RS_NewRoomNotify::SerializeWithCachedSizes(
+            ::google::protobuf::io::CodedOutputStream* output) const {
+            // @@protoc_insertion_point(serialize_start:game.base.RS_NewRoomNotify)
+            ::google::protobuf::uint32 cached_has_bits = 0;
+            (void) cached_has_bits;
+
+            cached_has_bits = _has_bits_[0];
+            // optional .game.base.Room room = 1;
+            if (cached_has_bits & 0x00000001u) {
+                ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+                    1, *this->room_, output);
+            }
+
+            if (_internal_metadata_.have_unknown_fields()) {
+                ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+                    _internal_metadata_.unknown_fields(), output);
+            }
+            // @@protoc_insertion_point(serialize_end:game.base.RS_NewRoomNotify)
+        }
+
+        ::google::protobuf::uint8* RS_NewRoomNotify::InternalSerializeWithCachedSizesToArray(
+            bool deterministic, ::google::protobuf::uint8* target) const {
+            (void) deterministic; // Unused
+            // @@protoc_insertion_point(serialize_to_array_start:game.base.RS_NewRoomNotify)
+            ::google::protobuf::uint32 cached_has_bits = 0;
+            (void) cached_has_bits;
+
+            cached_has_bits = _has_bits_[0];
+            // optional .game.base.Room room = 1;
+            if (cached_has_bits & 0x00000001u) {
+                target = ::google::protobuf::internal::WireFormatLite::
+                    InternalWriteMessageToArray(
+                    1, *this->room_, deterministic, target);
+            }
+
+            if (_internal_metadata_.have_unknown_fields()) {
+                target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+                    _internal_metadata_.unknown_fields(), target);
+            }
+            // @@protoc_insertion_point(serialize_to_array_end:game.base.RS_NewRoomNotify)
+            return target;
+        }
+
+        size_t RS_NewRoomNotify::ByteSizeLong() const {
+            // @@protoc_insertion_point(message_byte_size_start:game.base.RS_NewRoomNotify)
+            size_t total_size = 0;
+
+            if (_internal_metadata_.have_unknown_fields()) {
+                total_size +=
+                    ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+                    _internal_metadata_.unknown_fields());
+            }
+            // optional .game.base.Room room = 1;
+            if (has_room()) {
+                total_size += 1 +
+                    ::google::protobuf::internal::WireFormatLite::MessageSize(
+                    *this->room_);
+            }
+
+            int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+            GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+            _cached_size_ = cached_size;
+            GOOGLE_SAFE_CONCURRENT_WRITES_END();
+            return total_size;
+        }
+
+        void RS_NewRoomNotify::MergeFrom(const ::google::protobuf::Message& from) {
+            // @@protoc_insertion_point(generalized_merge_from_start:game.base.RS_NewRoomNotify)
+            GOOGLE_DCHECK_NE(&from, this);
+            const RS_NewRoomNotify* source =
+                ::google::protobuf::internal::DynamicCastToGenerated<const RS_NewRoomNotify>(
+                &from);
+            if (source == NULL) {
+                // @@protoc_insertion_point(generalized_merge_from_cast_fail:game.base.RS_NewRoomNotify)
+                ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+            } else {
+                // @@protoc_insertion_point(generalized_merge_from_cast_success:game.base.RS_NewRoomNotify)
+                MergeFrom(*source);
+            }
+        }
+
+        void RS_NewRoomNotify::MergeFrom(const RS_NewRoomNotify& from) {
+            // @@protoc_insertion_point(class_specific_merge_from_start:game.base.RS_NewRoomNotify)
+            GOOGLE_DCHECK_NE(&from, this);
+            _internal_metadata_.MergeFrom(from._internal_metadata_);
+            ::google::protobuf::uint32 cached_has_bits = 0;
+            (void) cached_has_bits;
+
+            if (from.has_room()) {
+                mutable_room()->::game::base::Room::MergeFrom(from.room());
+            }
+        }
+
+        void RS_NewRoomNotify::CopyFrom(const ::google::protobuf::Message& from) {
+            // @@protoc_insertion_point(generalized_copy_from_start:game.base.RS_NewRoomNotify)
+            if (&from == this) return;
+            Clear();
+            MergeFrom(from);
+        }
+
+        void RS_NewRoomNotify::CopyFrom(const RS_NewRoomNotify& from) {
+            // @@protoc_insertion_point(class_specific_copy_from_start:game.base.RS_NewRoomNotify)
+            if (&from == this) return;
+            Clear();
+            MergeFrom(from);
+        }
+
+        bool RS_NewRoomNotify::IsInitialized() const {
+            return true;
+        }
+
+        void RS_NewRoomNotify::Swap(RS_NewRoomNotify* other) {
+            if (other == this) return;
+            InternalSwap(other);
+        }
+        void RS_NewRoomNotify::InternalSwap(RS_NewRoomNotify* other) {
+            using std::swap;
+            swap(room_, other->room_);
+            swap(_has_bits_[0], other->_has_bits_[0]);
+            _internal_metadata_.Swap(&other->_internal_metadata_);
+            swap(_cached_size_, other->_cached_size_);
+        }
+
+        ::google::protobuf::Metadata RS_NewRoomNotify::GetMetadata() const {
             protobuf_game_5fbase_2eproto::protobuf_AssignDescriptorsOnce();
             return ::protobuf_game_5fbase_2eproto::file_level_metadata[kIndexInFileMessages];
         }

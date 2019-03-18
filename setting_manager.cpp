@@ -6,7 +6,7 @@
 int SettingManager::Init() {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
-    hot_update_thread_.Initial(std::thread([this] {this->ThreadHotUpdate(); }));
+    timer_thread_.Initial(std::thread([this] {this->ThreadHotUpdate(); }));
 
     if (kCommSucc != InitSettingWithLock()) {
         LOG_ERROR("InitSetting() failed");
@@ -16,7 +16,7 @@ int SettingManager::Init() {
     return kCommSucc;
 }
 
-int SettingManager::Term() {
+int SettingManager::Term() const {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
@@ -30,6 +30,7 @@ int SettingManager::ThreadHotUpdate() {
             break;
         }
         if (WAIT_TIMEOUT == dwRet) {
+            if (!g_inited) continue;
             std::lock_guard<std::mutex> lock(mutex_);
             InitSettingWithLock();
         }
@@ -37,6 +38,15 @@ int SettingManager::ThreadHotUpdate() {
     LOG_INFO("[EXIT] SettingManager HotUpdate thread [%d] exiting", GetCurrentThreadId());
     return kCommSucc;
 }
+
+int SettingManager::IsRoomSettingExist(const RoomID& roomid, bool& exist) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (room_setting_map_.find(roomid) != room_setting_map_.end()) {
+        exist = true;
+    }
+    return kCommSucc;
+}
+
 
 int SettingManager::InitSettingWithLock() {
     const auto filename = g_curExePath + _T("robot.setting");
@@ -132,14 +142,13 @@ RoomSettingMap SettingManager::GetRoomSettingMap() const {
     return room_setting_map_;
 }
 
-int SettingManager::GetRobotSetting(const UserID userid, RobotSetting& robot_setting) const {
+RobotSetting SettingManager::GetRobotSetting(const UserID& userid) const {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto iter = robot_setting_map_.find(userid);
-    if (iter == robot_setting_map_.end()) {
-        ASSERT_FALSE_RETURN;
+    if (iter != robot_setting_map_.end()) {
+        return iter->second;
     }
-    robot_setting = iter->second;
-    return kCommSucc;
+    return RobotSetting();
 }
 
 int SettingManager::GetMainsInterval() const {
@@ -152,12 +161,12 @@ int SettingManager::GetDepositInterval() const {
     return deposit_interval_;
 }
 
-int SettingManager::GetGainAmount() const {
+int64_t SettingManager::GetGainAmount() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return gain_amount_;
 }
 
-int SettingManager::GetBackAmount() const {
+int64_t SettingManager::GetBackAmount() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return back_amount_;
 }
@@ -180,7 +189,7 @@ std::string& SettingManager::GetDepositBackUrl() {
 int SettingManager::GetRandomUserID(UserID& random_userid) const {
     std::lock_guard<std::mutex> lock(mutex_);
     // Ëæ»úÑ¡È¡userid
-    auto random_pos = 0;
+    int64_t random_pos = 0;
     if (kCommSucc != RobotUtils::GenRandInRange(0, robot_setting_map_.size() - 1, random_pos)) {
         ASSERT_FALSE_RETURN;
     }
@@ -194,14 +203,21 @@ int SettingManager::GetDeposiInitGainFlag() const {
     return deposit_init_gain_;
 }
 
+int SettingManager::IsRobotSettingExist(const UserID& userid, bool& exist) {
+    const auto iter = robot_setting_map_.find(userid);
+    if (iter != robot_setting_map_.end()) {
+        exist = true;
+    }
+    return kCommSucc;
+}
 
 int SettingManager::SnapShotObjectStatus() const {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("game_id_ [%d]", game_id_);
     LOG_INFO("main_interval_ [%d]", main_interval_);
     LOG_INFO("deposit_interval_ [%d]", deposit_interval_);
-    LOG_INFO("gain_amount_ [%d]", gain_amount_);
-    LOG_INFO("back_amount_ [%d]", back_amount_);
+    LOG_INFO("gain_amount_ [%I64d]", gain_amount_);
+    LOG_INFO("back_amount_ [%I64d]", back_amount_);
     LOG_INFO("deposit_active_id_ [%s]", deposit_active_id_.c_str());
 
     LOG_INFO("robot_setting_map_ size [%d]", robot_setting_map_.size());
@@ -216,7 +232,7 @@ int SettingManager::SnapShotObjectStatus() const {
     for (auto& kv : room_setting_map_) {
         const auto roomid = kv.first;
         const auto setting = kv.second;
-        LOG_INFO("roomid [%d]  wait_time [%d]", roomid, setting.wait_time);
+        LOG_INFO("roomid [%d]  wait_time [%d] count_per_table [%d]", roomid, setting.wait_time, setting.count_per_table);
     }
 
     return kCommSucc;

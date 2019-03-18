@@ -8,13 +8,16 @@
 
 int RobotDepositManager::Init() {
     LOG_INFO_FUNC("\t[START]");
-    deposit_timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
+    timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
     return kCommSucc;
 }
 
 
 int RobotDepositManager::Term() {
-    deposit_timer_thread_.Release();
+    timer_thread_.Release();
+    deposit_map_.clear();
+    user_game_info_map_.clear();
+
     LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
 }
@@ -29,30 +32,13 @@ int RobotDepositManager::ThreadDeposit() {
         }
 
         if (WAIT_TIMEOUT == dwRet) {
-            DepositMap deposit_map_temp;
-            {
-                std::lock_guard<std::mutex> lock(mutex_);
-                deposit_map_temp = std::move(deposit_map_);
-            }
+            if (!g_inited) continue;
+            SendDepositRequest();
 
-            for (auto& kv : deposit_map_temp) {
-                const auto userid = kv.first;
-                const auto deposit_type = kv.second;
+            /*  if (kCommSucc != RoomMgr.GetTableDepositRange(roomid, tableno, max, min)) {
+                  ASSERT_FALSE;
+                  }*/
 
-                if (deposit_type == DepositType::kGain) {
-                    if (kCommSucc != RobotGainDeposit(userid, SettingMgr.GetGainAmount())) {
-                        ASSERT_FALSE;
-                        continue;
-                    }
-                }
-
-                if (deposit_type == DepositType::kBack) {
-                    if (kCommSucc != RobotBackDeposit(userid, SettingMgr.GetBackAmount())) {
-                        ASSERT_FALSE;
-                        continue;
-                    }
-                }
-            }
         }
     }
 
@@ -60,7 +46,39 @@ int RobotDepositManager::ThreadDeposit() {
     return kCommSucc;
 }
 
-int RobotDepositManager::RobotGainDeposit(const UserID& userid, const int& amount) const {
+
+int RobotDepositManager::SendDepositRequest() {
+    DepositMap deposit_map_temp;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        deposit_map_temp = std::move(deposit_map_);
+    }
+
+    for (auto& kv : deposit_map_temp) {
+        const auto userid = kv.first;
+        const auto data = kv.second;
+        const auto deposit_type = data.type;
+        const auto amount = data.amount;
+
+        if (deposit_type == DepositType::kGain) {
+            if (kCommSucc != RobotGainDeposit(userid, amount)) {
+                ASSERT_FALSE;
+                continue;
+            }
+        }
+
+        if (deposit_type == DepositType::kBack) {
+            if (kCommSucc != RobotBackDeposit(userid, amount)) {
+                ASSERT_FALSE;
+                continue;
+            }
+        }
+    }
+    return kCommSucc;
+}
+
+int RobotDepositManager::RobotGainDeposit(const UserID& userid, const int64_t& amount) const {
+    LOG_INFO("RobotGainDeposit BEG userid [%d] amount [%I64d]", userid, amount);
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
@@ -93,15 +111,17 @@ int RobotDepositManager::RobotGainDeposit(const UserID& userid, const int& amoun
     Json::Value _root;
     if (!reader.parse((LPCTSTR) strResult, _root)) ASSERT_FALSE_RETURN;
 
-    auto ret_code = _root["Code"].asInt();
+    const auto ret_code = _root["Code"].asInt();
     if (0 != ret_code) {
         LOG_ERROR("userid  = [%d] gain deposit fail, code  = [%d], strResult =  [%s]", userid, _root["Code"].asInt(), strResult);
         //ASSERT_FALSE_RETURN
     }
+    LOG_INFO("RobotGainDeposit END userid [%d] amount [%I64d]", userid, amount);
     return kCommSucc;
 }
 
-int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount) const {
+int RobotDepositManager::RobotBackDeposit(const UserID& userid, const int64_t& amount) const {
+    LOG_INFO("RobotBackDeposit BEG userid [%d] amount [%I64d]", userid, amount);
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
@@ -138,27 +158,54 @@ int RobotDepositManager::RobotBackDeposit(const UserID userid, const int amount)
         LOG_ERROR("userid  = [%d] gain deposit fail, code  = [%d], strResult =  [%s]", userid, _root["Code"].asInt(), strResult);
         ASSERT_FALSE_RETURN
     }
+
+    LOG_INFO("RobotBackDeposit END userid [%d] amount [%I64d]", userid, amount);
     return kCommSucc;
 }
 
-int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType& type) {
-    CHECK_USERID(userid);
+int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType& type, const int64_t& amount) {
     std::lock_guard<std::mutex> lock(mutex_);
+    CHECK_USERID(userid);
+    if (amount < 0) ASSERT_FALSE_RETURN;
     if (deposit_map_.find(userid) == deposit_map_.end()) {
-        deposit_map_[userid] = type;
+        deposit_map_[userid] = {type, amount};
     }
 
     return kCommSucc;
 }
 
+DepositMap RobotDepositManager::GetDepositMap() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return deposit_map_;
+}
+
+int RobotDepositManager::SetUserGameInfo(const int& userid, USER_GAMEINFO_MB* info) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    CHECK_USERID(userid);
+    user_game_info_map_[userid] = *info;
+    return kCommSucc;
+}
+
+UserGameInfoMap RobotDepositManager::GetUserGameInfo() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return user_game_info_map_;
+}
+
 int RobotDepositManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG_INFO("deposit_timer_thread_ [%d]", deposit_timer_thread_.GetThreadID());
+    LOG_INFO("deposit_timer_thread_ [%d]", timer_thread_.GetThreadID());
     LOG_INFO("deposit_map_ size [%d]", deposit_map_.size());
     for (auto& kv : deposit_map_) {
         const auto userid = kv.first;
         const auto status = kv.second;
         LOG_INFO("robot userid [%d] status [%d]", userid, status);
+    }
+
+    LOG_INFO("user_game_info_map_ size [%d]", user_game_info_map_.size());
+    for (auto& kv : user_game_info_map_) {
+        const auto userid = kv.first;
+        const auto game_info = kv.second;
+        LOG_INFO("robot userid [%d] deposit [%I64d]", userid, game_info.nDeposit);
     }
 
     return kCommSucc;

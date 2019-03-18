@@ -8,12 +8,13 @@ using UserFilterMap = std::hash_map<UserID, UserID>;
 
 class UserManager : public ISingletion<UserManager> {
 public:
-    // 获取用户的shared_ptr
-    int GetUser(const UserID& userid, UserPtr& user) const;
 
-    // 获取所有的用户 返回copy 不返回被mutex保护对象引用
-    // 性能问题 不使用在实时性要求高的业务
-    UserMap GetAllUsers() const;
+    // 重置对象
+    int Reset();
+
+    // 获取用户
+    // !! 注意 !! 控制线程可见性 只对RobotNetManager notify_thread_ 线程可见
+    int GetUser(const UserID& userid, UserPtr& user) const;
 
     // 删除用户
     int DelUser(const UserID& userid);
@@ -21,19 +22,11 @@ public:
     // 添加用户
     int AddUser(const UserID& userid, const UserPtr &user);
 
-    // 重置对象
-    int Reset();
+    // 获取所有的用户 返回copy 不返回被mutex保护对象引用
+    UserMap GetAllUsers() const;
 
-public:
-    int GetUserWithLock(const UserID& userid, UserPtr& user) const;
-
-public:
-    // 对象状态快照
-    int SnapShotObjectStatus();
-
-    int UserManager::BriefInfo() const;
-
-    int SnapShotUser(const UserID& userid) const;
+    // 机器人用户是否在游戏
+    bool IsRobotUserExist(const UserID& userid) const;
 
     // 返回调用时所有登入游戏userid集合，不返回引用，返回copy
     UserFilterMap GetAllEnterUserID() const;
@@ -47,11 +40,26 @@ public:
     // 获取所有正常用户数量
     int GetNormalUserCountInRoom(const RoomID& roomid, int& count) const;
 
-    // 获取所有正常用户集合
+    // 获取所有正常用户集合 返回copy 不返回被mutex保护对象引用
     int GetNormalUserMap(UserMap& normal_user_map) const;
 
-    // 获取所有机器人用户集合
+    // 获取所有机器人用户集合 返回copy 不返回被mutex保护对象引用
     int GetRobotUserMap(UserMap& robot_user_map) const;
+
+    // 设置机器人收消息线程
+    void SetNotifyThreadID(const ThreadID& thread_id);
+public:
+    // 对象状态快照
+    int SnapShotObjectStatus();
+
+    int BriefInfo() const;
+
+    int SnapShotUser(const UserID& userid) const;
+
+private:
+    int GetUserWithLock(const UserID& userid, UserPtr& user) const;
+
+    int CheckNotifyThreadID() const;
 
 protected:
     SINGLETION_CONSTRUCTOR(UserManager);
@@ -59,6 +67,7 @@ protected:
 private:
     mutable std::mutex mutex_;
     UserMap user_map_;
+    ThreadID notify_thread_id_{InvalidThreadID};
 };
 
 #define UserMgr UserManager::Instance()

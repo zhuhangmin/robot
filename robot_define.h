@@ -26,18 +26,24 @@ const int InvalidRequestID = 0;
 
 const int InvalidCount = -1;
 
+const int InvalidThreadID = -1;
+
 const int MS_PER_SECOND = 1000;  // ms
+
+const int TimerInterval = 1 * MS_PER_SECOND; // 定时器时间间隔 1
+
+const int GamePulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
+
+const int HallPulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
+
+const int RobotPulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
+
+const int GetAllRoomDataInterval = 10 * 60 * MS_PER_SECOND; // 10 min  
 
 const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间 4
 
 // 游戏服务器兜底状态同步, 请勿减少时间间隔会触发后端服务器大量锁
 const int GameSyncInterval = 10 * 60 * MS_PER_SECOND; // 10 min  
-
-const int PulseInterval = 10 * MS_PER_SECOND; // 心跳时间间隔 60
-
-const int HallPulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
-
-const int RobotTimerInterval = 1 * MS_PER_SECOND; // 轮询1秒, 间隔 60
 
 const int HttpTimeOut = 5 * MS_PER_SECOND; // HTTP 超时 5
 
@@ -47,9 +53,9 @@ const int DepositInterval = 10 * MS_PER_SECOND; // 补银时间间隔  10
 
 const int HotUpdateInterval = 10 * MS_PER_SECOND; // 配置热更新  10
 
-const int GainAmount = 200000;
+const int64_t GainAmount = 200000;
 
-const int BackAmount = 200000;
+const int64_t BackAmount = 200000;
 
 const int InitGainFlag = 1;
 
@@ -94,6 +100,14 @@ enum RobotErrorCode {
     kRespIDZero,
 };
 
+enum RobotExceptionCode {
+    kExceptionUserNotOnChair = 20086,
+    kExceptionNoRobotDeposit,
+    kExceptionNoMoreRobot,
+    kExceptionGameDataNotInited,
+    kExceptionRobotNotInGame,
+};
+
 enum class DepositType {
     kDefault,
     kGain, //补银
@@ -129,6 +143,70 @@ struct NeedUser {
     TableNO tableno;
     RoomID roomid;
 };
+
+struct DepositData {
+    DepositType type;
+    int64_t amount;
+};
+
+typedef struct _tagQUERY_USER_GAMEINFO {
+    int nUserID;
+    int nGameID;
+    DWORD dwQueryFlags;
+    UWL_ADDR stIPAddr;
+    char szHardID[MAX_HARDID_LEN];
+    INT64 nGiftDeposit;
+    int nReserved[4];
+}QUERY_USER_GAMEINFO, *LPQUERY_USER_GAMEINFO;
+
+typedef struct _tagUSER_GAMEINFO_MB {
+    int nUserID;                // 用户ID
+    int nGameID;                // 游戏ID
+    INT64  nDeposit;                // 银子
+    int nPlayerLevel;              // 级别
+    int nScore;                  // 积分
+    int nExperience;              // 经验(分钟，已废弃)
+    int nBreakOff;                // 断线
+    int nWin;                  // 赢
+    int nLoss;                  // 输
+    int nStandOff;                // 和
+    int nBout;                  // 回合
+    int nTimeCost;                // 花时(秒)
+    int nSalaryTime;
+    INT64 nSalaryDeposit;
+    INT64 nTotalSalary;
+    DWORD dwFlags;                              // 一些状态标记
+    int nReserved[7];
+}USER_GAMEINFO_MB, *LPUSER_GAMEINFO_MB;//注意这个结构跟pc端的那个不同
+
+using CDefSocketClientPtr = std::shared_ptr <CDefSocketClient>;
+
+using RoomSettingMap = std::unordered_map<RoomID, RoomSetiing>;
+
+using RobotSettingMap = std::unordered_map<UserID, RobotSetting>;
+
+using HallLogonMap = std::unordered_map<UserID, HallLogonStatusType>;
+
+using HallRoomDataMap = std::unordered_map<RoomID, HallRoomData>;
+
+using UserGameInfoMap = std::unordered_map<UserID, USER_GAMEINFO_MB>;
+
+using DepositMap = std::unordered_map<UserID, DepositData>;
+
+using RoomNeedCountMap = std::unordered_map<RoomID, NeedCount>;
+
+using RoomNeedUserMap = std::unordered_map<RoomID, NeedUser>;
+
+using SendMsgCountMap = std::unordered_map<RequestID, uint64_t>;
+
+using RecvNtfCountMap = std::unordered_map<RequestID, uint64_t>;
+
+using ErrorCountMap = std::unordered_map<uint32_t, uint64_t>;
+
+using RobotUserIDMap = std::unordered_map<UserID, UserID>;
+
+using RobotDepositMap = std::unordered_map<UserID, int64_t>;
+
 
 // 单例模板类
 template< typename T >
@@ -182,26 +260,6 @@ protected:
     HANDLE			m_hThrd{nullptr};
 };
 
-using CDefSocketClientPtr = std::shared_ptr <CDefSocketClient>;
 
-using RoomSettingMap = std::unordered_map<RoomID, RoomSetiing>;
-
-using RobotSettingMap = std::unordered_map<UserID, RobotSetting>;
-
-using HallLogonMap = std::unordered_map<UserID, HallLogonStatusType>;
-
-using HallRoomDataMap = std::unordered_map<RoomID, HallRoomData>;
-
-using DepositMap = std::unordered_map<UserID, DepositType>;
-
-using RoomNeedCountMap = std::unordered_map<RoomID, NeedCount>;
-
-using RoomNeedUserMap = std::unordered_map<RoomID, NeedUser>;
-
-using SendMsgCountMap = std::unordered_map<RequestID, uint64_t>;
-
-using RecvNtfCountMap = std::unordered_map<RequestID, uint64_t>;
-
-using ErrorCountMap = std::unordered_map<uint32_t, uint64_t>;
 
 

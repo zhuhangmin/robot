@@ -26,21 +26,25 @@ int RoomManager::Reset() {
     return kCommSucc;
 }
 
-int RoomManager::GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info) {
+int RoomManager::GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info) const {
     std::lock_guard<std::mutex> lock(mutex_);
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
         ASSERT_FALSE_RETURN;
     }
 
-    if (kCommSucc != table->GetChairInfoByUserid(userid, info)) {
+    const auto result = table->GetChairInfoByUserid(userid, info);
+    if (kCommSucc != result) {
+        if (kExceptionUserNotOnChair == result) {
+            return result;
+        }
         ASSERT_FALSE_RETURN;
     }
 
     return kCommSucc;
 }
 
-int RoomManager::GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) {
+int RoomManager::GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const {
     std::lock_guard<std::mutex> lock(mutex_);
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
@@ -54,16 +58,16 @@ int RoomManager::GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tabl
     return kCommSucc;
 }
 
-int RoomManager::GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) {
+int RoomManager::GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const {
     std::lock_guard<std::mutex> lock(mutex_);
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
         ASSERT_FALSE_RETURN;
     }
 
-    auto all_users = table->GetPlayerCount();
+    const auto all_users = table->GetPlayerCount();
 
-    auto robot_users = 0;
+    const auto robot_users = 0;
     if (kCommSucc != table->GetRobotCount(count)) {
         ASSERT_FALSE_RETURN;
     }
@@ -73,26 +77,18 @@ int RoomManager::GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tab
     return kCommSucc;
 }
 
-const GameRoomMap& RoomManager::GetAllRooms() const {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return rooms_;
-}
-
-int RoomManager::IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result) {
+int RoomManager::IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result) const {
     std::lock_guard<std::mutex> lock(mutex_);
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
         ASSERT_FALSE_RETURN;
     }
 
-    if (kTablePlaying == table->get_table_status()) {
-        result = true;
-    }
-    result = false;
+    result = (kTablePlaying == table->get_table_status());
     return kCommSucc;
 }
 
-int RoomManager::GetMiniPlayers(const RoomID& roomid, int& mini) {
+int RoomManager::GetMiniPlayers(const RoomID& roomid, int& mini) const {
     std::lock_guard<std::mutex> lock(mutex_);
     RoomPtr room;
     if (kCommSucc != GetRoomWithLock(roomid, room)) {
@@ -128,7 +124,6 @@ int RoomManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("rooms_ size [%d]", rooms_.size());
     for (auto& kv : rooms_) {
-        const auto roomid = kv.first;
         const auto room = kv.second;
         room->SnapShotObjectStatus();
     }
@@ -136,3 +131,34 @@ int RoomManager::SnapShotObjectStatus() {
     return kCommSucc;
 }
 
+int RoomManager::GetRoomDepositRange(int64_t& max, int64_t& min) const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto& kv : rooms_) {
+        const auto room = kv.second;
+        const auto max_deposit = room->get_max_deposit();
+        const auto min_deposit = room->get_min_deposit();
+        if (max < max_deposit) max = max_deposit;
+        if (min > min_deposit) min = min_deposit;
+    }
+    if (max < min) { return kCommFaild; }
+    if (max <= 0) { return kCommFaild; }
+    if (min < 0) { return kCommFaild; }
+    return kCommSucc;
+}
+
+int RoomManager::GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    TablePtr table;
+    if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
+        ASSERT_FALSE_RETURN;
+    }
+
+    min = table->get_min_deposit();
+    max = table->get_max_deposit();
+
+    if (max < min) { return kCommFaild; }
+    if (max <= 0) { return kCommFaild; }
+    if (min < 0) { return kCommFaild; }
+
+    return kCommSucc;
+}

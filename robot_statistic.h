@@ -2,7 +2,7 @@
 #include "robot_define.h"
 class RobotStatistic : public ISingletion<RobotStatistic> {
 public:
-    void Event(EventType type, EventKey key);
+    void Event(const EventType& type, const EventKey& key);
 
     void SnapShotObjectStatus();
 protected:

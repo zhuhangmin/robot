@@ -15,7 +15,7 @@ public:
     static CString ExecHttpRequestPost(const CString& url, const CString& params);
 
     // 产生随机数
-    static int GenRandInRange(const int& min_value, const int& max_value, int& random_result);
+    static int GenRandInRange(const int64_t& min_value, const int64_t& max_value, int64_t& random_result);
 
     // 获得配置游戏服务器地址
     static std::string GetGameIP();
@@ -69,7 +69,7 @@ public:
 
     static std::string ChairStatusStr(const int& status);
 
-    static std::string TimeStampToDate(int time_stamp);
+    static std::string TimeStampToDate(const int& time_stamp);
 };
 
 #define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {ASSERT_FALSE_RETURN}
@@ -116,8 +116,7 @@ public:
 
 #define LOG_INFO_FUNC(x) LOG_INFO(" %s [%s]", x, __FUNCTION__);
 
-#define LOG_ROUTE(x, roomid, tableno ,userid) LOG_INFO(" [%s] roomid [%d] tableno [%d] userid [%d] [%s]", "DISPATCH", roomid, tableno, userid, x);
-//#define LOG_ROUTE(x, roomid, tableno ,userid)
+#define LOG_ROUTE(x, roomid, tableno ,userid) LOG_DEBUG(" [%s] roomid [%d] tableno [%d] userid [%d] [%s]", "DISPATCH", roomid, tableno, userid, x);
 
 #define DEBUG_USER(userid) LOG_DEBUG(" [%s] userid [%d]", __FUNCTION__, userid);
 

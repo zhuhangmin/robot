@@ -19,12 +19,12 @@ public:
 
     // 玩家进入房间(如果tableno>0，则加入指定桌子。 否则由服务端自动分配)
     virtual int PlayerEnterGame(const UserPtr &user);
-    int BindPlayer(const UserPtr &user);
+    int BindPlayer(const UserPtr &user) const;
     // 旁观者进入房间
     virtual int LookerEnterGame(const UserPtr &user);
     // 玩家离开游戏
     virtual int UserLeaveGame(const UserID& userid, const TableNO& tableno);
-    int UnbindUser(const UserID& userid, const TableNO& tableno);
+    int UnbindUser(const UserID& userid, const TableNO& tableno) const;
     // 玩家弃牌
     virtual int UserGiveUp(const UserID& userid, const TableNO& tableno);
     // 旁观者转玩家
@@ -139,9 +139,6 @@ public:
         return min_playercount_per_table_;
     }
     void set_min_playercount_per_table(const int &val) {
-        //min_playercount_per_table_ = val;
-        //TODO 
-
         min_playercount_per_table_ = 2;
 
     }

@@ -5,7 +5,6 @@
 using GameRoomMap = std::hash_map<RoomID, RoomPtr>;
 
 class RoomManager : public ISingletion<RoomManager> {
-
 public:
     int GetRoom(const RoomID& roomid, RoomPtr& room) const;
 
@@ -13,17 +12,19 @@ public:
 
     int Reset();
 
-    int GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info);
+    int GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info) const;
 
-    int GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count);
+    int GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const;
 
-    int GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count);
+    int GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const;
 
-    const GameRoomMap& GetAllRooms() const;
+    int IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result) const;
 
-    int IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result);
+    int GetMiniPlayers(const RoomID& roomid, int& mini) const;
 
-    int GetMiniPlayers(const RoomID& roomid, int& mini);
+    int GetRoomDepositRange(int64_t& max, int64_t& min) const;
+
+    int GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min);
 
 private:
     int GetRoomWithLock(const RoomID& roomid, RoomPtr& room) const;

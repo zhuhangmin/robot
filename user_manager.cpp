@@ -17,7 +17,7 @@ int UserManager::DelUser(const UserID& userid) {
     std::lock_guard<std::mutex> users_lock(mutex_);
     CHECK_USERID(userid);
     UserPtr user;
-    if (kCommSucc != GetUser(userid, user)) {
+    if (kCommSucc != GetUserWithLock(userid, user)) {
         ASSERT_FALSE_RETURN;
     }
 
@@ -44,6 +44,7 @@ int UserManager::GetUserWithLock(const UserID& userid, UserPtr& user) const {
     CHECK_USERID(userid);
     const auto itr = user_map_.find(userid);
     if (itr == user_map_.end()) {
+        LOG_ERROR("userid [%d] not exist in user manager", userid);
         ASSERT_FALSE_RETURN;
     }
     user = itr->second;
@@ -103,7 +104,7 @@ int UserManager::GetNormalUserMap(UserMap& normal_user_map) const {
     std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
-        auto user_tpye = user->get_user_type();
+        const auto user_tpye = user->get_user_type();
         if (!IS_BIT_SET(user_tpye, kUserRobot)) {
             normal_user_map[kv.first] = kv.second;
         }
@@ -122,20 +123,41 @@ int UserManager::GetRobotUserMap(UserMap& robot_user_map) const {
     return kCommSucc;
 }
 
+bool UserManager::IsRobotUserExist(const UserID& userid) const {
+    const auto iter = user_map_.find(userid);
+    if (iter != user_map_.end()) {
+        const auto user_ptr = iter->second;
+        if (user_ptr->get_user_type() == kUserRobot) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void UserManager::SetNotifyThreadID(const ThreadID& thread_id) {
+    notify_thread_id_ = thread_id;
+}
+
+int UserManager::CheckNotifyThreadID() const {
+    if (GetCurrentThreadId() == notify_thread_id_) {
+        return kCommSucc;
+    }
+    return kCommFaild;
+}
+
+
 int UserManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> users_lock(mutex_);
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("users_ size [%d]", user_map_.size());
 
     for (auto& kv : user_map_) {
-        const auto userid = kv.first;
         auto user = kv.second;
         user->SnapShotObjectStatus();
     }
 
     return kCommSucc;
 }
-
 
 int UserManager::SnapShotUser(const UserID& userid) const {
     std::lock_guard<std::mutex> users_lock(mutex_);
@@ -149,10 +171,20 @@ int UserManager::SnapShotUser(const UserID& userid) const {
     return kCommSucc;
 }
 
-
-
 int UserManager::BriefInfo() const {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("users_ size [%d]", user_map_.size());
+    std::string str = "{";
+    for (auto& kv : user_map_) {
+        const auto userid = kv.first;
+        str += "userid ";
+        str += "[";
+        str += std::to_string(userid);
+        str += "] ";
+    }
+    str += "}";
+    LOG_INFO(" [%s]", str.c_str());
     return kCommSucc;
 }
+
+

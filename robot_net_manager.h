@@ -10,18 +10,15 @@ public:
 
     int Term();
 
-    // 获得（不存在创建）指定机器人
-    int GetRobotWithCreate(const UserID& userid, RobotPtr& robot);
-
-    // 获得所有机器人接收消息的线程
-    ThreadID GetNotifyThreadID() const;
+    // 机器人 连接 发送进入游戏
+    int EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno);
 
 private:
     // 机器人 定时消息
     int ThreadTimer();
 
     // 机器人 消息接收
-    int ThreadNotify();
+    int ThreadNotify() const;
 
     // 机器人 消息处理
     int OnNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size, const TokenID& token_id) const;
@@ -64,7 +61,7 @@ private:
     YQThread notify_thread_;
 
     //机器人 心跳线程
-    YQThread heart_thread_;
+    YQThread timer_thread_;
 
 };
 

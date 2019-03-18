@@ -10,4 +10,6 @@ extern HANDLE			g_hExitServer;
 
 extern std::string		g_localGameIP;
 
+extern bool             g_inited;
+
 //@zhuhangmin 20190225 [请勿添加任何]具体业务逻辑的全局变量

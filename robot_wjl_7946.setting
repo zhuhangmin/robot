@@ -1,8 +1,6 @@
 {
     "game_id":1001,
 
-    "game_ip":"192.168.44.41",
-
     "main_interval":1000,
 
     "deposit_interval":1000,
@@ -17,27 +15,23 @@
 
     "deposit_back_amount":1000,
 
-    "deposit_init_gain":0,
+    "deposit_init_gain":1,
     
     "rooms":[
-        {"roomid":7972, "wait_time":10}
+        {"roomid":7972, "wait_time":10, "count_per_table":1}
     ],
     
     "robots":[
 {"userid":682524,"password":"4874236","nickName":"Rao"},
 {"userid":682525,"password":"2891171","nickName":"banerjee"},
 {"userid":682526,"password":"6860422","nickName":"Nazareth"},
-{"userid":682527,"password":"6348543","nickName":"Mehta"},
 {"userid":682528,"password":"2837533","nickName":"Gupta"},
 {"userid":682529,"password":"4992254","nickName":"Rao1"},
 {"userid":682530,"password":"7499229","nickName":"Ra02"},
-{"userid":682531,"password":"8577462","nickName":"Rao3"},
 {"userid":682532,"password":"6711912","nickName":"Rao4"},
-{"userid":682533,"password":"5778124","nickName":"Rao5"},
 {"userid":682534,"password":"7674347","nickName":"Rao6"},
 {"userid":682535,"password":"2328238","nickName":"Rao7"},
 {"userid":682536,"password":"6619369","nickName":"Rao8"},
-{"userid":682537,"password":"1796568","nickName":"Rao9"},
 {"userid":682538,"password":"4801716","nickName":"Gupta1"},
 {"userid":682539,"password":"2548506","nickName":"Gupta2"},
 {"userid":682540,"password":"5162990","nickName":"Gupta3"},

@@ -36,6 +36,8 @@ CWinApp				theApp;
 
 HINSTANCE			g_hResDll = NULL;
 
+bool                g_inited = false;
+
 extern void Test(char cmd, AppDelegate& app_delegate);
 
 void WriteMiniDMP(struct _EXCEPTION_POINTERS *pExp) {
@@ -194,7 +196,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
     return nRetCode;
 }
 
-// TEST CASE
+// ！！以下代码非标准 非线程安全 请勿用作业务例子
 extern void Test(char cmd, AppDelegate& app_delegate) {
     if (cmd == 'S') {
         LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
@@ -221,8 +223,9 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         LOG_INFO("-------------[DEPOSIT TEST BEG]-------------");
         auto robot_setting_map = SettingMgr.GetRobotSettingMap();
         for (auto& kv : robot_setting_map) {
+
             auto userid = kv.first;
-            DepositMgr.SetDepositType(userid, DepositType::kGain);
+            DepositMgr.SetDepositType(userid, DepositType::kGain, 10000);
         }
 
         LOG_INFO("-------------[DEPOSIT TEST END]-------------");
@@ -243,8 +246,6 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         double dCPUUserRate = 0;                        //CPU使用的百分比        
         picProcessInfoCollect.GetCPUUserRate(dCPUUserRate);
         picProcessInfoCollect.GetMemoryUsed(nVirtualMemoryUsed, nMemoryUsed);
-        nVirtualMemoryUsed = nVirtualMemoryUsed;
-        nMemoryUsed = nMemoryUsed;
         picProcessInfoCollect.GetThreadCount(dwCurrentProcessThreadCount);
         picProcessInfoCollect.GetHandleCount(nHandleNumber);
         picProcessInfoCollect.GetIOBytes(&ullIo_read_bytes, &ullIo_write_bytes, &ullIo_wct, &ullIo_rct);
@@ -273,7 +274,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
     }
 
 
-    if (cmd == 'A') {
+    if (cmd == 'R') {
         LOG_INFO("-------------[ADD ROBOT TEST BEG]-------------");
         auto userid = 685555;
         auto roomid = 7972;
@@ -281,6 +282,35 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         app_delegate.TestLogonHall(userid);
         app_delegate.SendTestRobot(userid, roomid, tableno);
         LOG_INFO("-------------[ADD ROBOT TEST END]-------------");
+    }
+
+    if (cmd == 'A') {
+        LOG_INFO("-------------[ADD ALL ROBOT TEST BEG]-------------");
+        auto setting_map = SettingMgr.GetRobotSettingMap();
+        auto room_map = SettingMgr.GetRoomSettingMap();
+        auto room_size = room_map.size();
+        for (auto& kv : setting_map) {
+            auto userid = kv.first;
+            auto setting = kv.second;
+
+            int64_t random = 0;
+            RobotUtils::GenRandInRange(0, room_size-1, random);
+            const auto random_it = std::next(std::begin(room_map), random);
+            auto roomid = random_it->first;
+
+            RoomPtr room;
+            RoomMgr.GetRoom(roomid, room);
+            if (!room) continue;
+
+            //auto max_table_cout = room->get_max_table_cout();
+            auto max_table_cout = 10;
+            int64_t tableno = InvalidTableNO;
+            RobotUtils::GenRandInRange(1, max_table_cout, tableno);
+            app_delegate.TestLogonHall(userid);
+            app_delegate.SendTestRobot(userid, roomid, tableno);
+        }
+
+        LOG_INFO("-------------[ADD ALL ROBOT TEST END]-------------");
     }
 
 }

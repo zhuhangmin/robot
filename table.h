@@ -312,7 +312,6 @@ public:
 
     INT64 get_max_deposit() const {
         return max_deposit_;
-        //return 50000000;
     }
     void set_max_deposit(const INT64 &val) {
         max_deposit_ = val;

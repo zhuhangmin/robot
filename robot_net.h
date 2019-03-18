@@ -13,13 +13,13 @@ public:
     int OnDisconnect();
 
     // 游戏 连接状态
-    BOOL IsConnected() const;
+    int IsConnected(BOOL& is_connected) const;
 
     // 进入游戏
     int SendEnterGame(const RoomID& roomid, const TableNO& tableno);
 
     // 发送心跳
-    int SendGamePulse();
+    int SendPulse();
 
     // 连接保活
     int KeepConnection();
@@ -28,7 +28,7 @@ public:
     // 属性接口
     UserID GetUserID() const;
 
-    int GetTokenID(TokenID& token) const;
+    int GetTokenID(TokenID& token) const; //允许脏读
 
     TimeStamp GetTimeStamp() const;
 
@@ -44,7 +44,7 @@ private:
 
 public:
     // 对象状态快照
-    int SnapShotObjectStatus();
+    int SnapShotObjectStatus() const;
 
 private:
     // 配置机器人ID 初始化后不在改变,不需要锁保护
@@ -69,7 +69,7 @@ private:
     int timeout_count_{0};
 
     // 心跳时间戳
-    TimeStamp timestamp_{0};
+    TimeStamp timestamp_{std::time(nullptr)};
 
     // 重连标签
     bool need_reconnect_{false};

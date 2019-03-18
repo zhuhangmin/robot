@@ -102,12 +102,26 @@ public:
         total_bout_ = val;
     }
 
+    int get_loss_bout() const {
+        return loss_bout_;
+    }
+    void set_loss_bout(const int &val) {
+        loss_bout_ = val;
+    }
+
+    int get_standoff_bout() const {
+        return standoff_bout_;
+    }
+    void set_standoff_bout(const int &val) {
+        standoff_bout_ = val;
+    }
+
     bool IsPalyer() const {
         return get_chair_no() > 0;
     }
 public:
     // 对象状态快照
-    int SnapShotObjectStatus();
+    int SnapShotObjectStatus() const;
 
 private:
     int token_ = 0;
@@ -129,6 +143,8 @@ private:
 
     int win_bout_ = 0;				// 赢的局数
     int total_bout_ = 0;			// 总局数
+    int loss_bout_ = 0;				// 输的局数
+    int standoff_bout_ = 0;			// 和的局数
 };
 
 

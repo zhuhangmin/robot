@@ -9,7 +9,10 @@
 #include "PBReq.h"
 
 int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) {
-    CHECK_CONNECTION(connection);
+    if (!connection) {
+        LOG_WARN("connection not exist");
+        return kCommFaild;
+    }
 
     if (!connection->IsConnected()) {
         ASSERT_FALSE_RETURN;
@@ -50,7 +53,7 @@ int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const
     }
 
     if (requestid != GR_RS_PULSE) {
-        LOG_INFO("[%x] [SEND] [%d] [%s]", connection.get(), requestid, REQ_STR(requestid));
+        LOG_INFO("token [%d] [SEND] [%d] [%s]", connection->GetTokenID(), requestid, REQ_STR(requestid));
     }
 
     const auto responseid = response.head.nRequest;
@@ -114,7 +117,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
     return result_str;
 }
 
-int RobotUtils::GenRandInRange(const int& min_value, const int& max_value, int& random_result) {
+int RobotUtils::GenRandInRange(const int64_t& min_value, const int64_t& max_value, int64_t& random_result) {
     if (max_value < min_value) {
         LOG_ERROR("MAX VALUE %d smaller than SMALL VALUE %d", max_value, min_value);
         ASSERT_FALSE_RETURN;
@@ -319,6 +322,9 @@ std::string RobotUtils::ErrorCodeInfo(int code) {
         case kRespIDZero:
             error_string = "kRespIDZero";
             break;
+        case GR_HARDID_MISMATCH:
+            error_string = "GR_HARDID_MISMATCH";
+            break;
         default:
             LOG_WARN("UNKNOW ERROR CODE [%d]", code);
             break;
@@ -446,6 +452,9 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
         case PB_NOTIFY_TO_CLIENT:
             ret_string = "PB_NOTIFY_TO_CLIENT"; //zxd ： 不需要处理
             break;
+        case MR_QUERY_USER_GAMEINFO:
+            ret_string = "MR_QUERY_USER_GAMEINFO";
+            break;
         default:
             LOG_WARN("UNKNOW REQUEST ID [%d]", requestid);
             break;
@@ -472,6 +481,7 @@ std::string RobotUtils::UserTypeStr(const int& type) {
             ret_string = "USER_TYPE_HANDPHONE";
             break;
         default:
+            assert(false);
             break;
     }
 
@@ -504,24 +514,25 @@ std::string RobotUtils::ChairStatusStr(const int& status) {
             ret_string = "kChairWaiting";
             break;
         default:
+            assert(false);
             break;
     }
 
     return ret_string;
 }
 
-std::string RobotUtils::TimeStampToDate(int time_stamp) {
+std::string RobotUtils::TimeStampToDate(const int& time_stamp) {
     if (time_stamp <= 0) {
         return "";
     }
-    struct tm t;
+    struct tm t = {0};
     time_t rawtime = time_stamp;
     time(&rawtime);
     localtime_s(&t, &rawtime);
     char str[256] = {0};
     asctime_s(str, sizeof str, &t);
     auto ret = std::string(str);
-    auto pos = ret.find('\n');
+    const auto pos = ret.find('\n');
     if (pos != std::string::npos) {
         ret = ret.erase(pos);
     }

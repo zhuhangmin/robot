@@ -4,7 +4,7 @@ class SettingManager : public ISingletion<SettingManager> {
 public:
     int Init();
 
-    int Term();
+    int Term() const;
 
 public:
     // 游戏ID
@@ -16,8 +16,8 @@ public:
     // 机器人房间配置 支持热更新，不提供受mutex保护的引用，返回copy
     RoomSettingMap GetRoomSettingMap() const;
 
-    // 获得指定机器人配置
-    int GetRobotSetting(UserID userid, RobotSetting& robot_setting) const;
+    // 获得指定机器人配置 支持热更新，不提供受mutex保护的引用，返回copy
+    RobotSetting GetRobotSetting(const UserID& userid) const;
 
     // 主业务定时器间隔
     int GetMainsInterval() const;
@@ -29,10 +29,10 @@ public:
     std::string& GetDepositActiveID();
 
     // 每次补银数量
-    int GetGainAmount() const;
+    int64_t GetGainAmount() const;
 
     // 每次还银数量
-    int GetBackAmount() const;
+    int64_t GetBackAmount() const;
 
     // 补银url
     std::string& GetDepositGainUrl();
@@ -42,6 +42,12 @@ public:
 
     // 热更新
     int ThreadHotUpdate();
+
+    // 检查房间配置是否存在
+    int IsRoomSettingExist(const RoomID& roomid, bool& exist);
+
+    // 检查房间配置是否存在
+    int IsRobotSettingExist(const UserID& userid, bool& exist);
 
 public:
     // 对象状态快照
@@ -64,7 +70,7 @@ private:
 private:
     mutable std::mutex mutex_;
 
-    YQThread hot_update_thread_;
+    YQThread timer_thread_;
 
     RobotSettingMap robot_setting_map_;
 
@@ -78,9 +84,9 @@ private:
 
     int deposit_init_gain_{InitGainFlag};
 
-    int gain_amount_{GainAmount};
+    int64_t gain_amount_{GainAmount};
 
-    int back_amount_{BackAmount};
+    int64_t back_amount_{BackAmount};
 
     std::string deposit_active_id_;
 

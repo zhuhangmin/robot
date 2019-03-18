@@ -19,7 +19,6 @@ message RoomData
 	optional int32 chaircount_per_table	= 6;	
 	optional int64 min_deposit			= 7;
 	optional int64 max_deposit			= 8;
-
 	optional int32 min_player_count		= 9;		// 游戏开局的最小玩家数量
 }
 
@@ -132,6 +131,7 @@ message EnterNormalGameResp
 	optional TablePlayersInfo table_players = 4;
 	optional int32 custom_flag		= 5;	// 标记custom_data的类型
 	optional BytesData custom_data	= 6;	// 游戏方自定义数据
+	optional int32 gameid			= 7;	// 当用户在其他游戏中的时候，值为用户所在游戏的gameid
 }
 
 message EnterPrivateGameReq
@@ -378,14 +378,11 @@ message GetGameUsersResp
 // GN_RS_PLAER_ENTERGAME/GN_RS_LOOKER_ENTERGAME
 message RS_UserEnterGameNotify
 {
-	optional int32 userid		= 1;
-	optional int32 tableno		= 2;
-	optional int32 chairno		= 3;	// GN_RS_LOOKER_ENTERGAME时为0
-	optional int32 user_type	= 4;	// 普通玩家/管理员/机器人 定义见UserType
-	optional RoomData room_data = 5;	
-	optional int64 min_deposit	= 6;	// 当前桌 最小银子数
-	optional int64 max_deposit	= 7;	// 当前桌 最大银子数
-	optional int64 base_deposit	= 8;	// 当前桌 基础银
+	optional User user			= 1;
+	optional RoomData room_data = 2;	
+	optional int64 min_deposit	= 3;	// 当前桌 最小银子数
+	optional int64 max_deposit	= 4;	// 当前桌 最大银子数
+	optional int64 base_deposit	= 5;	// 当前桌 基础银
 }
 
 // GN_RS_LOOER2PLAYER/GN_RS_PLAYER2LOOKER
@@ -424,9 +421,7 @@ message RS_RefreshResultNotify
 // GN_RS_USER_LEAVEGAME
 message RS_UserLeaveGameNotify
 {
-	optional int32 userid		= 1;
-	optional int32 roomid		= 2;
-	optional int32 tableno		= 3;
+	optional User user			= 1;
 }
 
 // GN_RS_SWITCH_TABLE
@@ -437,4 +432,10 @@ message RS_SwitchTableNotify
 	optional int32 old_tableno	= 3;
 	optional int32 new_tableno	= 4;
 	optional int32 new_chairno	= 5;
+}
+
+// GN_RS_NEW_ROOM
+message RS_NewRoomNotify
+{
+	optional Room room			= 1;
 }

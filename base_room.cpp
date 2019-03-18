@@ -49,7 +49,7 @@ int BaseRoom::PlayerEnterGame(const UserPtr &user) {
     return kCommSucc;
 }
 
-int BaseRoom::BindPlayer(const UserPtr& user) {
+int BaseRoom::BindPlayer(const UserPtr& user) const {
     CHECK_USER(user);
     //V524 It is odd that the body of 'BindPlayer' function is fully equivalent to the body of 'PlayerEnterGame' function.base_room.cpp 43
     const auto tableno = user->get_table_no();
@@ -87,7 +87,7 @@ int BaseRoom::UserLeaveGame(const UserID& userid, const TableNO& tableno) {
     return kCommSucc;
 }
 
-int BaseRoom::UnbindUser(const UserID& userid, const TableNO& tableno) {
+int BaseRoom::UnbindUser(const UserID& userid, const TableNO& tableno) const {
     CHECK_USERID(userid);
     CHECK_TABLENO(tableno);
 
@@ -283,12 +283,14 @@ int BaseRoom::GetTable(const TableNO& tableno, TablePtr& table) const {
 int BaseRoom::SnapShotObjectStatus() {
     LOG_INFO("roomid [%d] options [%d] configs [%d] min_playercount_per_table [%d] chaircount_per_table [%d]  manages [%d] max_table_cout [%d] min_deposit [%I64d] max_deposit [%I64d]",
              room_id_, options_, configs_, min_playercount_per_table_, chaircount_per_table_, manages_, max_table_cout_, min_deposit_, max_deposit_);
-    LOG_INFO("tables_ size [%d]", tables_.size());
-    if (tables_[0])
+    LOG_INFO("tables_ size [%d]", max_table_cout_);
+    for (auto i = 0; i < max_table_cout_; i = i + 50) {
+        if (tables_[i])
+            tables_[i]->SnapShotObjectStatus();
+    }
+    /*if (tables_[0])
         tables_[0]->SnapShotObjectStatus();
-    if (tables_[1])
-        tables_[1]->SnapShotObjectStatus();
-    //int min_playercount_per_table_ = 0;	// 满足开局条件的最小玩家数
-    //int chaircount_per_table_ = 0;		// 桌子上的椅子数
+        if (tables_[1])
+        tables_[1]->SnapShotObjectStatus();*/
     return kCommSucc;
 }

@@ -8,11 +8,20 @@ public:
     int Term();
 
     // 游戏 是否连接
-    int IsConnected(BOOL& is_connected);
+    int IsConnected(BOOL& is_connected) const;
+
+    // 游戏数据层是否初始化完毕
+    bool IsGameDataInited() const;
+
+    // 获得所有机器人接收消息的线程
+    ThreadID GetNotifyThreadID() const;
 
 private:
     // 游戏 定时消息
     int ThreadTimer();
+
+    // 游戏 兜底同步
+    int SyncAllGameData();
 
     // 游戏 消息接收
     int ThreadNotify();
@@ -64,6 +73,9 @@ private:
     // 用户换桌	UnbindUser+BindPlaye
     int OnSwitchTable(const REQUEST &request) const;
 
+    // 新房间创建
+    int OnNewRoom(const REQUEST &request) const;
+
 private:
     //int GetUserStatus(UserID userid, UserStatus& user_status);
     int AddRoomPB(const game::base::Room& room_pb) const;
@@ -92,7 +104,7 @@ private:
 
 public:
     // 对象状态快照
-    int SnapShotObjectStatus();
+    int SnapShotObjectStatus() const;
 
 private:
     // 方法的线程可见性检查
@@ -114,7 +126,13 @@ private:
     YQThread notify_thread_;
 
     // 心跳 定时器 线程
-    YQThread heart_thread_;
+    YQThread timer_thread_;
+
+    // 兜底同步信息时间
+    TimeStamp sync_time_stamp_{std::time(nullptr)};
+
+    // 心跳时间戳
+    TimeStamp timestamp_{std::time(nullptr)};
 
     // 游戏服务器 IP
     std::string game_ip_;
@@ -125,8 +143,10 @@ private:
     // 重连标签
     bool need_reconnect_{false};
 
-    // 兜底同步信息时间
-    int sync_time_stamp = {std::time(nullptr)};
+    // 初始化游戏数据层标签
+    bool game_data_inited_{false};
+
+
 };
 
 #define GameMgr GameNetManager::Instance()
