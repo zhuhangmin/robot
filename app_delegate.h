@@ -35,9 +35,6 @@ private:
     // 启动时 为已在游戏中的机器人 立即建立游戏连接
     int ConnectGameForRobotInGame();
 
-    // 启动时 集体补银
-    int DepositGainAll();
-
     // 过滤：获得未开桌+椅子等待 真实玩家集合
     int GetWaittingUser(UserMap& filter_user_map) const;
 
@@ -49,9 +46,6 @@ private:
 
     // 进入游戏
     int EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno);
-
-    // 检查需要补银还银的机器人
-    int CheckRobotDeposit();
 
     // 过滤: 桌银区间的机器人
     int FilterRobotNotInTableDepositRange(const RoomID& roomid, const TableNO& tableno, RobotUserIDMap& not_logon_game_temp) const;

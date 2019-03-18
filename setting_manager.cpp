@@ -115,9 +115,6 @@ int SettingManager::InitSettingWithLock() {
     if (root.isMember("deposit_back_url"))
         deposit_back_url_ = root["deposit_back_url"].asString();
 
-    if (root.isMember("deposit_init_gain"))
-        deposit_init_gain_ = root["deposit_init_gain"].asInt();
-
     // check
     if (InvalidGameID == game_id_) {
         LOG_ERROR("game_id_  = [%d]", InvalidGameID);
@@ -196,11 +193,6 @@ int SettingManager::GetRandomUserID(UserID& random_userid) const {
     const auto random_it = std::next(std::begin(robot_setting_map_), random_pos);
     random_userid = random_it->first;
     return kCommSucc;
-}
-
-int SettingManager::GetDeposiInitGainFlag() const {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return deposit_init_gain_;
 }
 
 int SettingManager::IsRobotSettingExist(const UserID& userid, bool& exist) {

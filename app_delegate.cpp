@@ -94,9 +94,6 @@ int AppDelegate::Init() {
     UserMgr.SetNotifyThreadID(GameMgr.GetNotifyThreadID());
     // 以上数据管理类均为线程安全
 
-    // 可选：是否启动时集体补银
-    DepositGainAll();
-
     // ！！【注意】请勿使用多线程实现调度！！
     // 请在【ThreadMainProc 单线程】实现调度
     // 无业务锁情况下，多线程构建业务会出现线程竞争问题
@@ -151,9 +148,6 @@ int AppDelegate::ThreadMainProc() {
         if (WAIT_TIMEOUT == dwRet) {
             if (!g_inited) continue;
             if (!GameMgr.IsGameDataInited()) continue;
-
-            // 检查需要补银还银的机器人
-            CheckRobotDeposit();
 
             // 业务主流程
             MainProcess();
@@ -534,24 +528,6 @@ int AppDelegate::GetWaittingUser(UserMap& filter_user_map) const {
     return kCommSucc;
 }
 
-int AppDelegate::DepositGainAll() {
-    // 处理游戏服务器断线 但业务后台正常的情况
-    if (!GameMgr.IsGameDataInited()) return kExceptionGameDataNotInited;
-
-    if (InitGainFlag  != SettingMgr.GetDeposiInitGainFlag())
-        return kCommSucc;
-
-    auto robot_setting_map = SettingMgr.GetRobotSettingMap();
-    for (auto& kv : robot_setting_map) {
-        const auto userid = kv.first;
-        // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-        if (UserMgr.IsRobotUserExist(userid)) continue;
-        DepositMgr.SetDepositType(userid, DepositType::kGain, SettingMgr.GetGainAmount());
-    }
-
-    return kCommSucc;
-}
-
 int AppDelegate::ConnectHallForAllRobot() {
     LOG_INFO_FUNC("\t[START]");
     const auto robot_map = SettingMgr.GetRobotSettingMap();
@@ -627,53 +603,6 @@ int AppDelegate::ConnectGameForRobotInGame() {
             continue;
         }
     }
-    return kCommSucc;
-}
-
-int AppDelegate::CheckRobotDeposit() {
-    int64_t max = 0;
-    int64_t min = 0;
-    if (kCommSucc != RoomMgr.GetRoomDepositRange(max, min)) {
-        LOG_WARN("room deposit range min [%I64d] max [%I64d]", min, max);
-        return kCommFaild;
-    }
-    LOG_INFO("check robot deposit room deposit range min [%I64d] max [%I64d]", min, max);
-    auto user_game_info_map = DepositMgr.GetUserGameInfo();
-    for (const auto& kv: user_game_info_map) {
-        const auto userid = kv.first;
-        const auto deposit = kv.second.nDeposit;
-        if (deposit < 0)ASSERT_FALSE_RETURN;
-
-        auto exist = false;
-        if (kCommSucc != SettingMgr.IsRobotSettingExist(userid, exist)) {
-            continue;
-        }
-        if (!exist) continue;
-
-        // 处理游戏服务器断线 但业务后台正常的情况
-        if (!GameMgr.IsGameDataInited()) return kExceptionGameDataNotInited;
-
-        // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-        if (UserMgr.IsRobotUserExist(userid)) continue;
-
-
-        if (deposit < min) {
-            const auto amount = min - deposit + 1;
-            LOG_INFO("robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
-            if (amount < 0) { ASSERT_FALSE; continue; }
-            DepositMgr.SetDepositType(userid, DepositType::kGain, amount);
-        }
-
-        if (deposit > max) {
-            LOG_INFO("robot userid [%d] deposit [%I64d]", userid, deposit);
-            const auto amount = deposit - max + 1;
-            LOG_INFO("robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
-            if (amount < 0) { ASSERT_FALSE; continue; }
-            DepositMgr.SetDepositType(userid, DepositType::kBack, deposit + (min + max) / 2);
-        }
-    }
-
-
     return kCommSucc;
 }
 

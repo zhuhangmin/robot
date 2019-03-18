@@ -58,9 +58,6 @@ public:
     // 获得随机userid
     int GetRandomUserID(UserID& random_userid) const;
 
-    // 启动时是否集体补银
-    int GetDeposiInitGainFlag() const;
-
 protected:
     SINGLETION_CONSTRUCTOR(SettingManager);
 
@@ -81,8 +78,6 @@ private:
     int main_interval_{MainInterval};
 
     int deposit_interval_{DepositInterval};
-
-    int deposit_init_gain_{InitGainFlag};
 
     int64_t gain_amount_{GainAmount};
 
