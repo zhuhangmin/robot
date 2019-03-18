@@ -30,13 +30,50 @@ int UserManager::DelUser(const UserID& userid) {
 int UserManager::AddUser(const UserID& userid, const UserPtr &user) {
     std::lock_guard<std::mutex> users_lock(mutex_);
     CHECK_USERID(userid);
-    user_map_[userid] = user;
+    if (kCommSucc != AddUserWithLock(userid, user)) {
+        ASSERT_FALSE_RETURN;
+    }
     return kCommSucc;
 }
 
 int UserManager::Reset() {
     std::lock_guard<std::mutex> users_lock(mutex_);
     user_map_.clear();
+    return kCommSucc;
+}
+
+int UserManager::ResetDataAndReInit(const game::base::GetGameUsersResp& resp) {
+    LOG_WARN("RESET Data UserManger And ReInit");
+    std::lock_guard<std::mutex> users_lock(mutex_);
+    user_map_.clear();
+    for (auto user_index = 0; user_index < resp.users_size(); user_index++) {
+        if (kCommSucc != AddUserPBWithLock(resp.users(user_index))) {
+            ASSERT_FALSE;
+            continue;
+        }
+    }
+    return kCommSucc;
+}
+
+int UserManager::AddUserPBWithLock(const game::base::User& user_pb) const {
+    auto user = std::make_shared<User>();
+    user->set_user_id(user_pb.userid());
+    user->set_room_id(user_pb.roomid());
+    user->set_table_no(user_pb.tableno());
+    user->set_chair_no(user_pb.chairno());
+    user->set_user_type(user_pb.user_type());
+    user->set_deposit(user_pb.deposit());
+    user->set_total_bout(user_pb.total_bout());
+    user->set_offline_count(user_pb.offline_count());
+    if (kCommSucc != UserMgr.AddUserWithLock(user->get_user_id(), user)) {
+        ASSERT_FALSE_RETURN;
+    }
+    return kCommSucc;
+}
+
+int UserManager::AddUserWithLock(const UserID& userid, const UserPtr &user) {
+    CHECK_USERID(userid);
+    user_map_[userid] = user;
     return kCommSucc;
 }
 
@@ -124,6 +161,7 @@ int UserManager::GetRobotUserMap(UserMap& robot_user_map) const {
 }
 
 bool UserManager::IsRobotUserExist(const UserID& userid) const {
+    std::lock_guard<std::mutex> users_lock(mutex_);
     const auto iter = user_map_.find(userid);
     if (iter != user_map_.end()) {
         const auto user_ptr = iter->second;
@@ -133,18 +171,6 @@ bool UserManager::IsRobotUserExist(const UserID& userid) const {
     }
     return false;
 }
-
-void UserManager::SetNotifyThreadID(const ThreadID& thread_id) {
-    notify_thread_id_ = thread_id;
-}
-
-int UserManager::CheckNotifyThreadID() const {
-    if (GetCurrentThreadId() == notify_thread_id_) {
-        return kCommSucc;
-    }
-    return kCommFaild;
-}
-
 
 int UserManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> users_lock(mutex_);

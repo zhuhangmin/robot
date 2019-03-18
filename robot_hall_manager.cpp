@@ -6,6 +6,7 @@
 #include "robot_statistic.h"
 #include "deposit_http_manager.h"
 #include "PBReq.h"
+#include "deposit_data_manager.h"
 
 //外部线程调用方法
 
@@ -169,6 +170,11 @@ int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
     return kCommSucc;
 }
 
+RobotUserIDMap RobotHallManager::GetUpdateDepositMap() const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return update_depost_map_;
+}
+
 int RobotHallManager::SetLogonStatus(const UserID& userid, const HallLogonStatusType& status) {
     std::lock_guard<std::mutex> lock(mutex_);
     return SetLogonStatusWithLock(userid, status);
@@ -294,12 +300,20 @@ int RobotHallManager::ThreadTimer() {
 }
 
 int RobotHallManager::SendUpdateUserDeposit() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    auto copy_map = std::move(update_depost_map_);
+    RobotUserIDMap copy_map;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        copy_map = update_depost_map_;
+    }
     for (const auto& kv : copy_map) {
         const auto userid = kv.first;
         if (kCommSucc != GetUserGameInfoWithLock(userid)) {
             continue;
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            update_depost_map_.erase(userid);
         }
     }
     return kCommSucc;
@@ -447,10 +461,10 @@ int RobotHallManager::SendGetRoomDataWithLock(const RoomID& roomid) {
 }
 
 int RobotHallManager::GetUserGameInfoWithLock(const UserID& userid) {
-    if (kCommSucc != CheckNotInnerThread()) {
+    /*if (kCommSucc != CheckNotInnerThread()) {
         ASSERT_FALSE_RETURN;
-    }
-
+        }
+        */
     // 只拉去机器人列表中的
     auto exist = false;
     if (kCommSucc != SettingMgr.IsRobotSettingExist(userid, exist)) {
@@ -486,8 +500,7 @@ int RobotHallManager::GetUserGameInfoWithLock(const UserID& userid) {
         ASSERT_FALSE_RETURN;
     }
 
-    DepositHttpMgr.SetUserGameInfo(userid, static_cast<USER_GAMEINFO_MB*>(pRetData.get()));
-    return kCommSucc;
+    DepositDataMgr.SetUserGameData(userid, static_cast<USER_GAMEINFO_MB*>(pRetData.get()));
     return kCommSucc;
 }
 
@@ -546,6 +559,13 @@ int RobotHallManager::KeepConnection() {
         return ResetDataWithLock();
     }
     return kCommSucc;
+}
+
+bool RobotHallManager::IsInDepositUpdateProcess(const UserID& userid) {
+    if (update_depost_map_.find(userid) != update_depost_map_.end()) {
+        return true;
+    }
+    return false;
 }
 
 int RobotHallManager::SnapShotObjectStatus() {

@@ -51,6 +51,8 @@ public:
 
     static int IsValidConnection(const CDefSocketClientPtr& connection_);
 
+    static int IsNegativeDepositAmount(const int64_t& deposit_amount);
+
     // 控制方法对特定线程可见
     static int IsCurrentThread(YQThread& thread);
 
@@ -103,6 +105,8 @@ public:
 #define CHECK_THREAD(x)  if(kCommSucc != RobotUtils::IsCurrentThread(x))  {ASSERT_FALSE_RETURN}
 
 #define CHECK_NOT_THREAD(x)  if(kCommSucc != RobotUtils::NotThisThread(x))  {ASSERT_FALSE_RETURN}
+
+#define CHECK_DEPOSIT(x)  if(kCommSucc != RobotUtils::IsNegativeDepositAmount(x))  {ASSERT_FALSE_RETURN}
 
 #define ERR_STR(x) RobotUtils::ErrorCodeInfo(x).c_str()
 

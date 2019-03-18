@@ -195,6 +195,10 @@ int RobotUtils::IsValidConnection(const CDefSocketClientPtr& connection_) {
     return connection_ == nullptr ? kCommFaild : kCommSucc;
 }
 
+int RobotUtils::IsNegativeDepositAmount(const int64_t& deposit_amount) {
+    return deposit_amount < 0 ? kCommFaild : kCommSucc;
+}
+
 int RobotUtils::IsValidTable(const TablePtr& table) {
     return table == nullptr ? kCommFaild : kCommSucc;
 }
@@ -480,8 +484,11 @@ std::string RobotUtils::UserTypeStr(const int& type) {
         case USER_TYPE_HANDPHONE:
             ret_string = "USER_TYPE_HANDPHONE";
             break;
+        case USER_TYPE_HANDPHONE |USER_TYPE_MERCHANT:
+            ret_string = "USER_TYPE_HANDPHONE |USER_TYPE_MERCHANT";
+            break;
         default:
-            assert(false);
+            LOG_WARN("type [%x]", type);
             break;
     }
 

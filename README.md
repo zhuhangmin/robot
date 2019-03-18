@@ -222,10 +222,6 @@
 
 
 # NEED SUPPORT
-* 【优先级 ：中】 黑大厅填的房间银子max  200000000 ，但游戏下发pb里是2229999999
-
-* 【优先级 ：中】 机器人ConstructEnterGameNotify2RobotSvr 这个函数里 桌银范围取出来不对 0 - 0x7fffffffffffffff
-
 * 【优先级 ：高】会收到重复的用户离开游戏消息  GN_RS_USER_LEAVEGAME  导致数据层同步异常
 --------------------ok
 
@@ -234,7 +230,9 @@
 
 
 
+03/18/19 15:12:07:488[108128][INFO][robot_hall_manager.cpp:209] HALL token [1] [RECV] requestid [80103] [???????????] 
+03/18/19 15:12:07:525[110500][ERROR][robot_hall_manager.cpp:499] SendHallRequest GetUserGameInfo fail userid [682535], nResponse [60027] [GR_HARDID_MISMATCH] 
 
-
-
- 
+兜底机制的加强：不然容易产生僵尸 
+不仅是连接层面，业务层面也需要兜底
+如一些机器人不应该存在的状态，像“旁观”状态长时间后，也应踢掉机器人

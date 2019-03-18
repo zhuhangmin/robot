@@ -171,7 +171,7 @@ int GameNetManager::ThreadTimer() {
             SendPulse();
 
             // Í¬²½¶µµ×
-            SyncAllGameData();
+            //SyncAllGameData();
         }
     }
     LOG_INFO("[EXIT] Game KeepAlive thread [%d] exiting", GetCurrentThreadId());
@@ -182,6 +182,7 @@ int GameNetManager::SyncAllGameData() {
     const int now = std::time(nullptr);
     if (now - sync_time_stamp_ > GameSyncInterval) {
         std::lock_guard<std::mutex> lock(mutex_);
+        sync_time_stamp_ = now;
         if (kCommSucc != SendGetGameInfoWithLock()) {
             LOG_ERROR("SendGetGameInfo failed");
             ASSERT_FALSE_RETURN;
@@ -246,24 +247,15 @@ int GameNetManager::SendGetGameInfoWithLock() {
         ASSERT_FALSE_RETURN;
     }
 
-    RoomMgr.Reset();
     if (0 == resp.rooms_size()) {
         LOG_WARN("No Room From Game Server!")
     }
-    for (auto room_index = 0; room_index < resp.rooms_size(); room_index++) {
-        if (kCommSucc != AddRoomPB(resp.rooms(room_index))) {
-            ASSERT_FALSE;
-            continue;
-        }
-    }
+    RoomMgr.ResetDataAndReInit(resp);
 
-    UserMgr.Reset();
-    for (auto user_index = 0; user_index < resp.users_size(); user_index++) {
-        if (kCommSucc != AddUserPB(resp.users(user_index))) {
-            ASSERT_FALSE;
-            continue;
-        }
+    if (0 == resp.users_size()) {
+        LOG_WARN("No Users From Game Server!")
     }
+    UserMgr.ResetDataAndReInit(resp);
 
     return kCommSucc;
 }
@@ -785,104 +777,11 @@ int GameNetManager::OnNewRoom(const REQUEST &request) const {
     const auto roomid = room_data_pb.roomid();
     LOG_INFO("roomid [%d] [%s]", roomid, REQ_STR(request.head.nRequest));
 
-    if (kCommSucc != AddRoomPB(room_pb)) {
+    if (kCommSucc != RoomMgr.AddRoomPB(room_pb)) {
         ASSERT_FALSE_RETURN
     }
 
 
-    return kCommSucc;
-}
-
-int GameNetManager::AddRoomPB(const game::base::Room& room_pb) const {
-    const auto& room_data_pb = room_pb.room_data();
-    const auto roomid = room_data_pb.roomid();
-
-    auto exist = false;
-    if (kCommSucc!= SettingMgr.IsRoomSettingExist(roomid, exist)) {
-        ASSERT_FALSE_RETURN;
-    }
-    if (!exist) LOG_WARN("roomid [%d] not eixst in robot.setting", roomid);
-
-    auto room = std::make_shared<BaseRoom>();
-    room->set_room_id(room_data_pb.roomid());
-    room->set_options(room_data_pb.options());
-    room->set_configs(room_data_pb.configs());
-    room->set_manages(room_data_pb.manages());
-    room->set_max_table_cout(room_data_pb.max_table_cout());
-    room->set_chaircount_per_table(room_data_pb.chaircount_per_table());
-    room->set_min_playercount_per_table(room_data_pb.min_player_count());
-    room->set_min_deposit(room_data_pb.min_deposit());
-    room->set_max_deposit(room_data_pb.max_deposit());
-
-    // TABLE
-    const auto size = room_pb.tables_size();
-    for (auto table_index = 0; table_index < size; table_index++) {
-        const auto& table_pb = room_pb.tables(table_index);
-        const auto tableno = table_pb.tableno();
-        auto table = std::make_shared<Table>();
-        AddTablePB(table_pb, table);
-        room->AddTable(tableno, table);
-    }
-
-    // ROOM
-    if (kCommSucc != RoomMgr.AddRoom(roomid, room)) ASSERT_FALSE_RETURN;
-    return kCommSucc;
-}
-
-int GameNetManager::AddTablePB(const game::base::Table& table_pb, const TablePtr& table) {
-    table->set_table_no(table_pb.tableno()); // tableno start from 1
-    table->set_room_id(table_pb.roomid());
-    table->set_chair_count(table_pb.chair_count());
-    table->set_banker_chair(table_pb.banker_chair());
-    table->set_min_deposit(table_pb.min_deposit());
-    table->set_max_deposit(table_pb.max_deposit());
-    table->set_base_deposit(table_pb.base_deposit());
-    table->set_table_status(table_pb.table_status());
-
-    // CHAIR
-    for (auto chair_index = 0; chair_index < table_pb.chairs_size(); chair_index++) {
-        const auto& chair_pb = table_pb.chairs(chair_index);
-        const auto chairno = chair_pb.chairno(); // chairno start from 1
-        const auto userid = chair_pb.userid();
-        if (userid < 0) ASSERT_FALSE;
-        if (0 == userid) continue;
-        ChairInfo chair_info;
-        chair_info.set_userid(userid);
-        chair_info.set_chair_no(chairno);
-        chair_info.set_chair_status(static_cast<ChairStatus>(chair_pb.chair_status()));
-        chair_info.set_bind_timestamp(chair_pb.bind_timestamp());
-        table->AddChair(chairno, chair_info);
-    }
-
-    // TABLE USER INFO
-    for (auto table_user_index = 0; table_user_index < table_pb.table_users_size(); table_user_index++) {
-        const auto& table_user_pb = table_pb.table_users(table_user_index);
-        const auto userid = table_user_pb.userid();
-        if (userid < 0) ASSERT_FALSE;
-        if (0 == userid) continue;
-        TableUserInfo table_user_info;
-        table_user_info.set_userid(table_user_pb.userid());
-        table_user_info.set_user_type(table_user_pb.user_type());
-        table_user_info.set_bind_timestamp(table_user_pb.bind_timestamp());
-        table->AddTableUserInfo(userid, table_user_info);
-    }
-
-    return kCommSucc;
-}
-
-int GameNetManager::AddUserPB(const game::base::User& user_pb) const {
-    auto user = std::make_shared<User>();
-    user->set_user_id(user_pb.userid());
-    user->set_room_id(user_pb.roomid());
-    user->set_table_no(user_pb.tableno());
-    user->set_chair_no(user_pb.chairno());
-    user->set_user_type(user_pb.user_type());
-    user->set_deposit(user_pb.deposit());
-    user->set_total_bout(user_pb.total_bout());
-    user->set_offline_count(user_pb.offline_count());
-    if (kCommSucc != UserMgr.AddUser(user->get_user_id(), user)) {
-        ASSERT_FALSE_RETURN;
-    }
     return kCommSucc;
 }
 

@@ -4,10 +4,13 @@
 #include "main.h"
 #include "robot_utils.h"
 #include "game_net_manager.h"
+#include "deposit_data_manager.h"
+#include "robot_hall_manager.h"
 
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 int DepositHttpManager::Init() {
+    std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
     timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
     return kCommSucc;
@@ -15,9 +18,10 @@ int DepositHttpManager::Init() {
 
 
 int DepositHttpManager::Term() {
+    std::lock_guard<std::mutex> lock(mutex_);
     timer_thread_.Release();
     deposit_map_.clear();
-    user_game_info_map_.clear();
+
 
     LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
@@ -36,10 +40,6 @@ int DepositHttpManager::ThreadDeposit() {
             if (!g_inited) continue;
             SendDepositRequest();
 
-            /*  if (kCommSucc != RoomMgr.GetTableDepositRange(roomid, tableno, max, min)) {
-                  ASSERT_FALSE;
-                  }*/
-
         }
     }
 
@@ -52,7 +52,7 @@ int DepositHttpManager::SendDepositRequest() {
     DepositMap deposit_map_temp;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        deposit_map_temp = std::move(deposit_map_);
+        deposit_map_temp = deposit_map_;
     }
 
     for (auto& kv : deposit_map_temp) {
@@ -61,6 +61,7 @@ int DepositHttpManager::SendDepositRequest() {
         const auto deposit_type = data.type;
         const auto amount = data.amount;
 
+        // 发送HTTP
         if (deposit_type == DepositType::kGain) {
             if (kCommSucc != RobotGainDeposit(userid, amount)) {
                 ASSERT_FALSE;
@@ -74,12 +75,35 @@ int DepositHttpManager::SendDepositRequest() {
                 continue;
             }
         }
+
+        // 设置银子更新标记，等hall拉取最新银子
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (deposit_map_.find(userid) != deposit_map_.end()) {
+                deposit_map_.erase(userid);
+                //HallMgr.SetDepositUpdate(userid); // TODO GR_HARDID_MISMATCH
+                if (deposit_type == DepositType::kGain) {
+                    if (kCommSucc != DepositDataMgr.AddDeposit(userid, amount)) {
+                        continue;
+                    }
+                }
+
+                if (deposit_type == DepositType::kBack) {
+                    if (kCommSucc != DepositDataMgr.AddDeposit(userid, -amount)) {
+                        continue;
+                    }
+                }
+            } else {
+                assert(false);
+                continue;
+            }
+        }
     }
     return kCommSucc;
 }
 
 int DepositHttpManager::RobotGainDeposit(const UserID& userid, const int64_t& amount) const {
-    LOG_INFO("RobotGainDeposit BEG userid [%d] amount [%I64d]", userid, amount);
+    LOG_INFO("[DEPOSIT] RobotGainDeposit BEG userid [%d] amount [%I64d]", userid, amount);
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
@@ -114,15 +138,15 @@ int DepositHttpManager::RobotGainDeposit(const UserID& userid, const int64_t& am
 
     const auto ret_code = _root["Code"].asInt();
     if (0 != ret_code) {
-        LOG_ERROR("userid  = [%d] gain deposit fail, code  = [%d], strResult =  [%s]", userid, _root["Code"].asInt(), strResult);
-        //ASSERT_FALSE_RETURN
+        LOG_ERROR("[DEPOSIT] userid [%d] gain deposit fail, code  [%d], strResult [%s]", userid, _root["Code"].asInt(), strResult);
+        ASSERT_FALSE_RETURN;
     }
-    LOG_INFO("RobotGainDeposit END userid [%d] amount [%I64d]", userid, amount);
+    LOG_INFO("[DEPOSIT] RobotGainDeposit END userid [%d] amount [%I64d]", userid, amount);
     return kCommSucc;
 }
 
 int DepositHttpManager::RobotBackDeposit(const UserID& userid, const int64_t& amount) const {
-    LOG_INFO("RobotBackDeposit BEG userid [%d] amount [%I64d]", userid, amount);
+    LOG_INFO("[DEPOSIT] RobotBackDeposit BEG userid [%d] amount [%I64d]", userid, amount);
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
@@ -156,15 +180,15 @@ int DepositHttpManager::RobotBackDeposit(const UserID& userid, const int64_t& am
     if (!reader.parse((LPCTSTR) strResult, _root)) ASSERT_FALSE_RETURN;
 
     if (_root["Code"].asInt() != 0) {
-        LOG_ERROR("userid  = [%d] gain deposit fail, code  = [%d], strResult =  [%s]", userid, _root["Code"].asInt(), strResult);
-        ASSERT_FALSE_RETURN
+        LOG_ERROR("[DEPOSIT] userid [%d] gain deposit fail, code [%d], strResult [%s]", userid, _root["Code"].asInt(), strResult);
+        ASSERT_FALSE_RETURN;
     }
 
-    LOG_INFO("RobotBackDeposit END userid [%d] amount [%I64d]", userid, amount);
+    LOG_INFO("[DEPOSIT] RobotBackDeposit END userid [%d] amount [%I64d]", userid, amount);
     return kCommSucc;
 }
 
-int DepositHttpManager::SetDepositType(const UserID& userid, const DepositType& type, const int64_t& amount) {
+int DepositHttpManager::SetDepositTypeAmount(const UserID& userid, const DepositType& type, const int64_t& amount) {
     // 处理游戏服务器断线 但业务后台正常的情况
     if (!GameMgr.IsGameDataInited()) return kExceptionGameDataNotInited;
     std::lock_guard<std::mutex> lock(mutex_);
@@ -182,18 +206,6 @@ DepositMap DepositHttpManager::GetDepositMap() const {
     return deposit_map_;
 }
 
-int DepositHttpManager::SetUserGameInfo(const int& userid, USER_GAMEINFO_MB* info) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_USERID(userid);
-    user_game_info_map_[userid] = *info;
-    return kCommSucc;
-}
-
-UserGameInfoMap DepositHttpManager::GetUserGameInfo() const {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return user_game_info_map_;
-}
-
 int DepositHttpManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("deposit_timer_thread_ [%d]", timer_thread_.GetThreadID());
@@ -203,13 +215,5 @@ int DepositHttpManager::SnapShotObjectStatus() {
         const auto status = kv.second;
         LOG_INFO("robot userid [%d] status [%d]", userid, status);
     }
-
-    LOG_INFO("user_game_info_map_ size [%d]", user_game_info_map_.size());
-    for (auto& kv : user_game_info_map_) {
-        const auto userid = kv.first;
-        const auto game_info = kv.second;
-        LOG_INFO("robot userid [%d] deposit [%I64d]", userid, game_info.nDeposit);
-    }
-
     return kCommSucc;
 }

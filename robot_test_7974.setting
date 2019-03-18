@@ -1,0 +1,37 @@
+{
+    "game_id":1001,
+
+    "main_interval":3000,
+
+    "deposit_interval":1000,
+
+    "deposit_active_id" :"52",
+
+    "deposit_gain_url":"http://activityapi.comfun.org:1505/Robot/ChipsOperate",
+
+    "deposit_back_url":"http://activityapi.comfun.org:1505/Robot/ChipsOperate",
+
+    "deposit_gain_amount":100000,
+
+    "deposit_back_amount":100000,
+    
+    "rooms":[
+        {"roomid":7974, "wait_time":7, "count_per_table":1}
+    ],
+    
+    "robots":[
+
+{"userid":685500,"nickName":"cf-685500","password":"8483412","Portrait":""},
+{"userid":685501,"nickName":"cf-685501","password":"6445303","Portrait":""},
+{"userid":685502,"nickName":"cf-685502","password":"1119570","Portrait":""},
+{"userid":685503,"nickName":"cf-685503","password":"3281932","Portrait":""},
+{"userid":685504,"nickName":"cf-685504","password":"7067275","Portrait":""},
+{"userid":685505,"nickName":"cf-685505","password":"2223583","Portrait":""},
+{"userid":685506,"nickName":"cf-685506","password":"6583547","Portrait":""},
+{"userid":685507,"nickName":"cf-685507","password":"1937995","Portrait":""},
+{"userid":685508,"nickName":"cf-685508","password":"3351838","Portrait":""},
+{"userid":685509,"nickName":"cf-685509","password":"1204812","Portrait":""},
+{"userid":685510,"nickName":"cf-685510","password":"5826855","Portrait":""}
+
+    ]
+}

@@ -30,28 +30,28 @@ const int InvalidThreadID = -1;
 
 const int MS_PER_SECOND = 1000;  // ms
 
-const int TimerInterval = 1 * MS_PER_SECOND; // 定时器时间间隔 1
+const int TimerInterval = 1 * MS_PER_SECOND; // 定时器时间间隔 1s
 
-const int GamePulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
+const int GamePulseInterval = 60; // 心跳时间间隔 60s
 
-const int HallPulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
+const int HallPulseInterval = 60; // 心跳时间间隔 60s
 
-const int RobotPulseInterval = 60 * MS_PER_SECOND; // 心跳时间间隔 60
+const int RobotPulseInterval = 60; // 心跳时间间隔 60s
 
-const int GetAllRoomDataInterval = 10 * 60 * MS_PER_SECOND; // 10 min  
-
-const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间 4
+const int GetAllRoomDataInterval = 10 * 60; // 10 min  
 
 // 游戏服务器兜底状态同步, 请勿减少时间间隔会触发后端服务器大量锁
-const int GameSyncInterval = 10 * 60 * MS_PER_SECOND; // 10 min  
+const int GameSyncInterval = 30; // 10 min  
 
-const int HttpTimeOut = 5 * MS_PER_SECOND; // HTTP 超时 5
+const int RequestTimeOut = 4 * MS_PER_SECOND;  //请求回应超时时间 4s
 
-const int MainInterval = 10 * MS_PER_SECOND; // 主循环时间间隔 10
+const int HttpTimeOut = 5 * MS_PER_SECOND; // HTTP 超时 5s
 
-const int DepositInterval = 10 * MS_PER_SECOND; // 补银时间间隔  10
+const int MainInterval = 10 * MS_PER_SECOND; // 主循环时间间隔 10s
 
-const int HotUpdateInterval = 10 * MS_PER_SECOND; // 配置热更新  10
+const int DepositInterval = 1 * MS_PER_SECOND; // 补银时间间隔  1s
+
+const int HotUpdateInterval = 60 * MS_PER_SECOND; // 配置热更新  60s
 
 const int64_t GainAmount = 200000;
 

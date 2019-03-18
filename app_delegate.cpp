@@ -9,6 +9,7 @@
 #include "robot_utils.h"
 #include "user_manager.h"
 #include "room_manager.h"
+#include "deposit_data_manager.h"
 
 int AppDelegate::InitLanuch() const {
     LOG_INFO_FUNC("\t[START]");
@@ -91,7 +92,6 @@ int AppDelegate::Init() {
         ASSERT_FALSE_RETURN;
     }
 
-    UserMgr.SetNotifyThreadID(GameMgr.GetNotifyThreadID());
     // 以上数据管理类均为线程安全
 
     // ！！【注意】请勿使用多线程实现调度！！
@@ -169,12 +169,19 @@ int AppDelegate::MainProcess() {
         const auto userid = kv.first;
         const auto roomid = kv.second->get_room_id();
         const auto tableno = kv.second->get_table_no();
-        LOG_INFO("user [%d] roomid [%d] tableno [%d] chairno [%d] need robot",
-                 userid, roomid, tableno, kv.second->get_chair_no());
+
+        int64_t max = 0;
+        int64_t min = 0;
+        RoomMgr.GetTableDepositRange(roomid, tableno, max, min);
+        int64_t room_max = 0;
+        int64_t room_min = 0;
+        RoomMgr.GetRoomDepositRange(room_max, room_min);
+        LOG_INFO("[DEPOSIT] user [%d] roomid [%d] tableno [%d] chairno [%d], room_min [%I64d] room_max [%I64d], table deposit min [%I64d] max [%I64d] need robot",
+                 userid, roomid, tableno, kv.second->get_chair_no(), room_min, room_max, min, max);
 
         // 随机选一个没有进入游戏的机器人userid
         auto robot_userid = InvalidUserID;
-        auto result = GetRandomUserIDNotInGame(roomid, tableno, robot_userid);
+        auto result = GetRandomQualifiedRobotUserID(roomid, tableno, robot_userid);
         if (kCommSucc != result) {
             if (kExceptionNoRobotDeposit != result) {
                 continue;
@@ -196,7 +203,13 @@ int AppDelegate::MainProcess() {
             if (kTooLessDeposit == result || kTooMuchDeposit == result) {
                 continue;
             }
-            ASSERT_FALSE;
+            if (kAllocTableFaild == result) {
+                return result;
+            }
+            if (kHall_InOtherGame == result) {
+                return result;
+            }
+            ASSERT_FALSE_RETURN;
             continue;
         }
     }
@@ -217,6 +230,12 @@ int AppDelegate::RobotProcess(const UserID& userid, const RoomID& roomid, const 
     const auto result = EnterGame(userid, roomid, tableno);
     if (kCommSucc != result) {
         if (kTooLessDeposit == result || kTooMuchDeposit == result) {
+            return result;
+        }
+        if (kAllocTableFaild == result) {
+            return result;
+        }
+        if (kHall_InOtherGame == result) {
             return result;
         }
         ASSERT_FALSE_RETURN;
@@ -289,24 +308,28 @@ int AppDelegate::EnterGame(const UserID& userid, const RoomID& roomid, const Tab
         }
 
         LOG_WARN("!!! ENTER GAME FAILED !!! [%d] tableno [%d] userid [%d] error code [%d][%s]", roomid, tableno, userid, result, ERR_STR(result));
-        //ASSERT_FALSE_RETURN;
-        return kCommFaild;
+        return result;
     }
     LOG_INFO("*** ENTER GAME SUCCESS*** roomid [%d] tableno [%d] userid [%d]", roomid, tableno, userid);
     return kCommSucc;
 }
 
-int AppDelegate::GetRandomUserIDNotInGame(const RoomID& roomid, const TableNO& tableno, UserID& random_userid) const {
-    // 过滤出没有进入游戏服务器的userid集合
+int AppDelegate::GetRandomQualifiedRobotUserID(const RoomID& roomid, const TableNO& tableno, UserID& random_userid) const {
+    // 过滤 不在游戏的机器人
+    // 在游戏的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
     RobotUserIDMap not_logon_game_temp;
-    auto enter_game_map = UserMgr.GetAllEnterUserID();
     auto robot_setting = SettingMgr.GetRobotSettingMap();
     for (auto& kv : robot_setting) {
         auto userid = kv.first;
-        if (enter_game_map.find(userid) == enter_game_map.end()) {
-            not_logon_game_temp[userid] = userid;
+        if (UserMgr.IsRobotUserExist(userid)) {
+            LOG_DEBUG("robot userid [%d] in game", userid);
+            continue;
         }
+        not_logon_game_temp[userid] = userid;
     }
+
+    // 在游戏中的机器人 
+
 
     if (not_logon_game_temp.empty()) {
         LOG_WARN("no more robot in setting pool!");
@@ -327,18 +350,32 @@ int AppDelegate::GetRandomUserIDNotInGame(const RoomID& roomid, const TableNO& t
         return kExceptionNoMoreRobot;
     }
 
-    // 过滤正在补银的机器人
+    // 过滤正在补银HTTP请求的机器人
     const auto robot_in_deposit_process_map = DepositHttpMgr.GetDepositMap();
     for (const auto& kv : robot_in_deposit_process_map) {
         const auto userid = kv.first;
         if (not_logon_game_temp.find(userid) != not_logon_game_temp.end()) {
-            LOG_DEBUG("filter robot in deposit process userid [%d]", userid);
+            LOG_DEBUG("filter robot in http deposit process userid [%d]", userid);
             not_logon_game_temp.erase(userid);
         }
     }
 
     if (not_logon_game_temp.empty()) {
-        LOG_WARN("no more quailfied robot , some are in deposit process!");
+        LOG_WARN("no more quailfied robot , some are in http deposit process!");
+        return kExceptionNoMoreRobot;
+    }
+
+    // 过滤正在更新银子信息的机器人
+    const auto update_deposit_map = HallMgr.GetUpdateDepositMap();
+    for (const auto& kv : update_deposit_map) {
+        const auto userid = kv.first;
+        if (not_logon_game_temp.find(userid) != not_logon_game_temp.end()) {
+            LOG_DEBUG("filter robot in hall deposit update process userid [%d]", userid);
+            not_logon_game_temp.erase(userid);
+        }
+    }
+    if (not_logon_game_temp.empty()) {
+        LOG_WARN("no more quailfied robot , some are in hall deposit process!");
         return kExceptionNoMoreRobot;
     }
 
@@ -354,7 +391,7 @@ int AppDelegate::GetRandomUserIDNotInGame(const RoomID& roomid, const TableNO& t
             return result;
         }
         if (kExceptionRobotNotInGame == result) {
-            LOG_WARN("filter robot kExceptionRobotNotInGame ");
+            LOG_WARN("filter robot exception robot not in game ");
             return result;
         }
         ASSERT_FALSE_RETURN;
@@ -369,15 +406,15 @@ int AppDelegate::GetRandomUserIDNotInGame(const RoomID& roomid, const TableNO& t
     result = FilterRobotNotInTableDepositRange(roomid, tableno, not_logon_game_temp);
     if (kCommSucc != result) {
         if (kExceptionNoRobotDeposit == result) {
-            LOG_WARN("filter robot kExceptionNoRobotDeposit ");
+            LOG_WARN("[DEPOSIT] filter robot kExceptionNoRobotDeposit ");
             return result;
         }
         if (kExceptionGameDataNotInited == result) {
-            LOG_WARN("filter robot kExceptionGameDataNotInited ");
+            LOG_WARN("[DEPOSIT] filter robot kExceptionGameDataNotInited ");
             return result;
         }
         if (kExceptionRobotNotInGame == result) {
-            LOG_WARN("filter robot kExceptionRobotNotInGame ");
+            LOG_WARN("filter robot exception robot not in game ");
             return result;
         }
         ASSERT_FALSE_RETURN;
@@ -481,6 +518,11 @@ int AppDelegate::GetWaittingUser(UserMap& filter_user_map) const {
         const auto user = kv.second;
         const auto tableno = user->get_table_no();
         const auto roomid = user->get_room_id();
+
+        if (0 == tableno || 0 == roomid) {
+            //LOG_WARN("userid [%d] tableno [%d] roomid [%d]", userid, tableno, roomid);
+            continue;
+        }
 
         // 过滤已开局
         auto is_playing = true;
@@ -615,7 +657,7 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
         return kCommFaild;
     }
     /*LOG_INFO("check robot deposit room deposit range min [%I64d] max [%I64d]", min, max);*/
-    auto user_game_info_map = DepositHttpMgr.GetUserGameInfo();
+    auto user_game_info_map = DepositDataMgr.GetUserGameDataMap();
     for (const auto& kv: user_game_info_map) {
         const auto userid = kv.first;
         const auto deposit = kv.second.nDeposit;
@@ -627,22 +669,22 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
         }
         if (!exist) continue;
 
-        // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-        if (UserMgr.IsRobotUserExist(userid)) continue;
-
         if (deposit < min) {
+            not_logon_game_temp.erase(userid);
             const auto amount = min - deposit + 1;
-            LOG_INFO("robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
+            LOG_INFO("[DEPOSIT] ROOM robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
             if (amount < 0) { ASSERT_FALSE; continue; }
-            DepositHttpMgr.SetDepositType(userid, DepositType::kGain, amount);
+            DepositHttpMgr.SetDepositTypeAmount(userid, DepositType::kGain, amount);
+            continue;
         }
 
         if (deposit > max) {
-            LOG_INFO("robot userid [%d] deposit [%I64d]", userid, deposit);
+            not_logon_game_temp.erase(userid);
             const auto amount = deposit - max + 1;
-            LOG_INFO("robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
+            LOG_INFO("[DEPOSIT] ROOM robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
             if (amount < 0) { ASSERT_FALSE; continue; }
-            DepositHttpMgr.SetDepositType(userid, DepositType::kBack, deposit + (min + max) / 2);
+            DepositHttpMgr.SetDepositTypeAmount(userid, DepositType::kBack, amount);
+            continue;
         }
     }
 
@@ -663,7 +705,7 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
 
     RobotDepositMap too_less_map;
     RobotDepositMap too_much_map;
-    auto game_user_info_map = DepositHttpMgr.GetUserGameInfo();
+    auto game_user_info_map = DepositDataMgr.GetUserGameDataMap();
     for (const auto& kv : game_user_info_map) {
         const auto userid = kv.first;
         const auto user_info = kv.second;
@@ -679,7 +721,7 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
     }
 
     if (not_logon_game_temp.empty()) {
-        LOG_WARN("no robot match the roomid [%d] tableno [%d] deposit range min [%I64d] max [%I64d] !", roomid, tableno, min, max);
+        LOG_WARN("[DEPOSIT] no robot match the roomid [%d] tableno [%d] deposit range min [%I64d] max [%I64d] !", roomid, tableno, min, max);
         // 随机选择1个机器人进行
         // 补银
         if (too_less_map.size() > 0) {
@@ -704,8 +746,9 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
                     assert(false);
                     return kCommFaild;
                 }
-                LOG_INFO("robot userid [%d] deposit [%I64d] random_amount [%I64d] amount [%I64d]", userid, deposit, random_diff, amount);
-                DepositHttpMgr.SetDepositType(userid, DepositType::kGain, amount);
+                LOG_INFO("[DEPOSIT] TABLE userid [%d] deposit [%I64d] random [%I64d] amount [%I64d]",
+                         userid, deposit, random_diff, amount);
+                DepositHttpMgr.SetDepositTypeAmount(userid, DepositType::kGain, amount);
             } else {
                 ASSERT_FALSE_RETURN;
             }
@@ -735,8 +778,8 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
                     assert(false);
                     return kCommFaild;
                 }
-                LOG_INFO("robot userid [%d] deposit [%I64d] random_amount [%I64d] amount [%I64d]", userid, deposit, random_diff, amount);
-                DepositHttpMgr.SetDepositType(userid, DepositType::kBack, amount);
+                LOG_INFO("[DEPOSIT] TABLE robot userid [%d] deposit [%I64d] random [%I64d] amount [%I64d]", userid, deposit, random_diff, amount);
+                DepositHttpMgr.SetDepositTypeAmount(userid, DepositType::kBack, amount);
             } else {
                 ASSERT_FALSE_RETURN;
             }

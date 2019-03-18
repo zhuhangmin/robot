@@ -1,7 +1,7 @@
 {
     "game_id":1001,
 
-    "main_interval":1000,
+    "main_interval":5000,
 
     "deposit_interval":1000,
 
@@ -11,14 +11,12 @@
 
     "deposit_back_url":"http://activityapi.comfun.org:1505/Robot/ChipsOperate",
 
-    "deposit_gain_amount":1000,
+    "deposit_gain_amount":100000,
 
-    "deposit_back_amount":1000,
-
-    "deposit_init_gain":1,
+    "deposit_back_amount":100000,
     
     "rooms":[
-        {"roomid":7972, "wait_time":10, "count_per_table":1}
+        {"roomid":7977, "wait_time":9, "count_per_table":1}
     ],
     
     "robots":[

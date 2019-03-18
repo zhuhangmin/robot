@@ -89,8 +89,8 @@ int RobotNet::InitDataWithLock() {
 
 // 具体业务
 int RobotNet::SendEnterGame(const RoomID& roomid, const TableNO& tableno) {
-    CHECK_ROOMID(roomid);
     std::lock_guard<std::mutex> lock(mutex_);
+    CHECK_ROOMID(roomid);
     TCHAR hard_id[32];
     xyGetHardID(hard_id);
     game::base::EnterNormalGameReq val;
@@ -125,9 +125,19 @@ int RobotNet::SendEnterGame(const RoomID& roomid, const TableNO& tableno) {
         LOG_ERROR("userid [%d] roomid [%d] requestid [%d] [%s] content [%s] failed, resp error code [%d] [%s]", userid_, roomid, requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), code, ERR_STR(code));
         if (kHall_InOtherGame == code) {
             LOG_WARN("userid [%d] kHall_InOtherGame, other game id [%d]", userid_, resp.gameid());
+            return code;
         }
 
         if (kTooLessDeposit == code || kTooMuchDeposit == code) {
+            LOG_ERROR("[DEPOSIT] userid [%d] roomid [%d] requestid [%d] [%s] content [%s] failed, resp error code [%d] [%s]", userid_, roomid, requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), code, ERR_STR(code));
+            return code;
+        }
+
+        if (kAllocTableFaild == code) {
+            return code;
+        }
+
+        if (kHall_InvalidHardID == code) {
             return code;
         }
         ASSERT_FALSE;

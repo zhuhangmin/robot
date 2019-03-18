@@ -77,14 +77,6 @@ private:
     int OnNewRoom(const REQUEST &request) const;
 
 private:
-    //int GetUserStatus(UserID userid, UserStatus& user_status);
-    int AddRoomPB(const game::base::Room& room_pb) const;
-
-    static int AddTablePB(const game::base::Table& table_pb, const TablePtr& table);
-
-    int AddUserPB(const game::base::User& user_pb) const;
-
-private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
 
     // 游戏 初始化连接和数据

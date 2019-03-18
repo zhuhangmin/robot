@@ -12,6 +12,7 @@
 #include "process_info.h"
 #include "robot_utils.h"
 #include "robot_statistic.h"
+#include "deposit_data_manager.h"
 #pragma comment(lib,  "dbghelp.lib")
 
 #ifdef _DEBUG
@@ -225,7 +226,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         for (auto& kv : robot_setting_map) {
 
             auto userid = kv.first;
-            DepositHttpMgr.SetDepositType(userid, DepositType::kGain, 10000);
+            DepositHttpMgr.SetDepositTypeAmount(userid, DepositType::kGain, 10000);
         }
 
         LOG_INFO("-------------[DEPOSIT TEST END]-------------");
@@ -311,6 +312,28 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         }
 
         LOG_INFO("-------------[ADD ALL ROBOT TEST END]-------------");
+    }
+
+    if (cmd == 'P') {
+        LOG_INFO("-------------[DEPOSIT SNAPSHOT BEG]-------------");
+        DepositDataMgr.SnapShotObjectStatus();
+
+        int64_t max = 0;
+        int64_t min = 0;
+        if (kCommSucc == RoomMgr.GetRoomDepositRange(max, min)) {
+            LOG_INFO("room min [%I64d] max [%I64d] ", min, max);
+        }
+        for (auto tableno = 1; tableno < 1000; tableno = tableno + 100) {
+            int64_t max = 0;
+            int64_t min = 0;
+            if (kCommSucc == RoomMgr.GetTableDepositRange(7972, tableno, max, min)) {
+                LOG_INFO("tableno [%d] min [%I64d] max [%I64d] ", tableno, min, max);
+            }
+        }
+
+
+
+        LOG_INFO("-------------[DEPOSIT SNAPSHOT END]-------------");
     }
 
 }

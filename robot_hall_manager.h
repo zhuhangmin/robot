@@ -28,6 +28,9 @@ public:
     // 随机选择没有登陆大厅的机器人
     int GetRandomNotLogonUserID(UserID& random_userid);
 
+    // 银子更新队列中 COPY
+    RobotUserIDMap GetUpdateDepositMap() const;
+
 private:
     // 大厅 定时消息
     int ThreadTimer();
@@ -87,6 +90,9 @@ private:
 
     // 连接保活
     int KeepConnection();
+
+    // 是否在银子更新队列中
+    bool IsInDepositUpdateProcess(const UserID& userid);
 
 public:
     // 非业务 调试函数

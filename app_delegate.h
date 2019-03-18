@@ -38,8 +38,8 @@ private:
     // 过滤：获得未开桌+椅子等待 真实玩家集合
     int GetWaittingUser(UserMap& filter_user_map) const;
 
-    // 0 随机选一个 1符合房银 2符合桌银 3没有进入游戏的robot
-    int GetRandomUserIDNotInGame(const RoomID& roomid, const TableNO& tableno, UserID& random_userid) const;
+    // 0 随机选一个 1符合房银 2符合桌银 3没进入游戏 4无异常
+    int GetRandomQualifiedRobotUserID(const RoomID& roomid, const TableNO& tableno, UserID& random_userid) const;
 
     // 获得此房间需要机器人匹配的用户信息
     int GetRoomNeedUserMap(UserMap& need_user_map);

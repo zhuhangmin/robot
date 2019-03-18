@@ -12,6 +12,8 @@ public:
     // 重置对象
     int Reset();
 
+    int ResetDataAndReInit(const game::base::GetGameUsersResp& resp);
+
     // 获取用户
     // !! 注意 !! 控制线程可见性 只对RobotNetManager notify_thread_ 线程可见
     int GetUser(const UserID& userid, UserPtr& user) const;
@@ -46,8 +48,6 @@ public:
     // 获取所有机器人用户集合 返回copy 不返回被mutex保护对象引用
     int GetRobotUserMap(UserMap& robot_user_map) const;
 
-    // 设置机器人收消息线程
-    void SetNotifyThreadID(const ThreadID& thread_id);
 public:
     // 对象状态快照
     int SnapShotObjectStatus();
@@ -59,7 +59,10 @@ public:
 private:
     int GetUserWithLock(const UserID& userid, UserPtr& user) const;
 
-    int CheckNotifyThreadID() const;
+    int AddUserPBWithLock(const game::base::User& user_pb) const;
+
+    // 添加用户
+    int AddUserWithLock(const UserID& userid, const UserPtr &user);
 
 protected:
     SINGLETION_CONSTRUCTOR(UserManager);

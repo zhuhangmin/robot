@@ -4,8 +4,11 @@
 #include "robot_utils.h"
 #include "robot_define.h"
 #include "user_manager.h"
+#include "deposit_data_manager.h"
+#include "room_manager.h"
 
 int RobotNetManager::Init() {
+    std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
     timer_thread_.Initial(std::thread([this] {this->ThreadTimer(); }));
     notify_thread_.Initial(std::thread([this] {this->ThreadNotify(); }));
@@ -13,6 +16,7 @@ int RobotNetManager::Init() {
 }
 
 int RobotNetManager::Term() {
+    std::lock_guard<std::mutex> lock(mutex_);
     timer_thread_.Release();
     notify_thread_.Release();
     robot_map_.clear();
@@ -31,7 +35,7 @@ int RobotNetManager::EnterGame(const UserID& userid, const RoomID& roomid, const
         robot = std::make_shared<RobotNet>(userid);
         SetRobotWithLock(robot);
     }
-    if (!robot) return kCommFaild;
+    if (!robot) ASSERT_FALSE_RETURN;
 
     // @zhuhangmin 20190223 issue: 网络库不支持域名IPV6解析，使用配置IP
     // 建立连接
@@ -50,6 +54,18 @@ int RobotNetManager::EnterGame(const UserID& userid, const RoomID& roomid, const
 
     // 发送进入游戏
     LOG_ROUTE("enter game", roomid, tableno, userid);
+    int64_t deposit = 0;
+    DepositDataMgr.GetDeposit(userid, deposit);
+    int64_t max = 0;
+    int64_t min = 0;
+    RoomMgr.GetTableDepositRange(roomid, tableno, max, min);
+    int64_t room_max = 0;
+    int64_t room_min = 0;
+    RoomMgr.GetRoomDepositRange(room_max, room_min);
+    LOG_INFO("[DEPOSIT] enter game robot userid [%d] roomid [%d] tableno [%d] deposit [%I64d] room_min [%I64d] room_max [%I64d], table deposit min [%I64d] max [%I64d] need robot",
+             userid, roomid, tableno, deposit, room_min, room_max, min, max);
+
+
     return robot->SendEnterGame(roomid, tableno);
 }
 
