@@ -296,12 +296,13 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   <ItemGroup>
     <ClCompile Include="base_room.cpp" />
     <ClCompile Include="common_func.cpp" />
+    <ClCompile Include="deposit_data_manager.cpp" />
     <ClCompile Include="game_base.pb.cc" />
     <ClCompile Include="game_net_manager.cpp" />
     <ClCompile Include="process_info.cpp" />
     <ClCompile Include="robot_hall_manager.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="robot_deposit_manager.cpp" />
+    <ClCompile Include="deposit_http_manager.cpp" />
     <ClCompile Include="robot_net.cpp" />
     <ClCompile Include="robot_net_manager.cpp" />
     <ClCompile Include="robot_statistic.cpp" />
@@ -318,6 +319,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
   <ItemGroup>
     <ClInclude Include="base_room.h" />
     <ClInclude Include="common_func.h" />
+    <ClInclude Include="deposit_data_manager.h" />
     <ClInclude Include="game_base.pb.h" />
     <ClInclude Include="game_net_manager.h" />
     <ClInclude Include="PBReq.h" />
@@ -325,7 +327,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="robot_hall_manager.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="robot_deposit_manager.h" />
+    <ClInclude Include="deposit_http_manager.h" />
     <ClInclude Include="robot_net.h" />
     <ClInclude Include="robot_define.h" />
     <ClInclude Include="robot_net_manager.h" />

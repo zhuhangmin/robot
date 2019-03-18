@@ -4,7 +4,7 @@
 #include "robot_net_manager.h"
 #include "setting_manager.h"
 #include "game_net_manager.h"
-#include "robot_deposit_manager.h"
+#include "deposit_http_manager.h"
 #include "robot_hall_manager.h"
 #include "robot_utils.h"
 #include "user_manager.h"
@@ -54,7 +54,7 @@ int AppDelegate::Init() {
     }
 
     // 机器人补银管理类
-    if (kCommSucc != DepositMgr.Init()) {
+    if (kCommSucc != DepositHttpMgr.Init()) {
         LOG_ERROR(_T("RobotDepositManager Init Failed"));
         ASSERT_FALSE_RETURN;
     }
@@ -104,7 +104,7 @@ int AppDelegate::Init() {
     RobotMgr.BriefInfo();
     HallMgr.BriefInfo();
     UserMgr.BriefInfo();
-    DepositMgr.SnapShotObjectStatus();
+    DepositHttpMgr.SnapShotObjectStatus();
 
     // 初始化完毕
     TCHAR hard_id[32];
@@ -119,7 +119,7 @@ int AppDelegate::Term() {
 
     g_inited = false;
 
-    DepositMgr.Term();
+    DepositHttpMgr.Term();
     RobotMgr.Term();
     HallMgr.Term();
     GameMgr.Term();
@@ -328,7 +328,7 @@ int AppDelegate::GetRandomUserIDNotInGame(const RoomID& roomid, const TableNO& t
     }
 
     // 过滤正在补银的机器人
-    const auto robot_in_deposit_process_map = DepositMgr.GetDepositMap();
+    const auto robot_in_deposit_process_map = DepositHttpMgr.GetDepositMap();
     for (const auto& kv : robot_in_deposit_process_map) {
         const auto userid = kv.first;
         if (not_logon_game_temp.find(userid) != not_logon_game_temp.end()) {
@@ -615,7 +615,7 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
         return kCommFaild;
     }
     /*LOG_INFO("check robot deposit room deposit range min [%I64d] max [%I64d]", min, max);*/
-    auto user_game_info_map = DepositMgr.GetUserGameInfo();
+    auto user_game_info_map = DepositHttpMgr.GetUserGameInfo();
     for (const auto& kv: user_game_info_map) {
         const auto userid = kv.first;
         const auto deposit = kv.second.nDeposit;
@@ -634,7 +634,7 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
             const auto amount = min - deposit + 1;
             LOG_INFO("robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
             if (amount < 0) { ASSERT_FALSE; continue; }
-            DepositMgr.SetDepositType(userid, DepositType::kGain, amount);
+            DepositHttpMgr.SetDepositType(userid, DepositType::kGain, amount);
         }
 
         if (deposit > max) {
@@ -642,7 +642,7 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
             const auto amount = deposit - max + 1;
             LOG_INFO("robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
             if (amount < 0) { ASSERT_FALSE; continue; }
-            DepositMgr.SetDepositType(userid, DepositType::kBack, deposit + (min + max) / 2);
+            DepositHttpMgr.SetDepositType(userid, DepositType::kBack, deposit + (min + max) / 2);
         }
     }
 
@@ -663,7 +663,7 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
 
     RobotDepositMap too_less_map;
     RobotDepositMap too_much_map;
-    auto game_user_info_map = DepositMgr.GetUserGameInfo();
+    auto game_user_info_map = DepositHttpMgr.GetUserGameInfo();
     for (const auto& kv : game_user_info_map) {
         const auto userid = kv.first;
         const auto user_info = kv.second;
@@ -705,7 +705,7 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
                     return kCommFaild;
                 }
                 LOG_INFO("robot userid [%d] deposit [%I64d] random_amount [%I64d] amount [%I64d]", userid, deposit, random_diff, amount);
-                DepositMgr.SetDepositType(userid, DepositType::kGain, amount);
+                DepositHttpMgr.SetDepositType(userid, DepositType::kGain, amount);
             } else {
                 ASSERT_FALSE_RETURN;
             }
@@ -736,7 +736,7 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
                     return kCommFaild;
                 }
                 LOG_INFO("robot userid [%d] deposit [%I64d] random_amount [%I64d] amount [%I64d]", userid, deposit, random_diff, amount);
-                DepositMgr.SetDepositType(userid, DepositType::kBack, amount);
+                DepositHttpMgr.SetDepositType(userid, DepositType::kBack, amount);
             } else {
                 ASSERT_FALSE_RETURN;
             }

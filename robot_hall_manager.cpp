@@ -4,7 +4,7 @@
 #include "setting_manager.h"
 #include "main.h"
 #include "robot_statistic.h"
-#include "robot_deposit_manager.h"
+#include "deposit_http_manager.h"
 #include "PBReq.h"
 
 //外部线程调用方法
@@ -486,7 +486,7 @@ int RobotHallManager::GetUserGameInfoWithLock(const UserID& userid) {
         ASSERT_FALSE_RETURN;
     }
 
-    DepositMgr.SetUserGameInfo(userid, static_cast<USER_GAMEINFO_MB*>(pRetData.get()));
+    DepositHttpMgr.SetUserGameInfo(userid, static_cast<USER_GAMEINFO_MB*>(pRetData.get()));
     return kCommSucc;
     return kCommSucc;
 }

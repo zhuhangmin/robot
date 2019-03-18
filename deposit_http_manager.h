@@ -1,7 +1,7 @@
 #pragma once
 #include "robot_define.h"
 
-class RobotDepositManager :public ISingletion<RobotDepositManager> {
+class DepositHttpManager :public ISingletion<DepositHttpManager> {
 public:
     int Init();
 
@@ -23,7 +23,7 @@ public:
     DepositMap GetDepositMap() const;
 
 protected:
-    SINGLETION_CONSTRUCTOR(RobotDepositManager);
+    SINGLETION_CONSTRUCTOR(DepositHttpManager);
 
 private:
     // 后台 补银定时器
@@ -53,4 +53,4 @@ private:
 
 };
 
-#define DepositMgr RobotDepositManager::Instance()
+#define DepositHttpMgr DepositHttpManager::Instance()

@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "robot_deposit_manager.h"
+#include "deposit_http_manager.h"
 #include "setting_manager.h"
 #include "main.h"
 #include "robot_utils.h"
@@ -7,14 +7,14 @@
 
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
-int RobotDepositManager::Init() {
+int DepositHttpManager::Init() {
     LOG_INFO_FUNC("\t[START]");
     timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
     return kCommSucc;
 }
 
 
-int RobotDepositManager::Term() {
+int DepositHttpManager::Term() {
     timer_thread_.Release();
     deposit_map_.clear();
     user_game_info_map_.clear();
@@ -23,7 +23,7 @@ int RobotDepositManager::Term() {
     return kCommSucc;
 }
 
-int RobotDepositManager::ThreadDeposit() {
+int DepositHttpManager::ThreadDeposit() {
     LOG_INFO("\t[START] deposit thread [%d] started", GetCurrentThreadId());
 
     while (true) {
@@ -48,7 +48,7 @@ int RobotDepositManager::ThreadDeposit() {
 }
 
 
-int RobotDepositManager::SendDepositRequest() {
+int DepositHttpManager::SendDepositRequest() {
     DepositMap deposit_map_temp;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -78,7 +78,7 @@ int RobotDepositManager::SendDepositRequest() {
     return kCommSucc;
 }
 
-int RobotDepositManager::RobotGainDeposit(const UserID& userid, const int64_t& amount) const {
+int DepositHttpManager::RobotGainDeposit(const UserID& userid, const int64_t& amount) const {
     LOG_INFO("RobotGainDeposit BEG userid [%d] amount [%I64d]", userid, amount);
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
@@ -121,7 +121,7 @@ int RobotDepositManager::RobotGainDeposit(const UserID& userid, const int64_t& a
     return kCommSucc;
 }
 
-int RobotDepositManager::RobotBackDeposit(const UserID& userid, const int64_t& amount) const {
+int DepositHttpManager::RobotBackDeposit(const UserID& userid, const int64_t& amount) const {
     LOG_INFO("RobotBackDeposit BEG userid [%d] amount [%I64d]", userid, amount);
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
@@ -164,7 +164,7 @@ int RobotDepositManager::RobotBackDeposit(const UserID& userid, const int64_t& a
     return kCommSucc;
 }
 
-int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType& type, const int64_t& amount) {
+int DepositHttpManager::SetDepositType(const UserID& userid, const DepositType& type, const int64_t& amount) {
     // 处理游戏服务器断线 但业务后台正常的情况
     if (!GameMgr.IsGameDataInited()) return kExceptionGameDataNotInited;
     std::lock_guard<std::mutex> lock(mutex_);
@@ -177,24 +177,24 @@ int RobotDepositManager::SetDepositType(const UserID& userid, const DepositType&
     return kCommSucc;
 }
 
-DepositMap RobotDepositManager::GetDepositMap() const {
+DepositMap DepositHttpManager::GetDepositMap() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return deposit_map_;
 }
 
-int RobotDepositManager::SetUserGameInfo(const int& userid, USER_GAMEINFO_MB* info) {
+int DepositHttpManager::SetUserGameInfo(const int& userid, USER_GAMEINFO_MB* info) {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
     user_game_info_map_[userid] = *info;
     return kCommSucc;
 }
 
-UserGameInfoMap RobotDepositManager::GetUserGameInfo() const {
+UserGameInfoMap DepositHttpManager::GetUserGameInfo() const {
     std::lock_guard<std::mutex> lock(mutex_);
     return user_game_info_map_;
 }
 
-int RobotDepositManager::SnapShotObjectStatus() {
+int DepositHttpManager::SnapShotObjectStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("deposit_timer_thread_ [%d]", timer_thread_.GetThreadID());
     LOG_INFO("deposit_map_ size [%d]", deposit_map_.size());

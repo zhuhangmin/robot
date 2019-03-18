@@ -5,7 +5,7 @@
 #include "setting_manager.h"
 #include "robot_net_manager.h"
 #include "game_net_manager.h"
-#include "robot_deposit_manager.h"
+#include "deposit_http_manager.h"
 #include "robot_hall_manager.h"
 #include "user_manager.h"
 #include "room_manager.h"
@@ -203,7 +203,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         SettingMgr.SnapShotObjectStatus();
         RobotMgr.SnapShotObjectStatus();
         GameMgr.SnapShotObjectStatus();
-        DepositMgr.SnapShotObjectStatus();
+        DepositHttpMgr.SnapShotObjectStatus();
         HallMgr.SnapShotObjectStatus();
         UserMgr.SnapShotObjectStatus();
         RoomMgr.SnapShotObjectStatus();
@@ -225,7 +225,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         for (auto& kv : robot_setting_map) {
 
             auto userid = kv.first;
-            DepositMgr.SetDepositType(userid, DepositType::kGain, 10000);
+            DepositHttpMgr.SetDepositType(userid, DepositType::kGain, 10000);
         }
 
         LOG_INFO("-------------[DEPOSIT TEST END]-------------");
