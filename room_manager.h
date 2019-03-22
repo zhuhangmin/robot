@@ -22,10 +22,13 @@ public:
 
     int IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result) const;
 
+    // 最小开桌人数
     int GetMiniPlayers(const RoomID& roomid, int& mini) const;
 
+    // 所有房银区间 //TODO 提供特定房间的接口
     int GetRoomDepositRange(int64_t& max, int64_t& min) const;
 
+    // 桌银区间
     int GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min);
 
     int AddRoomPB(const game::base::Room& room_pb) const;
@@ -50,7 +53,10 @@ protected:
     SINGLETION_CONSTRUCTOR(RoomManager);
 
 private:
+    // 数据锁
     mutable std::mutex mutex_;
+
+    // 房间数据
     GameRoomMap rooms_;
 };
 

@@ -2,6 +2,7 @@
 #include "main.h"
 #include "app_delegate.h"
 #include "robot_define.h"
+#ifdef _DEBUG
 #include "setting_manager.h"
 #include "robot_net_manager.h"
 #include "game_net_manager.h"
@@ -13,6 +14,9 @@
 #include "robot_utils.h"
 #include "robot_statistic.h"
 #include "deposit_data_manager.h"
+#endif 
+#include "service.h"
+#include "robot_utils.h"
 #pragma comment(lib,  "dbghelp.lib")
 
 #ifdef _DEBUG
@@ -38,6 +42,10 @@ CWinApp				theApp;
 HINSTANCE			g_hResDll = NULL;
 
 bool                g_inited = false;
+
+uint32_t            g_launchThreadID = InvalidThreadID;
+
+uint32_t            g_mainThreadID = InvalidThreadID;
 
 extern void Test(char cmd, AppDelegate& app_delegate);
 
@@ -65,140 +73,11 @@ LONG WINAPI ExpFilter(struct _EXCEPTION_POINTERS *pExp) {
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]) {
-    TCLOG_INIT();
-    LOG_INFO("\n ===================================SERVER START===================================");
-    LOG_INFO("*********[START BEG]*********");
-
-    //绑定单核运行 避免机器人本身消耗所有CPU
-    BOOL success = SetProcessAffinityMask(GetCurrentProcess(), 0x00000001);
-    if (!success) {
-        LOG_WARN("bind to single core 0x00000001 failed error [%d]", GetLastError());
-    }
-
-    auto nRetCode = EXIT_SUCCESS;
-    SetUnhandledExceptionFilter(ExpFilter);
-
-    LOG_INFO("\t[START] AFX BEG");
-    WSADATA wsa;
-    WSAStartup(MAKEWORD(2, 2), &wsa);
-    // 初始化 MFC 并在失败时显示错误
-    if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0)) {
-        MessageBox(NULL, _T("Fatal error: MFC initialization failed!\n"), "", MB_ICONSTOP);
-        nRetCode = EXIT_FAILURE;
-        return nRetCode;
-    }
-    LOG_INFO("\t[START] AFX END");
-
-
-    LOG_INFO("\t[START] UWL BEG");
-    if (!UwlInit()) {
-        MessageBox(NULL, _T("Fatal error: UWL initialization failed!\n"), "", MB_ICONSTOP);
-        nRetCode = EXIT_FAILURE;
-        return nRetCode;
-    }
-    LOG_INFO("\t[START] UWL END");
-
-    DWORD dwTraceMode = UWL_TRACE_DATETIME | UWL_TRACE_FILELINE | UWL_TRACE_NOTFULLPATH
-        | UWL_TRACE_FORCERETURN | UWL_TRACE_CONSOLE;
-    //| UWL_TRACE_FORCERETURN | UWL_TRACE_DUMPFILE | UWL_TRACE_CONSOLE;
-
-    UwlBeginTrace((TCHAR*) AfxGetAppName(), dwTraceMode);
-    UwlBeginLog((TCHAR*) AfxGetAppName());
-
-    UwlRegSocketWnd();
-
-    LOG_INFO("\t[START] AFX SOCKET BEG");
-    if (!AfxSocketInit()) {
-        MessageBox(NULL, _T("Fatal error: Failed to initialize sockets!\n"), "", MB_ICONSTOP);
-        nRetCode = EXIT_FAILURE;
-        return nRetCode;
-    }
-    LOG_INFO("\t[START] AFX SOCKET END");
-
-#ifdef UWL_SERVICE
-
-    LOG_INFO("\t[START] SERVICE BEG");
-    TCHAR szIniFile[MAX_PATH] = {0};
-    TCHAR szExeName[MAX_PATH] = {0};
-    lstrcpy(szExeName, argv[0]);
-    PathStripPath(szExeName);
-    PathRemoveExtension(szExeName);
-    TCHAR szExeIni[MAX_PATH] = {0};
-    sprintf(szExeIni, " [%s].ini", szExeName);
-
-    TCHAR szFullName[MAX_PATH] = {0};
-    GetModuleFileName(GetModuleHandle(NULL), szFullName, sizeof(szFullName));
-    UwlSplitPath(szFullName, SPLIT_DRIVE_DIR, szIniFile);
-    lstrcat(szIniFile, szExeIni);
-
-    TCHAR serviceName[MAX_PATH] = {0};
-    GetPrivateProfileString("service", "service_name", SERVICE_NAME, serviceName, MAX_PATH, szIniFile);
-
-    TCHAR displayName[MAX_PATH] = {0};
-    GetPrivateProfileString("service", "display_name", DISPLAY_NAME, displayName, MAX_PATH, szIniFile);
-
-    if (strcmp(szExeName, serviceName) != 0) {
-        LOG_ERROR("szExeName[ [%s]] != serviceName[ [%s]]", szExeName, serviceName);
-        nRetCode = EXIT_FAILURE;
-        return nRetCode;
-    }
-    CMainService MainService(serviceName, displayName, 0, 0);
-
-    if (!MainService.ParseStandardArgs(argc, argv)) {
-        // Didn't find any standard args so start the service
-        // Uncomment the DebugBreak line below to enter the debugger when the service is started.
-        //DebugBreak();
-        MainService.StartService();
-    }
-    // When we get here, the service has been stopped
-    nRetCode = MainService.m_Status.dwWin32ExitCode;
-
-#else
-    LOG_INFO("\t[START] AppDelegate  BEG");
-    AppDelegate app_delegate;
-
-    if (kCommSucc != app_delegate.Init()) {
-        LOG_ERROR("server initialize failed!");
-        UwlTrace("server initialize failed!");
-        app_delegate.Term();
-        return -1;
-    }
-
-    LOG_INFO("\t[START] AppDelegate END");
-    LOG_INFO("*********[START END]*********");
-
-    UwlTrace("Type 'q' when you want to exit. ");
-    TCHAR ch;
-    do {
-        ch = _getch();
-        ch = toupper(ch);
-#ifdef _DEBUG
-        Test(ch, app_delegate);
-#endif
-
-    } while (ch != 'Q');
-
-    app_delegate.Term();
-
-    nRetCode = EXIT_SUCCESS;
-#endif
-
-    TCLOG_UNINT();
-    if (g_hResDll) {
-        AfxFreeLibrary(g_hResDll);
-    }
-    UwlEndLog();
-    UwlEndTrace();
-    UwlTerm();
-    WSACleanup();
-
-    _CrtDumpMemoryLeaks();
-    return nRetCode;
-}
+int _tmain(int argc, TCHAR* argv[], TCHAR* envp[]);
 
 // ！！以下代码非标准 非线程安全 请勿用作业务例子
 extern void Test(char cmd, AppDelegate& app_delegate) {
+#ifdef _DEBUG
     if (cmd == 'S') {
         LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
         SettingMgr.SnapShotObjectStatus();
@@ -224,8 +103,9 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         LOG_INFO("-------------[DEPOSIT TEST BEG]-------------");
         auto robot_setting_map = SettingMgr.GetRobotSettingMap();
         for (auto& kv : robot_setting_map) {
-
             auto userid = kv.first;
+            // 在游戏中的机器人不触发补银 会导致业务异常
+            if (kCommSucc == UserMgr.IsRobotUserExist(userid)) return;
             DepositHttpMgr.SetDepositTypeAmount(userid, DepositType::kGain, 10000);
         }
 
@@ -330,10 +210,180 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
                 LOG_INFO("tableno [%d] min [%I64d] max [%I64d] ", tableno, min, max);
             }
         }
-
-
-
         LOG_INFO("-------------[DEPOSIT SNAPSHOT END]-------------");
     }
+#endif
+}
 
+int main(int argc, TCHAR* argv[], TCHAR* envp[]) {
+    ThreadID launch_thread_id = GetCurrentThreadId();
+    CHECK_THREADID(launch_thread_id);
+    g_launchThreadID = launch_thread_id;
+    TCLOG_INIT();
+    LOG_INFO("\n ===================================SERVER START===================================");
+    LOG_INFO("*********[START BEG]*********");
+
+    //绑定单核运行 避免机器人本身消耗所有CPU
+    static DWORD s_dwProcessorCoreNum = 0;
+    if (!s_dwProcessorCoreNum) {
+        SYSTEM_INFO sysInfo = {0};
+        GetSystemInfo(&sysInfo);
+        s_dwProcessorCoreNum = sysInfo.dwNumberOfProcessors;
+    }
+
+    const auto min = 0x00000001;
+    const auto max = s_dwProcessorCoreNum;
+    int64_t bind_core_index = min;
+    if (kCommSucc != RobotUtils::GenRandInRange(min, max, bind_core_index)) {
+        ASSERT_FALSE_RETURN;
+    }
+    BOOL success = SetProcessAffinityMask(GetCurrentProcess(), bind_core_index);
+    if (!success) {
+        LOG_WARN("bind to single core [%d] failed error [%d]", bind_core_index, GetLastError());
+    }
+
+    auto nRetCode = EXIT_SUCCESS;
+    SetUnhandledExceptionFilter(ExpFilter);
+
+    LOG_INFO("\t[START] AFX BEG");
+    WSADATA wsa;
+    WSAStartup(MAKEWORD(2, 2), &wsa);
+    // 初始化 MFC 并在失败时显示错误
+    if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0)) {
+        MessageBox(NULL, _T("Fatal error: MFC initialization failed!\n"), "", MB_ICONSTOP);
+        nRetCode = EXIT_FAILURE;
+        return nRetCode;
+    }
+    LOG_INFO("\t[START] AFX END");
+
+
+    LOG_INFO("\t[START] UWL BEG");
+    if (!UwlInit()) {
+        MessageBox(NULL, _T("Fatal error: UWL initialization failed!\n"), "", MB_ICONSTOP);
+        nRetCode = EXIT_FAILURE;
+        return nRetCode;
+    }
+    LOG_INFO("\t[START] UWL END");
+
+    DWORD dwTraceMode = UWL_TRACE_DATETIME | UWL_TRACE_FILELINE | UWL_TRACE_NOTFULLPATH
+        | UWL_TRACE_FORCERETURN | UWL_TRACE_CONSOLE;
+    //| UWL_TRACE_FORCERETURN | UWL_TRACE_DUMPFILE | UWL_TRACE_CONSOLE;
+
+    UwlBeginTrace((TCHAR*) AfxGetAppName(), dwTraceMode);
+    UwlBeginLog((TCHAR*) AfxGetAppName());
+
+    UwlRegSocketWnd();
+
+    LOG_INFO("\t[START] AFX SOCKET BEG");
+    if (!AfxSocketInit()) {
+        MessageBox(NULL, _T("Fatal error: Failed to initialize sockets!\n"), "", MB_ICONSTOP);
+        nRetCode = EXIT_FAILURE;
+        return nRetCode;
+    }
+
+    LOG_INFO("\t[START] AFX SOCKET END");
+
+    LOG_INFO("\t[START] PATH BEG");
+    TCHAR szExeName[MAX_PATH] = {0};
+    lstrcpy(szExeName, argv[0]);
+    PathStripPath(szExeName);
+    PathRemoveExtension(szExeName);
+    LOG_INFO("\t[START] szExeName [%s]", szExeName);
+
+    TCHAR szExeIni[MAX_PATH] = {0};
+    sprintf_s(szExeIni, MAX_PATH, "%s.ini", szExeName);
+    LOG_INFO("\t[START] szExeIni [%s]", szExeIni);
+
+    TCHAR szFullName[MAX_PATH] = {0};
+    GetModuleFileName(GetModuleHandle(NULL), szFullName, sizeof(szFullName));
+    LOG_INFO("\t[START] szFullName [%s]", szFullName);
+
+    TCHAR szIniFile[MAX_PATH] = {0};
+    UwlSplitPath(szFullName, SPLIT_DRIVE_DIR, szIniFile);
+    lstrcat(szIniFile, szExeIni);
+    lstrcat(g_szIniFile, szIniFile);
+    LOG_INFO("\t[START] g_szIniFile [%s]", g_szIniFile);
+
+    TCHAR szCurExePath[MAX_PATH] = {0};
+    UwlSplitPath(szFullName, SPLIT_DRIVE_DIR, szCurExePath);
+    g_curExePath = std::string(szCurExePath);
+    LOG_INFO("\t[START] g_curExePath [%s]", g_curExePath.c_str());
+
+    LOG_INFO("\t[START] PATH END");
+
+#ifdef UWL_SERVICE
+    LOG_INFO("\t[START] SERVICE Beg [%s]", szFullName);
+
+    TCHAR serviceName[MAX_PATH] = {0};
+    GetPrivateProfileString("service", "service_name", SERVICE_NAME, serviceName, MAX_PATH, szIniFile);
+    LOG_INFO("\t[START] SERVICE serviceName [%s]", serviceName);
+
+    TCHAR displayName[MAX_PATH] = {0};
+    GetPrivateProfileString("service", "display_name", DISPLAY_NAME, displayName, MAX_PATH, szIniFile);
+    LOG_INFO("\t[START] SERVICE displayName [%s]", displayName);
+
+    if (strcmp(szExeName, serviceName) != 0) {
+        LOG_ERROR("szExeName [%s] != serviceName [%s] ", szExeName, serviceName);
+        nRetCode = EXIT_FAILURE;
+        return nRetCode;
+    }
+
+    LOG_INFO("\t[START] SERVICE MainService beg");
+    CMainService MainService(serviceName, displayName, 0, 0);
+    LOG_INFO("\t[START] SERVICE MainService end");
+
+    if (!MainService.ParseStandardArgs(argc, argv)) {
+        LOG_INFO("\t[START] !MainService.ParseStandardArgs(argc, argv) comes true");
+        // Didn't find any standard args so start the service
+        // Uncomment the DebugBreak line below to enter the debugger when the service is started.
+        //DebugBreak();
+        LOG_INFO("\t[START] MainService.StartService() beg");
+        MainService.StartService();
+        LOG_INFO("\t[START] MainService.StartService() end");
+    }
+    // When we get here, the service has been stopped
+    nRetCode = MainService.m_Status.dwWin32ExitCode;
+    LOG_INFO("\t[START] When we get here, the service has been stopped ret code [%d]", nRetCode);
+
+#else
+    LOG_INFO("\t[START] AppDelegate  BEG");
+    AppDelegate app_delegate;
+
+    if (kCommSucc != app_delegate.Init()) {
+        LOG_ERROR("server initialize failed!");
+        UwlTrace("server initialize failed!");
+        app_delegate.Term();
+        return -1;
+    }
+
+    LOG_INFO("\t[START] AppDelegate END");
+    LOG_INFO("*********[START END]*********");
+
+    UwlTrace("Type 'q' when you want to exit. ");
+    TCHAR ch;
+    do {
+        ch = _getch();
+        ch = toupper(ch);
+#ifdef _DEBUG
+        Test(ch, app_delegate);
+#endif
+
+    } while (ch != 'Q');
+
+    app_delegate.Term();
+
+    nRetCode = EXIT_SUCCESS;
+#endif
+
+    TCLOG_UNINT();
+    if (g_hResDll) {
+        AfxFreeLibrary(g_hResDll);
+    }
+    UwlEndLog();
+    UwlEndTrace();
+    UwlTerm();
+    WSACleanup();
+
+    _CrtDumpMemoryLeaks();
+    return nRetCode;
 }

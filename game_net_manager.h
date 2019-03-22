@@ -10,18 +10,37 @@ public:
     // 游戏 是否连接
     int IsConnected(BOOL& is_connected) const;
 
-    // 游戏数据层是否初始化完毕
+    // 游戏数据层是否初始化完毕  允许脏读
     bool IsGameDataInited() const;
 
-    // 获得所有机器人接收消息的线程
-    ThreadID GetNotifyThreadID() const;
+    // 桌银区间
+    int GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min);
+
+    // 所有房银区间 //TODO 提供特定房间的接口
+    int GetRoomDepositRange(int64_t& max, int64_t& min) const;
+
+    // 桌子上机器人数量
+    int GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const;
+
+    int GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info) const;
+
+    int IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result) const;
+
+    // 桌子上非机器人数量
+    int GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const;
+
+    // 最小开桌人数
+    int GetMiniPlayers(const RoomID& roomid, int& mini) const;
+
+    // 机器人用户是否在游戏
+    int IsRobotUserExist(const UserID& userid) const;
+
+    // 获取所有正常用户集合 返回copy 不返回被mutex保护对象引用
+    int GetNormalUserMap(UserMap& normal_user_map) const;
 
 private:
     // 游戏 定时消息
     int ThreadTimer();
-
-    // 游戏 兜底同步
-    int SyncAllGameData();
 
     // 游戏 消息接收
     int ThreadNotify();
@@ -98,9 +117,7 @@ public:
     // 对象状态快照
     int SnapShotObjectStatus() const;
 
-private:
-    // 方法的线程可见性检查
-    int CheckNotInnerThread();
+    int BriefInfo() const;
 
 protected:
     SINGLETION_CONSTRUCTOR(GameNetManager);
@@ -137,8 +154,6 @@ private:
 
     // 初始化游戏数据层标签
     bool game_data_inited_{false};
-
-
 };
 
 #define GameMgr GameNetManager::Instance()

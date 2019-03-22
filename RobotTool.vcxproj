@@ -70,8 +70,9 @@
     <OutDir>.\ReleaseS\</OutDir>
     <IntDir>.\ReleaseS\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)librabbitmq\Release;$(VS_CTLibPath_Sea)librabbit;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)xyGame2.0;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)protobuf3.5.0;$(VS_CTLibPath_Sea)xyGamePb;$(VS_CTLibPath_Sea)tcLog\include;$(VS_CTLibPath_Sea)GameSvr3.0\common;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files (x86)\Microsoft Visual Studio\VC98\MFC\Lib;$(VS_CTLibPath_Sea)module\ms;$(VS_CTLibPath_Sea)module\uwl.com;$(VS_CTLibPath_Sea)3thParty;$(VS_CTNetlibPath_Sea);$(VS_CTLibPath_Sea)xyapi1.0;$(VS_CTLibPath_Sea)TcyCommon;$(VS_CTLibPath_Sea)jsoncpp1.7.7;$(VS_CTLibPath_Sea)xyGame1.0;$(VS_CTLibPath_Sea)tcElkInOut;$(VS_CTLibPath_Sea)protobuf3.5.0;$(LibraryPath);$(VS_CTLibPath_Sea)tcLog\lib\Win32;</LibraryPath>
+    <TargetName>robottoolrumm</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>.\Release\</OutDir>
@@ -115,6 +116,7 @@
       <ProgramDataBaseFileName>.\ReleaseS\</ProgramDataBaseFileName>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -132,7 +134,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>tcns-vc12.lib;uwl-vc12.lib;uwlnt-vc12.lib;uwltrace-vc12.lib;xyapi-vc12.lib;TcyCommon-vc12.lib;jsoncpp-vc12.lib;librabbitmq.4.lib;libRabbit-vc12.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tcns-vc12.lib;uwl-vc12.lib;uwlnt-vc12.lib;uwltrace-vc12.lib;xyapi-vc12.lib;TcyCommon-vc12.lib;jsoncpp-vc12.lib;tcLog.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <SubSystem>Console</SubSystem>

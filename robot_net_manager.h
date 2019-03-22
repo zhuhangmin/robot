@@ -11,17 +11,17 @@ public:
     int Term();
 
     // 机器人 连接 发送进入游戏
-    int EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno);
+    int EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno, std::string game_ip, int game_port);
 
 private:
     // 机器人 定时消息
     int ThreadTimer();
 
     // 机器人 消息接收
-    int ThreadNotify() const;
+    int ThreadNotify();
 
     // 机器人 消息处理
-    int OnNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size, const TokenID& token_id) const;
+    int OnNotify(const RequestID& requestid, const REQUEST& request, const TokenID& token_id);
 
     // 机器人 发送心跳
     int SendPulse();
@@ -43,9 +43,6 @@ public:
     int SnapShotObjectStatus();
 
     int BriefInfo() const;
-
-private:
-    int CheckNotInnerThread();
 
 protected:
     SINGLETION_CONSTRUCTOR(RobotNetManager);

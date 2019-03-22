@@ -9,6 +9,7 @@
 #include "PBReq.h"
 
 int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) {
+    //TODO CHCEK THREAD
     if (!connection) {
         LOG_WARN("connection not exist");
         return kCommFaild;
@@ -129,6 +130,17 @@ int RobotUtils::GenRandInRange(const int64_t& min_value, const int64_t& max_valu
 }
 
 std::string RobotUtils::GetGameIP() {
+    ThreadID thread_id = GetCurrentThreadId();
+    if (thread_id <= InvalidThreadID) {
+        ASSERT_FALSE;
+        return "";
+    };
+
+    if (thread_id != g_launchThreadID && thread_id != g_mainThreadID) {
+        ASSERT_FALSE;
+        return "";
+    }
+
     if (g_localGameIP.empty()) {
         TCHAR game_ip_str[MAX_PATH] = {0};
         GetPrivateProfileString("local_ip", "ip", LocalIPStr.c_str(), game_ip_str, MAX_PATH, g_szIniFile);
@@ -138,25 +150,41 @@ std::string RobotUtils::GetGameIP() {
 }
 
 int RobotUtils::GetGamePort() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     auto room_setting_map = SettingMgr.GetRoomSettingMap();
     if (room_setting_map.empty()) {
         LOG_ERROR(_T("room_setting_map empty"));
         ASSERT_FALSE_RETURN;
     }
 
-    auto room_id = InvalidRoomID;
+    auto game_port = InvallidPort;
     for (auto& kv: room_setting_map) {
-        room_id = kv.first;
-        break;
+        const auto roomid = kv.first;
+        HallRoomData hall_room_data = {};
+        if (kCommSucc != HallMgr.GetHallRoomData(roomid, hall_room_data)) {
+            LOG_ERROR("GetHallRoomData room id  = [%d] failed", roomid);
+            ASSERT_FALSE_RETURN;
+        }
+        auto port = hall_room_data.room.nGamePort;
+        LOG_INFO("[CHECK GAME PORT] roomid [%d] game port [%d]", roomid, port);
+        if (InvalidPort == port) continue;
+
+        if (game_port == InvallidPort) {
+            game_port = port; // 第一个房间
+        } else {
+            if (game_port != port) { // 第二个房间 检查是否所有房间 game port 一致
+                LOG_WARN("[CHECK GAME PORT] roomid [%d] game port [%d] diff with later one [%d], all room should have the same game port!", roomid, game_port, port);
+                ASSERT_FALSE_RETURN;
+            }
+        }
     }
 
-    HallRoomData hall_room_data = {};
-    if (kCommSucc != HallMgr.GetHallRoomData(room_id, hall_room_data)) {
-        LOG_ERROR("GetHallRoomData room id  = [%d] failed", room_id);
-        ASSERT_FALSE_RETURN;
-    }
+    return game_port;
+}
 
-    return hall_room_data.room.nGamePort;
+int RobotUtils::Sleep(const uint32_t& milli_seconds) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(milli_seconds));
+    return kCommSucc;
 }
 
 int RobotUtils::IsValidGameID(const GameID& game_id) {
@@ -191,8 +219,12 @@ int RobotUtils::IsValidUser(const UserPtr& user) {
     return user == nullptr ? kCommFaild : kCommSucc;
 }
 
-int RobotUtils::IsValidConnection(const CDefSocketClientPtr& connection_) {
-    return connection_ == nullptr ? kCommFaild : kCommSucc;
+int RobotUtils::IsValidConnection(const CDefSocketClientPtr& connection) {
+    return connection == nullptr ? kCommFaild : kCommSucc;
+}
+
+int RobotUtils::IsValidThreadID(const ThreadID& thead_id) {
+    return thead_id == InvalidThreadID ? kCommFaild : kCommSucc;
 }
 
 int RobotUtils::IsNegativeDepositAmount(const int64_t& deposit_amount) {
@@ -205,10 +237,6 @@ int RobotUtils::IsValidTable(const TablePtr& table) {
 
 int RobotUtils::IsValidRoom(const RoomPtr& room) {
     return room == nullptr ? kCommFaild : kCommSucc;
-}
-
-int RobotUtils::IsValidRobot(const RobotPtr& robot) {
-    return robot == nullptr ? kCommFaild : kCommSucc;
 }
 
 int RobotUtils::IsValidGameIP(const std::string& game_ip) {
@@ -227,8 +255,24 @@ int RobotUtils::NotThisThread(YQThread& thread) {
     return  thread.GetThreadID() == GetCurrentThreadId() ? kCommFaild : kCommSucc;
 }
 
+int RobotUtils::IsAllowedThreadID() {
+    ThreadID thread_id = GetCurrentThreadId();
+    CHECK_THREADID(thread_id);
+
+    if (thread_id == g_launchThreadID) {
+        return kCommSucc;
+    }
+
+    if (thread_id == g_mainThreadID) {
+        return kCommSucc;
+    }
+
+    assert(false);
+    return kCommFaild;
+}
 
 int RobotUtils::TraceStack() {
+#ifdef _DEBUG
     static const int MAX_STACK_FRAMES = 5;
 
     void *pStack[MAX_STACK_FRAMES];
@@ -260,7 +304,8 @@ int RobotUtils::TraceStack() {
         }
     }
 
-    LOG_WARN("[STACK] %s", oss.str().c_str());
+    LOG_INFO("[STACK] %s", oss.str().c_str());
+#endif
     return kCommSucc;
 }
 
@@ -363,6 +408,9 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
         case GR_SWITCH_TABLE:
             ret_string = "GR_SWITCH_TABLE";
             break;
+        case GN_RS_NEW_ROOM:
+            ret_string = "GN_RS_NEW_ROOM";
+            break;
         case GR_TABLE_CHAT:
             ret_string = "GR_TABLE_CHAT";
             break;
@@ -380,30 +428,6 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
             break;
         case GR_GET_PRODUCTS:
             ret_string = "GR_GET_PRODUCTS";
-            break;
-        case GN_TABLE_CHAT:
-            ret_string = "GN_TABLE_CHAT";
-            break;
-        case GN_COUNTDOWN_START:
-            ret_string = "GN_COUNTDOWN_START";
-            break;
-        case GN_COUNTDOWN_STOP:
-            ret_string = "GN_COUNTDOWN_STOP";
-            break;
-        case GN_GAME_START:
-            ret_string = "GN_GAME_START";
-            break;
-        case GN_PLAYER_GIVEUP:
-            ret_string = "GN_PLAYER_GIVEUP";
-            break;
-        case GN_USER_SITDOWN:
-            ret_string = "GN_USER_SITDOWN";
-            break;
-        case GN_USER_STANDUP:
-            ret_string = "GN_USER_STANDUP";
-            break;
-        case GN_USER_LEAVE:
-            ret_string = "GN_USER_LEAVE";
             break;
         case GR_RS_VALID_ROBOTSVR:
             ret_string = "GR_RS_VALID_ROBOTSVR";
@@ -438,6 +462,39 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
         case GN_RS_SWITCH_TABLE:
             ret_string = "GN_RS_SWITCH_TABLE";
             break;
+        case GN_TABLE_CHAT:
+            ret_string = "GN_TABLE_CHAT";
+            break;
+        case GN_COUNTDOWN_START:
+            ret_string = "GN_COUNTDOWN_START";
+            break;
+        case GN_COUNTDOWN_STOP:
+            ret_string = "GN_COUNTDOWN_STOP";
+            break;
+        case GN_GAME_START:
+            ret_string = "GN_GAME_START";
+            break;
+        case GN_PLAYER_GIVEUP:
+            ret_string = "GN_PLAYER_GIVEUP";
+            break;
+        case GN_USER_SITDOWN:
+            ret_string = "GN_USER_SITDOWN";
+            break;
+        case GN_USER_STANDUP:
+            ret_string = "GN_USER_STANDUP";
+            break;
+        case GN_USER_LEAVE:
+            ret_string = "GN_USER_LEAVE";
+            break;
+        case GN_GAME_RESULT_TABLE:
+            ret_string = "GN_GAME_RESULT_TABLE";
+            break;// 游戏结果通知(整桌结算)
+        case GN_GAME_RESULT_ONEUSER:
+            ret_string = "GN_GAME_RESULT_ONEUSER";
+            break;// 游戏结果通知(单人结算)
+        case GN_USER_DEPOSIT_CHANGE:
+            ret_string = "GN_USER_DEPOSIT_CHANGE";
+            break;// 用户银子变化通知
         case GR_GET_ROOM:
             ret_string = "HALL GR_GET_ROOM";
             break;
@@ -458,6 +515,15 @@ std::string RobotUtils::RequestStr(const RequestID& requestid) {
             break;
         case MR_QUERY_USER_GAMEINFO:
             ret_string = "MR_QUERY_USER_GAMEINFO";
+            break;
+        case GR_KICKEDOFF_LOGONAGAIN:
+            ret_string = "GR_KICKEDOFF_LOGONAGAIN";
+            break;
+        case GR_KICKEDOFF_BYADMIN:
+            ret_string = "GR_KICKEDOFF_BYADMIN";
+            break;
+        case GR_KICKEDOFF_FORBIDTWOHALL:
+            ret_string = "GR_KICKEDOFF_FORBIDTWOHALL";
             break;
         default:
             LOG_WARN("UNKNOW REQUEST ID [%d]", requestid);
@@ -488,7 +554,7 @@ std::string RobotUtils::UserTypeStr(const int& type) {
             ret_string = "USER_TYPE_HANDPHONE |USER_TYPE_MERCHANT";
             break;
         default:
-            LOG_WARN("type [%x]", type);
+            //LOG_WARN("type [%x]", type);
             break;
     }
 
@@ -526,23 +592,4 @@ std::string RobotUtils::ChairStatusStr(const int& status) {
     }
 
     return ret_string;
-}
-
-std::string RobotUtils::TimeStampToDate(const int& time_stamp) {
-    if (time_stamp <= 0) {
-        return "";
-    }
-    struct tm t = {0};
-    time_t rawtime = time_stamp;
-    time(&rawtime);
-    localtime_s(&t, &rawtime);
-    char str[256] = {0};
-    asctime_s(str, sizeof str, &t);
-    auto ret = std::string(str);
-    const auto pos = ret.find('\n');
-    if (pos != std::string::npos) {
-        ret = ret.erase(pos);
-    }
-    return ret;
-
 }

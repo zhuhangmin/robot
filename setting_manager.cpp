@@ -4,49 +4,25 @@
 #include "robot_utils.h"
 
 int SettingManager::Init() {
-    std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
-    timer_thread_.Initial(std::thread([this] {this->ThreadHotUpdate(); }));
-
     if (kCommSucc != InitSettingWithLock()) {
         LOG_ERROR("InitSetting() failed");
         ASSERT_FALSE_RETURN;
     }
-
     return kCommSucc;
 }
 
 int SettingManager::Term() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("[EXIT]");
     return kCommSucc;
 }
 
-int SettingManager::ThreadHotUpdate() {
-    LOG_INFO("\t[START] hotupdate thread [%d] started", GetCurrentThreadId());
-    while (true) {
-        const auto dwRet = WaitForSingleObject(g_hExitServer, HotUpdateInterval);
-        if (WAIT_OBJECT_0 == dwRet) {
-            break;
-        }
-        if (WAIT_TIMEOUT == dwRet) {
-            if (!g_inited) continue;
-            std::lock_guard<std::mutex> lock(mutex_);
-            InitSettingWithLock();
-        }
-    }
-    LOG_INFO("[EXIT] SettingManager HotUpdate thread [%d] exiting", GetCurrentThreadId());
-    return kCommSucc;
-}
-
 int SettingManager::IsRoomSettingExist(const RoomID& roomid, bool& exist) {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (room_setting_map_.find(roomid) != room_setting_map_.end()) {
         exist = true;
     }
     return kCommSucc;
 }
-
 
 int SettingManager::InitSettingWithLock() {
     const auto filename = g_curExePath + _T("robot.setting");
@@ -125,22 +101,18 @@ int SettingManager::InitSettingWithLock() {
 }
 
 std::string& SettingManager::GetDepositActiveID() {
-    std::lock_guard<std::mutex> lock(mutex_);
     return deposit_active_id_;
 }
 
 RobotSettingMap SettingManager::GetRobotSettingMap() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return robot_setting_map_;
 }
 
 RoomSettingMap SettingManager::GetRoomSettingMap() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return room_setting_map_;
 }
 
 RobotSetting SettingManager::GetRobotSetting(const UserID& userid) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     const auto iter = robot_setting_map_.find(userid);
     if (iter != robot_setting_map_.end()) {
         return iter->second;
@@ -149,42 +121,34 @@ RobotSetting SettingManager::GetRobotSetting(const UserID& userid) const {
 }
 
 int SettingManager::GetMainsInterval() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return main_interval_;
 }
 
 int SettingManager::GetDepositInterval() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return deposit_interval_;
 }
 
 int64_t SettingManager::GetGainAmount() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return gain_amount_;
 }
 
 int64_t SettingManager::GetBackAmount() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return back_amount_;
 }
 
 GameID SettingManager::GetGameID() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return game_id_;
 }
 
 std::string& SettingManager::GetDepositGainUrl() {
-    std::lock_guard<std::mutex> lock(mutex_);
     return deposit_gain_url_;
 }
 
 std::string& SettingManager::GetDepositBackUrl() {
-    std::lock_guard<std::mutex> lock(mutex_);
     return deposit_back_url_;
 }
 
 int SettingManager::GetRandomUserID(UserID& random_userid) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     // Ëæ»úÑ¡È¡userid
     int64_t random_pos = 0;
     if (kCommSucc != RobotUtils::GenRandInRange(0, robot_setting_map_.size() - 1, random_pos)) {
@@ -199,12 +163,13 @@ int SettingManager::IsRobotSettingExist(const UserID& userid, bool& exist) {
     const auto iter = robot_setting_map_.find(userid);
     if (iter != robot_setting_map_.end()) {
         exist = true;
+        return kCommSucc;
     }
-    return kCommSucc;
+    return kCommFaild;
 }
 
 int SettingManager::SnapShotObjectStatus() const {
-    std::lock_guard<std::mutex> lock(mutex_);
+#ifdef _DEBUG
     LOG_INFO("game_id_ [%d]", game_id_);
     LOG_INFO("main_interval_ [%d]", main_interval_);
     LOG_INFO("deposit_interval_ [%d]", deposit_interval_);
@@ -226,12 +191,13 @@ int SettingManager::SnapShotObjectStatus() const {
         const auto setting = kv.second;
         LOG_INFO("roomid [%d]  wait_time [%d] count_per_table [%d]", roomid, setting.wait_time, setting.count_per_table);
     }
-
+#endif
     return kCommSucc;
 }
 
 int SettingManager::BriefInfo() const {
-    std::lock_guard<std::mutex> lock(mutex_);
+#ifdef _DEBUG
     LOG_INFO("robot_setting_map_ size [%d]", robot_setting_map_.size());
+#endif
     return kCommSucc;
 }

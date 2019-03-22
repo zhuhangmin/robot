@@ -20,6 +20,7 @@ message RoomData
 	optional int64 min_deposit			= 7;
 	optional int64 max_deposit			= 8;
 	optional int32 min_player_count		= 9;		// 游戏开局的最小玩家数量
+	optional int32 areaid				= 10;		// 区域ID
 }
 
 message User

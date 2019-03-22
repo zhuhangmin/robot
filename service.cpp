@@ -14,16 +14,19 @@ BOOL CMainService::OnInit() {
     // Read the registry parameters
     // Try opening the registry key:
     // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\<AppName>\Parameters
+    LOG_INFO("CMainService::OnInit beg");
     HKEY hkey;
     TCHAR szKey[1024];
     strcpy_s(szKey, sizeof(szKey), _T("SYSTEM\\CurrentControlSet\\Services\\"));
     strcat_s(szKey, sizeof(szKey), m_szServiceName);
     strcat_s(szKey, sizeof(szKey), _T("\\Parameters"));
+    LOG_INFO("CMainService::OnInit szKey [%s]", szKey);
     if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
         szKey,
         0,
         KEY_QUERY_VALUE,
         &hkey) == ERROR_SUCCESS) {
+        LOG_INFO("Yes we are installed hkey [%s]", hkey);
         // Yes we are installed
         DWORD dwType = 0;
         DWORD dwSize = sizeof(m_iStartParam);
@@ -43,13 +46,16 @@ BOOL CMainService::OnInit() {
         RegCloseKey(hkey);
     }
 
+
     // Set the initial state
     m_iState = m_iStartParam;
-
+    LOG_INFO("Set the initial state [%d]", m_iState);
+    LOG_INFO("CMainService::OnInit end");
     return TRUE;
 }
 
 void CMainService::Run() {
+    LOG_INFO("CMainService::Run BEG");
     m_dwThreadId = GetCurrentThreadId();
 
     if (kCommSucc != m_AppDelegate.Init()) {
@@ -70,6 +76,8 @@ void CMainService::Run() {
 
     // Update the current state
     m_iState += m_iIncParam;
+
+    LOG_INFO("CMainService::Run END");
 
 }
 

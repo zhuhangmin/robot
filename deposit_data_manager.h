@@ -1,5 +1,7 @@
 #pragma once
 #include "robot_define.h"
+
+// 业务逻辑中银子以此对象为准！
 class DepositDataManager : public ISingletion<DepositDataManager> {
 public:
     int Init();

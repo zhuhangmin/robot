@@ -3,13 +3,12 @@
 #include "setting_manager.h"
 #include "main.h"
 #include "robot_utils.h"
-#include "game_net_manager.h"
-#include "deposit_data_manager.h"
 #include "robot_hall_manager.h"
 
 #define ROBOT_APPLY_DEPOSIT_KEY "zjPUYq9L36oA9zke"
 
 int DepositHttpManager::Init() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
     timer_thread_.Initial(std::thread([this] {this->ThreadDeposit(); }));
@@ -18,6 +17,7 @@ int DepositHttpManager::Init() {
 
 
 int DepositHttpManager::Term() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     timer_thread_.Release();
     deposit_map_.clear();
@@ -59,11 +59,25 @@ int DepositHttpManager::SendDepositRequest() {
         const auto userid = kv.first;
         const auto data = kv.second;
         const auto deposit_type = data.type;
-        const auto amount = data.amount;
+        auto amount = data.amount;
+
+        if (amount > MaxAmount) {
+            LOG_WARN("amount [%d] too large max [%d]", amount, MaxAmount);
+            amount = MaxAmount;
+        }
 
         // 发送HTTP
         if (deposit_type == DepositType::kGain) {
             if (kCommSucc != RobotGainDeposit(userid, amount)) {
+                { // http操作失败 需要从队列中移除
+                    std::lock_guard<std::mutex> lock(mutex_);
+                    if (deposit_map_.find(userid) != deposit_map_.end()) {
+                        deposit_map_.erase(userid);
+                    } else {
+                        assert(false);
+                        continue;
+                    }
+                }
                 ASSERT_FALSE;
                 continue;
             }
@@ -71,6 +85,15 @@ int DepositHttpManager::SendDepositRequest() {
 
         if (deposit_type == DepositType::kBack) {
             if (kCommSucc != RobotBackDeposit(userid, amount)) {
+                { // http操作失败 需要从队列中移除
+                    std::lock_guard<std::mutex> lock(mutex_);
+                    if (deposit_map_.find(userid) != deposit_map_.end()) {
+                        deposit_map_.erase(userid);
+                    } else {
+                        assert(false);
+                        continue;
+                    }
+                }
                 ASSERT_FALSE;
                 continue;
             }
@@ -81,18 +104,7 @@ int DepositHttpManager::SendDepositRequest() {
             std::lock_guard<std::mutex> lock(mutex_);
             if (deposit_map_.find(userid) != deposit_map_.end()) {
                 deposit_map_.erase(userid);
-                //HallMgr.SetDepositUpdate(userid); // TODO GR_HARDID_MISMATCH
-                if (deposit_type == DepositType::kGain) {
-                    if (kCommSucc != DepositDataMgr.AddDeposit(userid, amount)) {
-                        continue;
-                    }
-                }
-
-                if (deposit_type == DepositType::kBack) {
-                    if (kCommSucc != DepositDataMgr.AddDeposit(userid, -amount)) {
-                        continue;
-                    }
-                }
+                HallMgr.SetDepositUpdate(userid);
             } else {
                 assert(false);
                 continue;
@@ -189,8 +201,7 @@ int DepositHttpManager::RobotBackDeposit(const UserID& userid, const int64_t& am
 }
 
 int DepositHttpManager::SetDepositTypeAmount(const UserID& userid, const DepositType& type, const int64_t& amount) {
-    // 处理游戏服务器断线 但业务后台正常的情况
-    if (!GameMgr.IsGameDataInited()) return kExceptionGameDataNotInited;
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
     if (amount < 0) ASSERT_FALSE_RETURN;
@@ -202,11 +213,19 @@ int DepositHttpManager::SetDepositTypeAmount(const UserID& userid, const Deposit
 }
 
 DepositMap DepositHttpManager::GetDepositMap() const {
+    ThreadID thread_id = GetCurrentThreadId();
+    DepositMap dummy;
+    if (thread_id != g_launchThreadID && thread_id != g_mainThreadID) {
+        assert(false);
+        return dummy;
+    }
     std::lock_guard<std::mutex> lock(mutex_);
     return deposit_map_;
 }
 
 int DepositHttpManager::SnapShotObjectStatus() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+#ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("deposit_timer_thread_ [%d]", timer_thread_.GetThreadID());
     LOG_INFO("deposit_map_ size [%d]", deposit_map_.size());
@@ -215,5 +234,6 @@ int DepositHttpManager::SnapShotObjectStatus() {
         const auto status = kv.second;
         LOG_INFO("robot userid [%d] status [%d]", userid, status);
     }
+#endif
     return kCommSucc;
 }

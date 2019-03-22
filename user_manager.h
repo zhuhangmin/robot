@@ -2,10 +2,6 @@
 #include "user.h"
 #include "robot_define.h"
 
-using UserMap = std::hash_map<UserID, UserPtr>;
-
-using UserFilterMap = std::hash_map<UserID, UserID>;
-
 class UserManager : public ISingletion<UserManager> {
 public:
 
@@ -28,7 +24,7 @@ public:
     UserMap GetAllUsers() const;
 
     // 机器人用户是否在游戏
-    bool IsRobotUserExist(const UserID& userid) const;
+    int IsRobotUserExist(const UserID& userid) const;
 
     // 返回调用时所有登入游戏userid集合，不返回引用，返回copy
     UserFilterMap GetAllEnterUserID() const;
@@ -68,9 +64,11 @@ protected:
     SINGLETION_CONSTRUCTOR(UserManager);
 
 private:
+    // 数据锁
     mutable std::mutex mutex_;
+
+    // 所有在游戏服务器用户数据
     UserMap user_map_;
-    ThreadID notify_thread_id_{InvalidThreadID};
 };
 
 #define UserMgr UserManager::Instance()

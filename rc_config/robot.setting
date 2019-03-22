@@ -1,0 +1,74 @@
+{
+    "game_id":1001,
+
+    "main_interval":3000,
+
+    "deposit_interval":1000,
+
+    "deposit_active_id" :"24",
+
+    "deposit_gain_url":"http://activityapi.comfun.com/robot/chipsoperate",
+
+    "deposit_back_url":"http://activityapi.comfun.com/robot/chipsoperate",
+
+    "deposit_gain_amount":100000,
+
+    "deposit_back_amount":100000,
+    
+    "rooms":[
+        {"roomid":37, "wait_time":8, "count_per_table":1}
+    ],
+    
+    "robots":[
+        {"userid":3716,"password":"9297617"},
+		{"userid":3717,"password":"9704568"},
+		{"userid":3718,"password":"3759823"},
+		{"userid":3719,"password":"7788715"},
+		{"userid":3720,"password":"2205063"},
+		{"userid":3721,"password":"7562611"},
+		{"userid":3722,"password":"1424006"},
+		{"userid":3723,"password":"1813941"},
+		{"userid":3724,"password":"5088386"},
+		{"userid":3725,"password":"9541332"},
+        {"userid":3726,"password":"8300641"},
+		{"userid":3727,"password":"3583279"},
+		{"userid":3728,"password":"1478981"},
+		{"userid":3729,"password":"3971689"},
+		{"userid":3730,"password":"3173420"},
+		{"userid":3731,"password":"5993103"},
+		{"userid":3732,"password":"7358400"},
+		{"userid":3733,"password":"3901993"},
+		{"userid":3734,"password":"3273589"},
+		{"userid":3735,"password":"9595165"},
+        {"userid":3736,"password":"2291458"},
+		{"userid":3737,"password":"1679495"},
+		{"userid":3738,"password":"3080136"},
+		{"userid":3739,"password":"9066543"},
+		{"userid":3740,"password":"6526837"},
+		{"userid":3741,"password":"1493129"},
+		{"userid":3742,"password":"9684497"},
+		{"userid":3743,"password":"4970054"},
+		{"userid":3744,"password":"1380251"},
+		{"userid":3745,"password":"5570217"},
+        {"userid":3746,"password":"6010154"},
+		{"userid":3747,"password":"8144658"},
+		{"userid":3748,"password":"2994597"},
+		{"userid":3749,"password":"3157487"},
+		{"userid":3750,"password":"9218330"},
+		{"userid":3751,"password":"9248608"},
+		{"userid":3752,"password":"7336741"},
+		{"userid":3753,"password":"8708033"},
+		{"userid":3754,"password":"5980409"},
+		{"userid":3755,"password":"4666409"},
+        {"userid":3756,"password":"7651077"},
+		{"userid":3757,"password":"3221139"},
+		{"userid":3758,"password":"6400322"},
+		{"userid":3759,"password":"5074087"},
+		{"userid":3760,"password":"5699853"},
+		{"userid":3761,"password":"3938304"},
+		{"userid":3762,"password":"3292056"},
+		{"userid":3763,"password":"4494194"},
+		{"userid":3764,"password":"7887810"},
+		{"userid":3765,"password":"5189637"}
+    ]
+}

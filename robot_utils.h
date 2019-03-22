@@ -3,7 +3,6 @@
 #include "user.h"
 #include "table.h"
 #include "base_room.h"
-#include "robot_net.h"
 
 //无状态类 不应该有任何成员变量 保持线程安全
 class RobotUtils {
@@ -23,6 +22,10 @@ public:
     // 获得动态游戏服务器端口
     static int GetGamePort();
 
+    // 线程阻塞ms 一般用于测试和限流
+    static int Sleep(const uint32_t& milli_seconds);
+
+    // 参数检查
     static int IsValidGameID(const GameID& game_id);
 
     static int IsValidUserID(const UserID& userid);
@@ -43,13 +46,13 @@ public:
 
     static int IsValidRoom(const RoomPtr& room);
 
-    static int IsValidRobot(const RobotPtr& robot);
-
     static int IsValidGameIP(const std::string& game_ip);
 
     static int IsValidGamePort(const int32_t& game_port);
 
-    static int IsValidConnection(const CDefSocketClientPtr& connection_);
+    static int IsValidConnection(const CDefSocketClientPtr& connection);
+
+    static int IsValidThreadID(const ThreadID& thead_id);
 
     static int IsNegativeDepositAmount(const int64_t& deposit_amount);
 
@@ -59,6 +62,10 @@ public:
     // 控制方法对特定线程不可见
     static int NotThisThread(YQThread& thread);
 
+    // 只允许合法线程
+    static int IsAllowedThreadID();
+
+    // 打印调用栈
     static int TraceStack();
 
     static std::string ErrorCodeInfo(int code);
@@ -70,9 +77,9 @@ public:
     static std::string TableStatusStr(const int& status);
 
     static std::string ChairStatusStr(const int& status);
-
-    static std::string TimeStampToDate(const int& time_stamp);
 };
+
+#define SLEEP_FOR(x) RobotUtils::Sleep(x);
 
 #define CHECK_GAMEID(x) if(kCommSucc != RobotUtils::IsValidGameID(x))  {ASSERT_FALSE_RETURN}
 
@@ -96,15 +103,17 @@ public:
 
 #define CHECK_ROOM(x)  if(kCommSucc != RobotUtils::IsValidRoom(x))  {ASSERT_FALSE_RETURN}
 
-#define CHECK_ROBOT(x)  if(kCommSucc != RobotUtils::IsValidRobot(x))  {ASSERT_FALSE_RETURN}
-
 #define CHECK_GAMEIP(x)  if(kCommSucc != RobotUtils::IsValidGameIP(x))  {ASSERT_FALSE_RETURN}
 
 #define CHECK_GAMEPORT(x)  if(kCommSucc != RobotUtils::IsValidGamePort(x))  {ASSERT_FALSE_RETURN}
 
+#define CHECK_THREADID(x)  if(kCommSucc != RobotUtils::IsValidThreadID(x))  {ASSERT_FALSE_RETURN}
+
 #define CHECK_THREAD(x)  if(kCommSucc != RobotUtils::IsCurrentThread(x))  {ASSERT_FALSE_RETURN}
 
 #define CHECK_NOT_THREAD(x)  if(kCommSucc != RobotUtils::NotThisThread(x))  {ASSERT_FALSE_RETURN}
+
+#define CHECK_MAIN_OR_LAUNCH_THREAD()  if(kCommSucc != RobotUtils::IsAllowedThreadID())  {ASSERT_FALSE_RETURN}
 
 #define CHECK_DEPOSIT(x)  if(kCommSucc != RobotUtils::IsNegativeDepositAmount(x))  {ASSERT_FALSE_RETURN}
 
@@ -120,17 +129,16 @@ public:
 
 #define LOG_INFO_FUNC(x) LOG_INFO(" %s [%s]", x, __FUNCTION__);
 
+#define DEBUG_FUNC LOG_DEBUG("[%s]",__FUNCTION__);
+
 #define LOG_ROUTE(x, roomid, tableno ,userid) LOG_DEBUG(" [%s] roomid [%d] tableno [%d] userid [%d] [%s]", "DISPATCH", roomid, tableno, userid, x);
 
 #define DEBUG_USER(userid) LOG_DEBUG(" [%s] userid [%d]", __FUNCTION__, userid);
 
-#ifdef _DEBUG
+// 打印堆栈
 #define TRACE_STACK RobotUtils::TraceStack();
-#else
-#define TRACE_STACK
-#endif
 
-//#define STRICT_ASSERT // 开启严格调试模式, 错误时打印调用栈 并assert 
+// 严格模式 直接断言
 #ifdef STRICT_ASSERT
 
 #define  ASSERT_FALSE {\

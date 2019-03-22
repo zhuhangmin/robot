@@ -91,8 +91,8 @@ int RoomManager::GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tab
 
     const auto all_users = table->GetPlayerCount();
 
-    const auto robot_users = 0;
-    if (kCommSucc != table->GetRobotCount(count)) {
+    auto robot_users = 0;
+    if (kCommSucc != table->GetRobotCount(robot_users)) {
         ASSERT_FALSE_RETURN;
     }
 
@@ -178,7 +178,6 @@ int RoomManager::AddRoomPBWithLock(const game::base::Room& room_pb) const {
     }
 
     // ROOM
-    // TODO REMOVE RoomMgr.
     if (kCommSucc != RoomMgr.AddRoomWithLock(roomid, room)) {
         ASSERT_FALSE_RETURN;
     }
@@ -234,13 +233,14 @@ int RoomManager::AddRoomWithLock(const RoomID& roomid, const RoomPtr &room) {
 }
 
 int RoomManager::SnapShotObjectStatus() {
+#ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("rooms_ size [%d]", rooms_.size());
     for (auto& kv : rooms_) {
         const auto room = kv.second;
         room->SnapShotObjectStatus();
     }
-
+#endif
     return kCommSucc;
 }
 

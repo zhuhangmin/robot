@@ -1,6 +1,5 @@
 #pragma once
 #include "robot_define.h"
-#include "user_manager.h"
 
 // ำฮฯทาตฮ๑
 class AppDelegate {

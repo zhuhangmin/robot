@@ -55,7 +55,7 @@ int Table::UnbindUser(const int& userid) {
 int Table::UnbindPlayer(const int& userid) {
     CHECK_USERID(userid);
     const auto chairno = GetUserChair(userid);
-    if (chairno == 0) return kCommSucc; //TODO 偶发 有时后椅子数据已被清除又清除一次
+    if (chairno == 0) return kCommSucc;
     chairs_[chairno - 1].set_userid(0);
     chairs_[chairno - 1].set_chair_status(kChairWaiting);
     chairs_[chairno - 1].set_bind_timestamp(0);
@@ -187,6 +187,7 @@ bool Table::IsValidChairno(const int& chairno) {
     if (chairno > 0 && chairno <= get_chair_count() && chairno <= chairs_.size()) {
         return true;
     }
+    LOG_WARN("chairno [%d] chair_count_ [%d] chairs_.size [%d]", chairno, get_chair_count(), chairs_.size());
     return false;
 }
 
@@ -245,14 +246,20 @@ int Table::RefreshGameResult(const int& userid) {
     CHECK_USERID(userid);
     const auto chairno = GetUserChair(userid);
     if (!IsValidChairno(chairno)) {
-        LOG_WARN("user[%d] is not player.", userid);
+        LOG_WARN("user[%d] chairno [%d] not valid", userid, chairno);
         ASSERT_FALSE_RETURN;
     }
+
+    // 修改椅子状态
+    CHECK_CHAIRNO(chairno);
+    const auto chair_index = chairno - 1;
+    chairs_.at(chair_index).set_chair_status(kChairWaiting);
 
     return kCommSucc;
 }
 
 int Table::SnapShotObjectStatus() {
+#ifdef _DEBUG
     LOG_INFO("tableno [%d] min_deposit [%I64d] max_deposit [%I64d] status [%d][%s] chair_count [%d] banker_chair [%d] base_deposit [%I64d] room_id [%d] ",
              table_no_, min_deposit_, max_deposit_, table_status_%10, TABLE_STATUS_STR(table_status_%10), chair_count_, banker_chair_, base_deposit_, room_id_);
 
@@ -272,6 +279,6 @@ int Table::SnapShotObjectStatus() {
         LOG_INFO("\t userid [%d]\t user_type [0x%x][%s]\t bind_timestamp [%d]",
                  userid, type, USER_TYPE_STR(type), timestamp);
     }
-
+#endif
     return kCommSucc;
 }

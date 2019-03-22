@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "base_room.h"
-#include "user_manager.h"
 #include "robot_utils.h"
 
 BaseRoom::BaseRoom() {}
@@ -281,16 +280,18 @@ int BaseRoom::GetTable(const TableNO& tableno, TablePtr& table) const {
 }
 
 int BaseRoom::SnapShotObjectStatus() {
+#ifdef _DEBUG
     LOG_INFO("roomid [%d] options [%d] configs [%d] min_playercount_per_table [%d] chaircount_per_table [%d]  manages [%d] max_table_cout [%d] min_deposit [%I64d] max_deposit [%I64d]",
              room_id_, options_, configs_, min_playercount_per_table_, chaircount_per_table_, manages_, max_table_cout_, min_deposit_, max_deposit_);
     LOG_INFO("tables_ size [%d]", max_table_cout_);
-    for (auto i = 0; i < max_table_cout_; i = i + 50) {
+    /*for (auto i = 0; i < max_table_cout_; i = i + 200) {
         if (tables_[i])
-            tables_[i]->SnapShotObjectStatus();
-    }
+        tables_[i]->SnapShotObjectStatus();
+        }*/
     /*if (tables_[0])
         tables_[0]->SnapShotObjectStatus();
         if (tables_[1])
         tables_[1]->SnapShotObjectStatus();*/
+#endif
     return kCommSucc;
 }

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "user_manager.h"
 #include "robot_utils.h"
+#include "deposit_data_manager.h"
 
 int UserManager::GetUser(const UserID& userid, UserPtr& user) const {
     std::lock_guard<std::mutex> users_lock(mutex_);
@@ -33,6 +34,11 @@ int UserManager::AddUser(const UserID& userid, const UserPtr &user) {
     if (kCommSucc != AddUserWithLock(userid, user)) {
         ASSERT_FALSE_RETURN;
     }
+
+    const auto deposit = user->get_deposit();
+    if (kCommSucc != DepositDataMgr.SetDeposit(userid, deposit)) {
+        ASSERT_FALSE_RETURN;
+    }
     return kCommSucc;
 }
 
@@ -56,8 +62,11 @@ int UserManager::ResetDataAndReInit(const game::base::GetGameUsersResp& resp) {
 }
 
 int UserManager::AddUserPBWithLock(const game::base::User& user_pb) const {
+    const auto userid = user_pb.userid();
+    const auto deposit = user_pb.deposit();
+
     auto user = std::make_shared<User>();
-    user->set_user_id(user_pb.userid());
+    user->set_user_id(userid);
     user->set_room_id(user_pb.roomid());
     user->set_table_no(user_pb.tableno());
     user->set_chair_no(user_pb.chairno());
@@ -68,6 +77,11 @@ int UserManager::AddUserPBWithLock(const game::base::User& user_pb) const {
     if (kCommSucc != UserMgr.AddUserWithLock(user->get_user_id(), user)) {
         ASSERT_FALSE_RETURN;
     }
+
+    if (kCommSucc != DepositDataMgr.SetDeposit(userid, deposit)) {
+        ASSERT_FALSE_RETURN;
+    }
+
     return kCommSucc;
 }
 
@@ -160,19 +174,20 @@ int UserManager::GetRobotUserMap(UserMap& robot_user_map) const {
     return kCommSucc;
 }
 
-bool UserManager::IsRobotUserExist(const UserID& userid) const {
+int UserManager::IsRobotUserExist(const UserID& userid) const {
     std::lock_guard<std::mutex> users_lock(mutex_);
     const auto iter = user_map_.find(userid);
     if (iter != user_map_.end()) {
         const auto user_ptr = iter->second;
         if (user_ptr->get_user_type() == kUserRobot) {
-            return true;
+            return kCommSucc;
         }
     }
-    return false;
+    return kCommFaild;
 }
 
 int UserManager::SnapShotObjectStatus() {
+#ifdef _DEBUG
     std::lock_guard<std::mutex> users_lock(mutex_);
     LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("users_ size [%d]", user_map_.size());
@@ -181,7 +196,7 @@ int UserManager::SnapShotObjectStatus() {
         auto user = kv.second;
         user->SnapShotObjectStatus();
     }
-
+#endif
     return kCommSucc;
 }
 
@@ -198,6 +213,7 @@ int UserManager::SnapShotUser(const UserID& userid) const {
 }
 
 int UserManager::BriefInfo() const {
+#ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("users_ size [%d]", user_map_.size());
     std::string str = "{";
@@ -210,6 +226,7 @@ int UserManager::BriefInfo() const {
     }
     str += "}";
     LOG_INFO(" [%s]", str.c_str());
+#endif
     return kCommSucc;
 }
 

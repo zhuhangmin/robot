@@ -1610,6 +1610,7 @@ namespace protobuf_game_5fbase_2eproto {
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RoomData, min_deposit_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RoomData, max_deposit_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RoomData, min_player_count_),
+        GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::RoomData, areaid_),
         0,
         1,
         2,
@@ -1619,6 +1620,7 @@ namespace protobuf_game_5fbase_2eproto {
         6,
         7,
         8,
+        9,
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::User, _has_bits_),
         GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::game::base::User, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -2241,64 +2243,64 @@ namespace protobuf_game_5fbase_2eproto {
     };
     static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         {0, 7, sizeof(::game::base::BytesData)},
-        {9, 23, sizeof(::game::base::RoomData)},
-        {32, 50, sizeof(::game::base::User)},
-        {63, 71, sizeof(::game::base::TableUserInfo)},
-        {74, 83, sizeof(::game::base::ChairInfo)},
-        {87, 102, sizeof(::game::base::Table)},
-        {112, 119, sizeof(::game::base::Room)},
-        {121, 131, sizeof(::game::base::UserResult)},
-        {136, 151, sizeof(::game::base::TablePlayersInfo)},
-        {161, 167, sizeof(::game::base::PulseReq)},
-        {168, 174, sizeof(::game::base::PulseResp)},
-        {175, 188, sizeof(::game::base::EnterNormalGameReq)},
-        {196, 208, sizeof(::game::base::EnterNormalGameResp)},
-        {215, 221, sizeof(::game::base::EnterPrivateGameReq)},
-        {222, 228, sizeof(::game::base::EnterPrivateGameResp)},
-        {229, 235, sizeof(::game::base::EnterMatchGameReq)},
-        {236, 242, sizeof(::game::base::EnterMatchGameResp)},
-        {243, 249, sizeof(::game::base::LeaveGameReq)},
-        {250, 256, sizeof(::game::base::LeaveGameResp)},
-        {257, 263, sizeof(::game::base::GiveUpReq)},
-        {264, 270, sizeof(::game::base::GiveUpResp)},
-        {271, 277, sizeof(::game::base::Looker2PlayerReq)},
-        {278, 285, sizeof(::game::base::Looker2PlayerResp)},
-        {287, 294, sizeof(::game::base::Player2LookerReq)},
-        {296, 302, sizeof(::game::base::Player2LookerResp)},
-        {303, 309, sizeof(::game::base::SwitchTableReq)},
-        {310, 319, sizeof(::game::base::SwitchTableResp)},
-        {323, 330, sizeof(::game::base::TableChatReq)},
-        {332, 339, sizeof(::game::base::TableChatNotify)},
-        {341, 347, sizeof(::game::base::TableChatResp)},
-        {348, 355, sizeof(::game::base::StartGameReq)},
-        {357, 363, sizeof(::game::base::GetTablePlayersInfoReq)},
-        {364, 374, sizeof(::game::base::GetTablePlayersInfoResp)},
-        {379, 386, sizeof(::game::base::CountdownStartNotify)},
-        {388, 394, sizeof(::game::base::CountdownStopNotify)},
-        {395, 403, sizeof(::game::base::GameStartNotify)},
-        {406, 414, sizeof(::game::base::PlayerGiveupNotify)},
-        {417, 428, sizeof(::game::base::GameResultNotify)},
-        {434, 440, sizeof(::game::base::UserSitDownNotify)},
-        {441, 448, sizeof(::game::base::UserStandUpNotify)},
-        {450, 457, sizeof(::game::base::UserLeaveNotify)},
-        {459, 467, sizeof(::game::base::UserDepositChangeNotify)},
-        {470, 481, sizeof(::game::base::MallProduct)},
-        {487, 494, sizeof(::game::base::GetMallProductsReq)},
-        {496, 503, sizeof(::game::base::GetMallProductsResp)},
-        {505, 513, sizeof(::game::base::MallShopingReq)},
-        {516, 524, sizeof(::game::base::MallShopingResp)},
-        {527, 533, sizeof(::game::base::RobotSvrValidateReq)},
-        {534, 540, sizeof(::game::base::RobotSvrValidateResp)},
-        {541, 548, sizeof(::game::base::GetGameUsersReq)},
-        {550, 558, sizeof(::game::base::GetGameUsersResp)},
-        {561, 571, sizeof(::game::base::RS_UserEnterGameNotify)},
-        {576, 585, sizeof(::game::base::RS_SwitchLookerPlayerNotify)},
-        {589, 597, sizeof(::game::base::RS_StartGameNotify)},
-        {600, 609, sizeof(::game::base::RS_UserRefreshResultNotify)},
-        {613, 620, sizeof(::game::base::RS_RefreshResultNotify)},
-        {622, 628, sizeof(::game::base::RS_UserLeaveGameNotify)},
-        {629, 639, sizeof(::game::base::RS_SwitchTableNotify)},
-        {644, 650, sizeof(::game::base::RS_NewRoomNotify)},
+        {9, 24, sizeof(::game::base::RoomData)},
+        {34, 52, sizeof(::game::base::User)},
+        {65, 73, sizeof(::game::base::TableUserInfo)},
+        {76, 85, sizeof(::game::base::ChairInfo)},
+        {89, 104, sizeof(::game::base::Table)},
+        {114, 121, sizeof(::game::base::Room)},
+        {123, 133, sizeof(::game::base::UserResult)},
+        {138, 153, sizeof(::game::base::TablePlayersInfo)},
+        {163, 169, sizeof(::game::base::PulseReq)},
+        {170, 176, sizeof(::game::base::PulseResp)},
+        {177, 190, sizeof(::game::base::EnterNormalGameReq)},
+        {198, 210, sizeof(::game::base::EnterNormalGameResp)},
+        {217, 223, sizeof(::game::base::EnterPrivateGameReq)},
+        {224, 230, sizeof(::game::base::EnterPrivateGameResp)},
+        {231, 237, sizeof(::game::base::EnterMatchGameReq)},
+        {238, 244, sizeof(::game::base::EnterMatchGameResp)},
+        {245, 251, sizeof(::game::base::LeaveGameReq)},
+        {252, 258, sizeof(::game::base::LeaveGameResp)},
+        {259, 265, sizeof(::game::base::GiveUpReq)},
+        {266, 272, sizeof(::game::base::GiveUpResp)},
+        {273, 279, sizeof(::game::base::Looker2PlayerReq)},
+        {280, 287, sizeof(::game::base::Looker2PlayerResp)},
+        {289, 296, sizeof(::game::base::Player2LookerReq)},
+        {298, 304, sizeof(::game::base::Player2LookerResp)},
+        {305, 311, sizeof(::game::base::SwitchTableReq)},
+        {312, 321, sizeof(::game::base::SwitchTableResp)},
+        {325, 332, sizeof(::game::base::TableChatReq)},
+        {334, 341, sizeof(::game::base::TableChatNotify)},
+        {343, 349, sizeof(::game::base::TableChatResp)},
+        {350, 357, sizeof(::game::base::StartGameReq)},
+        {359, 365, sizeof(::game::base::GetTablePlayersInfoReq)},
+        {366, 376, sizeof(::game::base::GetTablePlayersInfoResp)},
+        {381, 388, sizeof(::game::base::CountdownStartNotify)},
+        {390, 396, sizeof(::game::base::CountdownStopNotify)},
+        {397, 405, sizeof(::game::base::GameStartNotify)},
+        {408, 416, sizeof(::game::base::PlayerGiveupNotify)},
+        {419, 430, sizeof(::game::base::GameResultNotify)},
+        {436, 442, sizeof(::game::base::UserSitDownNotify)},
+        {443, 450, sizeof(::game::base::UserStandUpNotify)},
+        {452, 459, sizeof(::game::base::UserLeaveNotify)},
+        {461, 469, sizeof(::game::base::UserDepositChangeNotify)},
+        {472, 483, sizeof(::game::base::MallProduct)},
+        {489, 496, sizeof(::game::base::GetMallProductsReq)},
+        {498, 505, sizeof(::game::base::GetMallProductsResp)},
+        {507, 515, sizeof(::game::base::MallShopingReq)},
+        {518, 526, sizeof(::game::base::MallShopingResp)},
+        {529, 535, sizeof(::game::base::RobotSvrValidateReq)},
+        {536, 542, sizeof(::game::base::RobotSvrValidateResp)},
+        {543, 550, sizeof(::game::base::GetGameUsersReq)},
+        {552, 560, sizeof(::game::base::GetGameUsersResp)},
+        {563, 573, sizeof(::game::base::RS_UserEnterGameNotify)},
+        {578, 587, sizeof(::game::base::RS_SwitchLookerPlayerNotify)},
+        {591, 599, sizeof(::game::base::RS_StartGameNotify)},
+        {602, 611, sizeof(::game::base::RS_UserRefreshResultNotify)},
+        {615, 622, sizeof(::game::base::RS_RefreshResultNotify)},
+        {624, 630, sizeof(::game::base::RS_UserLeaveGameNotify)},
+        {631, 641, sizeof(::game::base::RS_SwitchTableNotify)},
+        {646, 652, sizeof(::game::base::RS_NewRoomNotify)},
     };
 
     static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -2386,134 +2388,134 @@ namespace protobuf_game_5fbase_2eproto {
         InitDefaults();
         static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
             "\n\017game_base.proto\022\tgame.base\"+\n\tBytesDat"
-            "a\022\014\n\004data\030\001 \001(\014\022\020\n\010data_len\030\002 \001(\005\"\307\001\n\010Ro"
+            "a\022\014\n\004data\030\001 \001(\014\022\020\n\010data_len\030\002 \001(\005\"\327\001\n\010Ro"
             "omData\022\016\n\006roomid\030\001 \001(\005\022\017\n\007options\030\002 \001(\005\022"
             "\017\n\007configs\030\003 \001(\005\022\017\n\007manages\030\004 \001(\005\022\026\n\016max"
             "_table_cout\030\005 \001(\005\022\034\n\024chaircount_per_tabl"
             "e\030\006 \001(\005\022\023\n\013min_deposit\030\007 \001(\003\022\023\n\013max_depo"
-            "sit\030\010 \001(\003\022\030\n\020min_player_count\030\t \001(\005\"\361\001\n\004"
-            "User\022\016\n\006userid\030\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\017\n\007"
-            "tableno\030\003 \001(\005\022\017\n\007chairno\030\004 \001(\005\022\021\n\tuser_t"
-            "ype\030\005 \001(\005\022\017\n\007deposit\030\006 \001(\003\022\022\n\ntotal_bout"
-            "\030\007 \001(\005\022\020\n\010win_bout\030\010 \001(\005\022\021\n\tloss_bout\030\t "
-            "\001(\005\022\025\n\roffline_count\030\n \001(\005\022\020\n\010head_url\030\013"
-            " \001(\t\022\016\n\006hardid\030\014 \001(\t\022\021\n\tnick_name\030\r \001(\t\""
-            "J\n\rTableUserInfo\022\016\n\006userid\030\001 \001(\005\022\021\n\tuser"
-            "_type\030\002 \001(\005\022\026\n\016bind_timestamp\030\003 \001(\005\"Z\n\tC"
-            "hairInfo\022\017\n\007chairno\030\001 \001(\005\022\016\n\006userid\030\002 \001("
-            "\005\022\024\n\014chair_status\030\003 \001(\005\022\026\n\016bind_timestam"
-            "p\030\004 \001(\005\"\376\001\n\005Table\022\017\n\007tableno\030\001 \001(\005\022\016\n\006ro"
-            "omid\030\002 \001(\005\022\023\n\013chair_count\030\003 \001(\005\022\024\n\014banke"
-            "r_chair\030\004 \001(\005\022\023\n\013min_deposit\030\005 \001(\003\022\023\n\013ma"
-            "x_deposit\030\006 \001(\003\022\024\n\014base_deposit\030\007 \001(\003\022\024\n"
-            "\014table_status\030\010 \001(\005\022$\n\006chairs\030\t \003(\0132\024.ga"
-            "me.base.ChairInfo\022-\n\013table_users\030\n \003(\0132\030"
-            ".game.base.TableUserInfo\"P\n\004Room\022&\n\troom"
-            "_data\030\001 \001(\0132\023.game.base.RoomData\022 \n\006tabl"
-            "es\030\002 \003(\0132\020.game.base.Table\"e\n\nUserResult"
-            "\022\016\n\006userid\030\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\022\023\n\013old"
-            "_deposit\030\003 \001(\003\022\024\n\014diff_deposit\030\004 \001(\003\022\013\n\003"
-            "fee\030\005 \001(\005\"\221\002\n\020TablePlayersInfo\022\016\n\006roomid"
-            "\030\001 \001(\005\022\030\n\020room_min_deposit\030\002 \001(\003\022\030\n\020room"
-            "_max_deposit\030\003 \001(\003\022\017\n\007tableno\030\004 \001(\005\022\024\n\014t"
-            "able_status\030\005 \001(\005\022\031\n\021table_min_deposit\030\006"
-            " \001(\003\022\031\n\021table_max_deposit\030\007 \001(\003\022\024\n\014base_"
-            "deposit\030\010 \001(\003\022 \n\007players\030\t \003(\0132\017.game.ba"
-            "se.User\022$\n\006chairs\030\n \003(\0132\024.game.base.Chai"
-            "rInfo\"\026\n\010PulseReq\022\n\n\002id\030\001 \001(\005\"\036\n\tPulseRe"
-            "sp\022\021\n\ttimestamp\030\001 \001(\005\"\236\001\n\022EnterNormalGam"
-            "eReq\022\016\n\006userid\030\001 \001(\005\022\016\n\006gameid\030\002 \001(\005\022\016\n\006"
-            "roomid\030\003 \001(\005\022\014\n\004flag\030\004 \001(\005\022\016\n\006target\030\005 \001"
-            "(\005\022\016\n\006hardid\030\006 \001(\t\022\024\n\014hall_version\030\007 \001(\t"
-            "\022\024\n\014game_version\030\010 \001(\t\"\331\001\n\023EnterNormalGa"
-            "meResp\022\014\n\004code\030\001 \001(\005\022\014\n\004flag\030\002 \001(\005\022\"\n\004ha"
-            "nd\030\003 \001(\0132\024.game.base.BytesData\0222\n\rtable_"
-            "players\030\004 \001(\0132\033.game.base.TablePlayersIn"
-            "fo\022\023\n\013custom_flag\030\005 \001(\005\022)\n\013custom_data\030\006"
-            " \001(\0132\024.game.base.BytesData\022\016\n\006gameid\030\007 \001"
-            "(\005\"H\n\023EnterPrivateGameReq\0221\n\nbase_enter\030"
-            "\001 \001(\0132\035.game.base.EnterNormalGameReq\"$\n\024"
-            "EnterPrivateGameResp\022\014\n\004code\030\001 \001(\005\"F\n\021En"
-            "terMatchGameReq\0221\n\nbase_enter\030\001 \001(\0132\035.ga"
-            "me.base.EnterNormalGameReq\"\"\n\022EnterMatch"
-            "GameResp\022\014\n\004code\030\001 \001(\005\"\036\n\014LeaveGameReq\022\016"
-            "\n\006userid\030\001 \001(\005\"\035\n\rLeaveGameResp\022\014\n\004code\030"
-            "\001 \001(\005\"\033\n\tGiveUpReq\022\016\n\006userid\030\001 \001(\005\"\032\n\nGi"
-            "veUpResp\022\014\n\004code\030\001 \001(\005\"\"\n\020Looker2PlayerR"
-            "eq\022\016\n\006userid\030\001 \001(\005\"2\n\021Looker2PlayerResp\022"
-            "\014\n\004code\030\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\"0\n\020Player"
-            "2LookerReq\022\016\n\006userid\030\001 \001(\005\022\014\n\004flag\030\002 \001(\005"
-            "\"!\n\021Player2LookerResp\022\014\n\004code\030\001 \001(\005\" \n\016S"
-            "witchTableReq\022\016\n\006userid\030\001 \001(\005\"\223\001\n\017Switch"
-            "TableResp\022\014\n\004code\030\001 \001(\005\0222\n\rtable_players"
-            "\030\002 \001(\0132\033.game.base.TablePlayersInfo\022\023\n\013c"
-            "ustom_flag\030\003 \001(\005\022)\n\013custom_data\030\004 \001(\0132\024."
-            "game.base.BytesData\"+\n\014TableChatReq\022\016\n\006u"
-            "serid\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t\".\n\017TableChatNot"
-            "ify\022\016\n\006userid\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t\"\035\n\rTabl"
-            "eChatResp\022\014\n\004code\030\001 \001(\005\"/\n\014StartGameReq\022"
-            "\016\n\006roomid\030\001 \001(\005\022\017\n\007tableno\030\002 \001(\005\"(\n\026GetT"
-            "ablePlayersInfoReq\022\016\n\006userid\030\001 \001(\005\"\277\001\n\027G"
-            "etTablePlayersInfoResp\022\014\n\004code\030\001 \001(\005\0222\n\r"
-            "table_players\030\002 \001(\0132\033.game.base.TablePla"
-            "yersInfo\022\023\n\013custom_flag\030\003 \001(\005\022)\n\013custom_"
-            "data\030\004 \001(\0132\024.game.base.BytesData\022\"\n\004hand"
-            "\030\005 \001(\0132\024.game.base.BytesData\"<\n\024Countdow"
-            "nStartNotify\022\017\n\007tableno\030\001 \001(\005\022\023\n\013countdo"
-            "wn_s\030\002 \001(\005\"&\n\023CountdownStopNotify\022\017\n\007tab"
-            "leno\030\001 \001(\005\"[\n\017GameStartNotify\022\017\n\007tableno"
-            "\030\001 \001(\005\022\014\n\004flag\030\002 \001(\005\022)\n\013custom_data\030\003 \001("
-            "\0132\024.game.base.BytesData\"I\n\022PlayerGiveupN"
-            "otify\022\016\n\006userid\030\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\022\022"
-            "\n\nnext_chair\030\003 \001(\005\"\273\001\n\020GameResultNotify\022"
-            "\017\n\007tableno\030\001 \001(\005\022\022\n\nbout_count\030\002 \001(\005\022\024\n\014"
-            "banker_chair\030\003 \001(\005\022\024\n\014base_deposit\030\004 \001(\003"
-            "\022+\n\014user_results\030\005 \003(\0132\025.game.base.UserR"
-            "esult\022)\n\013custom_data\030\006 \001(\0132\024.game.base.B"
-            "ytesData\"2\n\021UserSitDownNotify\022\035\n\004user\030\001 "
-            "\001(\0132\017.game.base.User\"4\n\021UserStandUpNotif"
-            "y\022\016\n\006userid\030\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\"2\n\017Us"
-            "erLeaveNotify\022\016\n\006userid\030\001 \001(\005\022\017\n\007chairno"
-            "\030\002 \001(\005\"T\n\027UserDepositChangeNotify\022\016\n\006use"
-            "rid\030\001 \001(\005\022\024\n\014diff_deposit\030\002 \001(\003\022\023\n\013own_d"
-            "eposit\030\003 \001(\003\"\201\001\n\013MallProduct\022\021\n\tproducti"
-            "d\030\001 \001(\005\022\020\n\010currency\030\002 \001(\005\022\r\n\005price\030\003 \001(\003"
-            "\022\024\n\014product_name\030\004 \001(\t\022\024\n\014product_code\030\005"
-            " \001(\t\022\022\n\nos_support\030\006 \001(\005\"0\n\022GetMallProdu"
-            "ctsReq\022\016\n\006userid\030\001 \001(\005\022\n\n\002os\030\002 \001(\005\"L\n\023Ge"
-            "tMallProductsResp\022\014\n\004code\030\001 \001(\005\022\'\n\007produ"
-            "ct\030\002 \003(\0132\026.game.base.MallProduct\"B\n\016Mall"
-            "ShopingReq\022\016\n\006userid\030\001 \001(\005\022\021\n\tproductid\030"
-            "\002 \001(\005\022\r\n\005count\030\003 \001(\005\"\?\n\017MallShopingResp\022"
-            "\014\n\004code\030\001 \001(\005\022\020\n\010currency\030\002 \001(\005\022\014\n\004cost\030"
-            "\003 \001(\005\"(\n\023RobotSvrValidateReq\022\021\n\tclient_i"
-            "d\030\001 \001(\005\"$\n\024RobotSvrValidateResp\022\014\n\004code\030"
-            "\001 \001(\005\"3\n\017GetGameUsersReq\022\020\n\010clientid\030\001 \001"
-            "(\005\022\016\n\006roomid\030\002 \001(\005\"`\n\020GetGameUsersResp\022\014"
-            "\n\004code\030\001 \001(\005\022\036\n\005rooms\030\002 \003(\0132\017.game.base."
-            "Room\022\036\n\005users\030\003 \003(\0132\017.game.base.User\"\237\001\n"
-            "\026RS_UserEnterGameNotify\022\035\n\004user\030\001 \001(\0132\017."
-            "game.base.User\022&\n\troom_data\030\002 \001(\0132\023.game"
-            ".base.RoomData\022\023\n\013min_deposit\030\003 \001(\003\022\023\n\013m"
-            "ax_deposit\030\004 \001(\003\022\024\n\014base_deposit\030\005 \001(\003\"_"
-            "\n\033RS_SwitchLookerPlayerNotify\022\016\n\006userid\030"
-            "\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\017\n\007tableno\030\003 \001(\005\022\017"
-            "\n\007chairno\030\004 \001(\005\"[\n\022RS_StartGameNotify\022\016\n"
-            "\006roomid\030\001 \001(\005\022\017\n\007tableno\030\002 \001(\005\022$\n\006chairs"
-            "\030\003 \003(\0132\024.game.base.ChairInfo\"^\n\032RS_UserR"
-            "efreshResultNotify\022\016\n\006userid\030\001 \001(\005\022\016\n\006ro"
-            "omid\030\002 \001(\005\022\017\n\007tableno\030\003 \001(\005\022\017\n\007chairno\030\004"
-            " \001(\005\"9\n\026RS_RefreshResultNotify\022\016\n\006roomid"
-            "\030\001 \001(\005\022\017\n\007tableno\030\002 \001(\005\"7\n\026RS_UserLeaveG"
-            "ameNotify\022\035\n\004user\030\001 \001(\0132\017.game.base.User"
-            "\"u\n\024RS_SwitchTableNotify\022\016\n\006userid\030\001 \001(\005"
-            "\022\016\n\006roomid\030\002 \001(\005\022\023\n\013old_tableno\030\003 \001(\005\022\023\n"
-            "\013new_tableno\030\004 \001(\005\022\023\n\013new_chairno\030\005 \001(\005\""
-            "1\n\020RS_NewRoomNotify\022\035\n\004room\030\001 \001(\0132\017.game"
-            ".base.Room"
+            "sit\030\010 \001(\003\022\030\n\020min_player_count\030\t \001(\005\022\016\n\006a"
+            "reaid\030\n \001(\005\"\361\001\n\004User\022\016\n\006userid\030\001 \001(\005\022\016\n\006"
+            "roomid\030\002 \001(\005\022\017\n\007tableno\030\003 \001(\005\022\017\n\007chairno"
+            "\030\004 \001(\005\022\021\n\tuser_type\030\005 \001(\005\022\017\n\007deposit\030\006 \001"
+            "(\003\022\022\n\ntotal_bout\030\007 \001(\005\022\020\n\010win_bout\030\010 \001(\005"
+            "\022\021\n\tloss_bout\030\t \001(\005\022\025\n\roffline_count\030\n \001"
+            "(\005\022\020\n\010head_url\030\013 \001(\t\022\016\n\006hardid\030\014 \001(\t\022\021\n\t"
+            "nick_name\030\r \001(\t\"J\n\rTableUserInfo\022\016\n\006user"
+            "id\030\001 \001(\005\022\021\n\tuser_type\030\002 \001(\005\022\026\n\016bind_time"
+            "stamp\030\003 \001(\005\"Z\n\tChairInfo\022\017\n\007chairno\030\001 \001("
+            "\005\022\016\n\006userid\030\002 \001(\005\022\024\n\014chair_status\030\003 \001(\005\022"
+            "\026\n\016bind_timestamp\030\004 \001(\005\"\376\001\n\005Table\022\017\n\007tab"
+            "leno\030\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\023\n\013chair_coun"
+            "t\030\003 \001(\005\022\024\n\014banker_chair\030\004 \001(\005\022\023\n\013min_dep"
+            "osit\030\005 \001(\003\022\023\n\013max_deposit\030\006 \001(\003\022\024\n\014base_"
+            "deposit\030\007 \001(\003\022\024\n\014table_status\030\010 \001(\005\022$\n\006c"
+            "hairs\030\t \003(\0132\024.game.base.ChairInfo\022-\n\013tab"
+            "le_users\030\n \003(\0132\030.game.base.TableUserInfo"
+            "\"P\n\004Room\022&\n\troom_data\030\001 \001(\0132\023.game.base."
+            "RoomData\022 \n\006tables\030\002 \003(\0132\020.game.base.Tab"
+            "le\"e\n\nUserResult\022\016\n\006userid\030\001 \001(\005\022\017\n\007chai"
+            "rno\030\002 \001(\005\022\023\n\013old_deposit\030\003 \001(\003\022\024\n\014diff_d"
+            "eposit\030\004 \001(\003\022\013\n\003fee\030\005 \001(\005\"\221\002\n\020TablePlaye"
+            "rsInfo\022\016\n\006roomid\030\001 \001(\005\022\030\n\020room_min_depos"
+            "it\030\002 \001(\003\022\030\n\020room_max_deposit\030\003 \001(\003\022\017\n\007ta"
+            "bleno\030\004 \001(\005\022\024\n\014table_status\030\005 \001(\005\022\031\n\021tab"
+            "le_min_deposit\030\006 \001(\003\022\031\n\021table_max_deposi"
+            "t\030\007 \001(\003\022\024\n\014base_deposit\030\010 \001(\003\022 \n\007players"
+            "\030\t \003(\0132\017.game.base.User\022$\n\006chairs\030\n \003(\0132"
+            "\024.game.base.ChairInfo\"\026\n\010PulseReq\022\n\n\002id\030"
+            "\001 \001(\005\"\036\n\tPulseResp\022\021\n\ttimestamp\030\001 \001(\005\"\236\001"
+            "\n\022EnterNormalGameReq\022\016\n\006userid\030\001 \001(\005\022\016\n\006"
+            "gameid\030\002 \001(\005\022\016\n\006roomid\030\003 \001(\005\022\014\n\004flag\030\004 \001"
+            "(\005\022\016\n\006target\030\005 \001(\005\022\016\n\006hardid\030\006 \001(\t\022\024\n\014ha"
+            "ll_version\030\007 \001(\t\022\024\n\014game_version\030\010 \001(\t\"\331"
+            "\001\n\023EnterNormalGameResp\022\014\n\004code\030\001 \001(\005\022\014\n\004"
+            "flag\030\002 \001(\005\022\"\n\004hand\030\003 \001(\0132\024.game.base.Byt"
+            "esData\0222\n\rtable_players\030\004 \001(\0132\033.game.bas"
+            "e.TablePlayersInfo\022\023\n\013custom_flag\030\005 \001(\005\022"
+            ")\n\013custom_data\030\006 \001(\0132\024.game.base.BytesDa"
+            "ta\022\016\n\006gameid\030\007 \001(\005\"H\n\023EnterPrivateGameRe"
+            "q\0221\n\nbase_enter\030\001 \001(\0132\035.game.base.EnterN"
+            "ormalGameReq\"$\n\024EnterPrivateGameResp\022\014\n\004"
+            "code\030\001 \001(\005\"F\n\021EnterMatchGameReq\0221\n\nbase_"
+            "enter\030\001 \001(\0132\035.game.base.EnterNormalGameR"
+            "eq\"\"\n\022EnterMatchGameResp\022\014\n\004code\030\001 \001(\005\"\036"
+            "\n\014LeaveGameReq\022\016\n\006userid\030\001 \001(\005\"\035\n\rLeaveG"
+            "ameResp\022\014\n\004code\030\001 \001(\005\"\033\n\tGiveUpReq\022\016\n\006us"
+            "erid\030\001 \001(\005\"\032\n\nGiveUpResp\022\014\n\004code\030\001 \001(\005\"\""
+            "\n\020Looker2PlayerReq\022\016\n\006userid\030\001 \001(\005\"2\n\021Lo"
+            "oker2PlayerResp\022\014\n\004code\030\001 \001(\005\022\017\n\007chairno"
+            "\030\002 \001(\005\"0\n\020Player2LookerReq\022\016\n\006userid\030\001 \001"
+            "(\005\022\014\n\004flag\030\002 \001(\005\"!\n\021Player2LookerResp\022\014\n"
+            "\004code\030\001 \001(\005\" \n\016SwitchTableReq\022\016\n\006userid\030"
+            "\001 \001(\005\"\223\001\n\017SwitchTableResp\022\014\n\004code\030\001 \001(\005\022"
+            "2\n\rtable_players\030\002 \001(\0132\033.game.base.Table"
+            "PlayersInfo\022\023\n\013custom_flag\030\003 \001(\005\022)\n\013cust"
+            "om_data\030\004 \001(\0132\024.game.base.BytesData\"+\n\014T"
+            "ableChatReq\022\016\n\006userid\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t"
+            "\".\n\017TableChatNotify\022\016\n\006userid\030\001 \001(\005\022\013\n\003m"
+            "sg\030\002 \001(\t\"\035\n\rTableChatResp\022\014\n\004code\030\001 \001(\005\""
+            "/\n\014StartGameReq\022\016\n\006roomid\030\001 \001(\005\022\017\n\007table"
+            "no\030\002 \001(\005\"(\n\026GetTablePlayersInfoReq\022\016\n\006us"
+            "erid\030\001 \001(\005\"\277\001\n\027GetTablePlayersInfoResp\022\014"
+            "\n\004code\030\001 \001(\005\0222\n\rtable_players\030\002 \001(\0132\033.ga"
+            "me.base.TablePlayersInfo\022\023\n\013custom_flag\030"
+            "\003 \001(\005\022)\n\013custom_data\030\004 \001(\0132\024.game.base.B"
+            "ytesData\022\"\n\004hand\030\005 \001(\0132\024.game.base.Bytes"
+            "Data\"<\n\024CountdownStartNotify\022\017\n\007tableno\030"
+            "\001 \001(\005\022\023\n\013countdown_s\030\002 \001(\005\"&\n\023CountdownS"
+            "topNotify\022\017\n\007tableno\030\001 \001(\005\"[\n\017GameStartN"
+            "otify\022\017\n\007tableno\030\001 \001(\005\022\014\n\004flag\030\002 \001(\005\022)\n\013"
+            "custom_data\030\003 \001(\0132\024.game.base.BytesData\""
+            "I\n\022PlayerGiveupNotify\022\016\n\006userid\030\001 \001(\005\022\017\n"
+            "\007chairno\030\002 \001(\005\022\022\n\nnext_chair\030\003 \001(\005\"\273\001\n\020G"
+            "ameResultNotify\022\017\n\007tableno\030\001 \001(\005\022\022\n\nbout"
+            "_count\030\002 \001(\005\022\024\n\014banker_chair\030\003 \001(\005\022\024\n\014ba"
+            "se_deposit\030\004 \001(\003\022+\n\014user_results\030\005 \003(\0132\025"
+            ".game.base.UserResult\022)\n\013custom_data\030\006 \001"
+            "(\0132\024.game.base.BytesData\"2\n\021UserSitDownN"
+            "otify\022\035\n\004user\030\001 \001(\0132\017.game.base.User\"4\n\021"
+            "UserStandUpNotify\022\016\n\006userid\030\001 \001(\005\022\017\n\007cha"
+            "irno\030\002 \001(\005\"2\n\017UserLeaveNotify\022\016\n\006userid\030"
+            "\001 \001(\005\022\017\n\007chairno\030\002 \001(\005\"T\n\027UserDepositCha"
+            "ngeNotify\022\016\n\006userid\030\001 \001(\005\022\024\n\014diff_deposi"
+            "t\030\002 \001(\003\022\023\n\013own_deposit\030\003 \001(\003\"\201\001\n\013MallPro"
+            "duct\022\021\n\tproductid\030\001 \001(\005\022\020\n\010currency\030\002 \001("
+            "\005\022\r\n\005price\030\003 \001(\003\022\024\n\014product_name\030\004 \001(\t\022\024"
+            "\n\014product_code\030\005 \001(\t\022\022\n\nos_support\030\006 \001(\005"
+            "\"0\n\022GetMallProductsReq\022\016\n\006userid\030\001 \001(\005\022\n"
+            "\n\002os\030\002 \001(\005\"L\n\023GetMallProductsResp\022\014\n\004cod"
+            "e\030\001 \001(\005\022\'\n\007product\030\002 \003(\0132\026.game.base.Mal"
+            "lProduct\"B\n\016MallShopingReq\022\016\n\006userid\030\001 \001"
+            "(\005\022\021\n\tproductid\030\002 \001(\005\022\r\n\005count\030\003 \001(\005\"\?\n\017"
+            "MallShopingResp\022\014\n\004code\030\001 \001(\005\022\020\n\010currenc"
+            "y\030\002 \001(\005\022\014\n\004cost\030\003 \001(\005\"(\n\023RobotSvrValidat"
+            "eReq\022\021\n\tclient_id\030\001 \001(\005\"$\n\024RobotSvrValid"
+            "ateResp\022\014\n\004code\030\001 \001(\005\"3\n\017GetGameUsersReq"
+            "\022\020\n\010clientid\030\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\"`\n\020Ge"
+            "tGameUsersResp\022\014\n\004code\030\001 \001(\005\022\036\n\005rooms\030\002 "
+            "\003(\0132\017.game.base.Room\022\036\n\005users\030\003 \003(\0132\017.ga"
+            "me.base.User\"\237\001\n\026RS_UserEnterGameNotify\022"
+            "\035\n\004user\030\001 \001(\0132\017.game.base.User\022&\n\troom_d"
+            "ata\030\002 \001(\0132\023.game.base.RoomData\022\023\n\013min_de"
+            "posit\030\003 \001(\003\022\023\n\013max_deposit\030\004 \001(\003\022\024\n\014base"
+            "_deposit\030\005 \001(\003\"_\n\033RS_SwitchLookerPlayerN"
+            "otify\022\016\n\006userid\030\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\017\n"
+            "\007tableno\030\003 \001(\005\022\017\n\007chairno\030\004 \001(\005\"[\n\022RS_St"
+            "artGameNotify\022\016\n\006roomid\030\001 \001(\005\022\017\n\007tableno"
+            "\030\002 \001(\005\022$\n\006chairs\030\003 \003(\0132\024.game.base.Chair"
+            "Info\"^\n\032RS_UserRefreshResultNotify\022\016\n\006us"
+            "erid\030\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\017\n\007tableno\030\003 "
+            "\001(\005\022\017\n\007chairno\030\004 \001(\005\"9\n\026RS_RefreshResult"
+            "Notify\022\016\n\006roomid\030\001 \001(\005\022\017\n\007tableno\030\002 \001(\005\""
+            "7\n\026RS_UserLeaveGameNotify\022\035\n\004user\030\001 \001(\0132"
+            "\017.game.base.User\"u\n\024RS_SwitchTableNotify"
+            "\022\016\n\006userid\030\001 \001(\005\022\016\n\006roomid\030\002 \001(\005\022\023\n\013old_"
+            "tableno\030\003 \001(\005\022\023\n\013new_tableno\030\004 \001(\005\022\023\n\013ne"
+            "w_chairno\030\005 \001(\005\"1\n\020RS_NewRoomNotify\022\035\n\004r"
+            "oom\030\001 \001(\0132\017.game.base.Room"
         };
         ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-            descriptor, 5010);
+            descriptor, 5026);
         ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
             "game_base.proto", &protobuf_RegisterTypes);
     }
@@ -2842,6 +2844,7 @@ failure:
         const int RoomData::kMinDepositFieldNumber;
         const int RoomData::kMaxDepositFieldNumber;
         const int RoomData::kMinPlayerCountFieldNumber;
+        const int RoomData::kAreaidFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
         RoomData::RoomData()
@@ -2859,16 +2862,16 @@ failure:
             _cached_size_(0) {
             _internal_metadata_.MergeFrom(from._internal_metadata_);
             ::memcpy(&roomid_, &from.roomid_,
-                     static_cast<size_t>(reinterpret_cast<char*>(&min_player_count_) -
-                     reinterpret_cast<char*>(&roomid_)) + sizeof(min_player_count_));
+                     static_cast<size_t>(reinterpret_cast<char*>(&areaid_) -
+                     reinterpret_cast<char*>(&roomid_)) + sizeof(areaid_));
             // @@protoc_insertion_point(copy_constructor:game.base.RoomData)
         }
 
         void RoomData::SharedCtor() {
             _cached_size_ = 0;
             ::memset(&roomid_, 0, static_cast<size_t>(
-                reinterpret_cast<char*>(&min_player_count_) -
-                reinterpret_cast<char*>(&roomid_)) + sizeof(min_player_count_));
+                reinterpret_cast<char*>(&areaid_) -
+                reinterpret_cast<char*>(&roomid_)) + sizeof(areaid_));
         }
 
         RoomData::~RoomData() {
@@ -2913,7 +2916,11 @@ failure:
                     reinterpret_cast<char*>(&max_deposit_) -
                     reinterpret_cast<char*>(&roomid_)) + sizeof(max_deposit_));
             }
-            min_player_count_ = 0;
+            if (cached_has_bits & 768u) {
+                ::memset(&min_player_count_, 0, static_cast<size_t>(
+                    reinterpret_cast<char*>(&areaid_) -
+                    reinterpret_cast<char*>(&min_player_count_)) + sizeof(areaid_));
+            }
             _has_bits_.Clear();
             _internal_metadata_.Clear();
         }
@@ -3054,6 +3061,20 @@ failure:
                         break;
                     }
 
+                            // optional int32 areaid = 10;
+                    case 10: {
+                        if (static_cast<::google::protobuf::uint8>(tag) ==
+                            static_cast<::google::protobuf::uint8>(80u /* 80 & 0xFF */)) {
+                            set_has_areaid();
+                            DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                                ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                                input, &areaid_)));
+                        } else {
+                            goto handle_unusual;
+                        }
+                        break;
+                    }
+
                     default: {
 handle_unusual:
                         if (tag == 0) {
@@ -3126,6 +3147,11 @@ failure:
                 ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->min_player_count(), output);
             }
 
+            // optional int32 areaid = 10;
+            if (cached_has_bits & 0x00000200u) {
+                ::google::protobuf::internal::WireFormatLite::WriteInt32(10, this->areaid(), output);
+            }
+
             if (_internal_metadata_.have_unknown_fields()) {
                 ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
                     _internal_metadata_.unknown_fields(), output);
@@ -3184,6 +3210,11 @@ failure:
             // optional int32 min_player_count = 9;
             if (cached_has_bits & 0x00000100u) {
                 target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(9, this->min_player_count(), target);
+            }
+
+            // optional int32 areaid = 10;
+            if (cached_has_bits & 0x00000200u) {
+                target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(10, this->areaid(), target);
             }
 
             if (_internal_metadata_.have_unknown_fields()) {
@@ -3261,13 +3292,22 @@ failure:
                 }
 
             }
-            // optional int32 min_player_count = 9;
-            if (has_min_player_count()) {
-                total_size += 1 +
-                    ::google::protobuf::internal::WireFormatLite::Int32Size(
-                    this->min_player_count());
-            }
+            if (_has_bits_[8 / 32] & 768u) {
+                // optional int32 min_player_count = 9;
+                if (has_min_player_count()) {
+                    total_size += 1 +
+                        ::google::protobuf::internal::WireFormatLite::Int32Size(
+                        this->min_player_count());
+                }
 
+                // optional int32 areaid = 10;
+                if (has_areaid()) {
+                    total_size += 1 +
+                        ::google::protobuf::internal::WireFormatLite::Int32Size(
+                        this->areaid());
+                }
+
+            }
             int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
             GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
             _cached_size_ = cached_size;
@@ -3325,8 +3365,14 @@ failure:
                 }
                 _has_bits_[0] |= cached_has_bits;
             }
-            if (cached_has_bits & 0x00000100u) {
-                set_min_player_count(from.min_player_count());
+            if (cached_has_bits & 768u) {
+                if (cached_has_bits & 0x00000100u) {
+                    min_player_count_ = from.min_player_count_;
+                }
+                if (cached_has_bits & 0x00000200u) {
+                    areaid_ = from.areaid_;
+                }
+                _has_bits_[0] |= cached_has_bits;
             }
         }
 
@@ -3363,6 +3409,7 @@ failure:
             swap(min_deposit_, other->min_deposit_);
             swap(max_deposit_, other->max_deposit_);
             swap(min_player_count_, other->min_player_count_);
+            swap(areaid_, other->areaid_);
             swap(_has_bits_[0], other->_has_bits_[0]);
             _internal_metadata_.Swap(&other->_internal_metadata_);
             swap(_cached_size_, other->_cached_size_);

@@ -4,10 +4,10 @@
 #include "robot_utils.h"
 #include "robot_define.h"
 #include "user_manager.h"
-#include "deposit_data_manager.h"
-#include "room_manager.h"
+#include "game_net_manager.h"
 
 int RobotNetManager::Init() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
     timer_thread_.Initial(std::thread([this] {this->ThreadTimer(); }));
@@ -16,6 +16,7 @@ int RobotNetManager::Init() {
 }
 
 int RobotNetManager::Term() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     timer_thread_.Release();
     notify_thread_.Release();
@@ -25,7 +26,8 @@ int RobotNetManager::Term() {
     return kCommSucc;
 }
 
-int RobotNetManager::EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno) {
+int RobotNetManager::EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno, std::string game_ip, int game_port) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
 
@@ -45,27 +47,10 @@ int RobotNetManager::EnterGame(const UserID& userid, const RoomID& roomid, const
     }
     if (!is_connected) {
         LOG_ROUTE("connect game", roomid, tableno, userid);
-        const auto game_ip = RobotUtils::GetGameIP();
-        const auto game_port = RobotUtils::GetGamePort();
         if (kCommSucc != robot->Connect(game_ip, game_port, notify_thread_.GetThreadID())) {
             ASSERT_FALSE_RETURN;
         }
     }
-
-    // 发送进入游戏
-    LOG_ROUTE("enter game", roomid, tableno, userid);
-    int64_t deposit = 0;
-    DepositDataMgr.GetDeposit(userid, deposit);
-    int64_t max = 0;
-    int64_t min = 0;
-    RoomMgr.GetTableDepositRange(roomid, tableno, max, min);
-    int64_t room_max = 0;
-    int64_t room_min = 0;
-    RoomMgr.GetRoomDepositRange(room_max, room_min);
-    LOG_INFO("[DEPOSIT] enter game robot userid [%d] roomid [%d] tableno [%d] deposit [%I64d] room_min [%I64d] room_max [%I64d], table deposit min [%I64d] max [%I64d] need robot",
-             userid, roomid, tableno, deposit, room_min, room_max, min, max);
-
-
     return robot->SendEnterGame(roomid, tableno);
 }
 
@@ -78,7 +63,7 @@ int RobotNetManager::SendPulse() {
         auto robot = kv.second;
         const auto timestamp = robot->GetTimeStamp();
         const auto now = std::time(nullptr);
-        if (timestamp - now > RobotPulseInterval) {
+        if (now - timestamp > RobotPulseInterval) {
             robot->SetTimeStamp(now);
             BOOL is_connected = false;
             if (kCommSucc != robot->IsConnected(is_connected)) {
@@ -95,15 +80,18 @@ int RobotNetManager::SendPulse() {
 
 int RobotNetManager::KeepConnection() {
     std::lock_guard<std::mutex> lock(mutex_);
-    //在游戏的机器人才需要重连
     for (auto& kv : robot_map_) {
-        auto userid = kv.first;
-        if (!UserMgr.IsRobotUserExist(userid)) continue;
         auto robot = kv.second;
         if (!robot) {
             ASSERT_FALSE;
             continue;
         }
+
+#ifdef CURRENT_DELAY
+        //"正式版防止大量消息冲击后端服务器 [副作用] 正式版机器人启动较慢"
+        SLEEP_FOR(CurrentDealy);
+#endif
+
         robot->KeepConnection();
     }
     return kCommSucc;
@@ -120,7 +108,7 @@ int RobotNetManager::GetRobotWithLock(const UserID& userid, RobotPtr& robot) con
 }
 
 int RobotNetManager::SetRobotWithLock(const RobotPtr& robot) {
-    CHECK_ROBOT(robot);
+    if (!robot) return kCommFaild;
     robot_map_.insert(std::make_pair(robot->GetUserID(), robot));
     return kCommSucc;
 }
@@ -153,6 +141,10 @@ int RobotNetManager::ThreadTimer() {
 
         if (WAIT_TIMEOUT == dwRet) {
             if (!g_inited) continue;
+            if (!GameMgr.IsGameDataInited()) { // 脏读
+                LOG_WARN("game data has not inited yet");
+                continue;
+            }
             KeepConnection();
             SendPulse();
         }
@@ -161,8 +153,8 @@ int RobotNetManager::ThreadTimer() {
     return kCommSucc;
 }
 
-int RobotNetManager::ThreadNotify() const {
-    LOG_INFO("\t[START] notify thread [%d] started", GetCurrentThreadId());
+int RobotNetManager::ThreadNotify() {
+    LOG_INFO("\t[START] robot notify thread [%d] started", GetCurrentThreadId());
 
     MSG msg = {};
     while (GetMessage(&msg, 0, 0, 0)) {
@@ -170,10 +162,10 @@ int RobotNetManager::ThreadNotify() const {
 
             auto pContext = reinterpret_cast<LPCONTEXT_HEAD>(msg.wParam);
             auto pRequest = reinterpret_cast<LPREQUEST>(msg.lParam);
-            const auto nTokenID = pContext->lTokenID;
             const auto requestid = pRequest->head.nRequest;
+            auto nTokenID = pContext->lTokenID;
 
-            OnNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen, nTokenID);
+            OnNotify(requestid, *pRequest, nTokenID);
 
             SAFE_DELETE(pContext);
             UwlClearRequest(pRequest);
@@ -186,7 +178,7 @@ int RobotNetManager::ThreadNotify() const {
     return kCommSucc;
 }
 
-int RobotNetManager::OnNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size, const TokenID& token_id) const {
+int RobotNetManager::OnNotify(const RequestID& requestid, const REQUEST& request, const TokenID& token_id) {
     RobotPtr robot;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -194,20 +186,41 @@ int RobotNetManager::OnNotify(const RequestID& requestid, void* ntf_data_ptr, co
     }
     if (!robot) return kCommFaild;
 
+    if (UR_SOCKET_ERROR == requestid ||
+        UR_SOCKET_CLOSE == requestid ||
+        GN_GAME_RESULT_TABLE == requestid ||
+        GN_GAME_RESULT_ONEUSER == requestid||
+        GN_USER_DEPOSIT_CHANGE == requestid) {
+        auto token = InvalidTokenID;
+        const auto userid = robot->GetUserID();
+        if (kCommSucc == robot->GetTokenID(token)) {
+            LOG_INFO("robot userid [%d] token [%d] [RECV] requestid [%d] [%s]", userid, token, requestid, REQ_STR(requestid));
+        }
+    }
+
+    if (UR_SOCKET_ERROR != requestid &&
+        UR_SOCKET_CLOSE != requestid) {
+        if (!GameMgr.IsGameDataInited()) {
+            const auto userid = robot->GetUserID();
+            LOG_WARN("game data has inited yet robot userid [%d] requestid [%d] [%s] kExceptionGameDataNotInited", userid, requestid, REQ_STR(requestid));
+            return kExceptionGameDataNotInited;
+        }
+    }
+
     switch (requestid) {
         case UR_SOCKET_ERROR:
         case UR_SOCKET_CLOSE:
-        {
-            LOG_INFO("[RECV] [%d] [%s]", requestid, REQ_STR(requestid));
-
-            auto token = InvalidTokenID;
-            if (kCommSucc != robot->GetTokenID(token)) {
-                LOG_INFO("robot token [%d] [RECV] requestid [%d] [%s]", token, requestid, REQ_STR(requestid));
-            }
-
             robot->OnDisconnect();
-        }
-        break;
+            break;
+        case GN_GAME_RESULT_TABLE:
+            robot->ResultTable(request);
+            break;
+        case GN_GAME_RESULT_ONEUSER:
+            robot->ResultOneUser(request);
+            break;
+        case GN_USER_DEPOSIT_CHANGE:
+            LOG_WARN("NO CASE TO TEST YET, PLZ FIX ME! [GN_USER_DEPOSIT_CHANGE]");
+            break;
         default:
             break;
     }
@@ -215,6 +228,8 @@ int RobotNetManager::OnNotify(const RequestID& requestid, void* ntf_data_ptr, co
 }
 
 int RobotNetManager::SnapShotObjectStatus() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+#ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("robot_notify_thread_ [%d]", notify_thread_.GetThreadID());
     LOG_INFO("robot_heart_timer_thread_ [%d]", timer_thread_.GetThreadID());
@@ -229,7 +244,7 @@ int RobotNetManager::SnapShotObjectStatus() {
         auto token = InvalidTokenID;
         if (kCommSucc != robot->GetTokenID(token))  continue;
 
-        if (UserMgr.IsRobotUserExist(userid)) {
+        if (kCommSucc == UserMgr.IsRobotUserExist(userid)) {
             robot_in_game++;
             in_game_str += "userid";
             in_game_str += "[";
@@ -255,17 +270,14 @@ int RobotNetManager::SnapShotObjectStatus() {
 
     LOG_INFO("all robot [%s]", str.c_str());
     LOG_INFO("robot in game count [%d] [%s]", robot_in_game, in_game_str.c_str());
+#endif
     return kCommSucc;
 }
 
 int RobotNetManager::BriefInfo() const {
+#ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("robot_map_ size [%d]", robot_map_.size());
-    return kCommSucc;
-}
-
-int RobotNetManager::CheckNotInnerThread() {
-    CHECK_NOT_THREAD(notify_thread_);
-    CHECK_NOT_THREAD(timer_thread_);
+#endif
     return kCommSucc;
 }

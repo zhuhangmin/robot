@@ -4,18 +4,15 @@
 #include "setting_manager.h"
 #include "main.h"
 #include "robot_statistic.h"
-#include "deposit_http_manager.h"
 #include "PBReq.h"
 #include "deposit_data_manager.h"
 
 //外部线程调用方法
 
 int RobotHallManager::Init() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
-    if (kCommSucc != CheckNotInnerThread()) {
-        ASSERT_FALSE_RETURN
-    }
 
     auto setting = SettingMgr.GetRobotSettingMap();
     for (auto& kv : setting) {
@@ -34,10 +31,8 @@ int RobotHallManager::Init() {
 }
 
 int RobotHallManager::Term() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    if (kCommSucc != CheckNotInnerThread()) {
-        ASSERT_FALSE_RETURN
-    }
 
     notify_thread_.Release();
     timer_thread_.Release();
@@ -58,11 +53,9 @@ int RobotHallManager::Term() {
 
 
 int RobotHallManager::LogonHall(const UserID& userid) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
-    if (kCommSucc != CheckNotInnerThread()) {
-        ASSERT_FALSE_RETURN;
-    }
 
     HallLogonStatusType status;
     if (kCommSucc == GetLogonStatusWithLock(userid, status)) {
@@ -71,50 +64,11 @@ int RobotHallManager::LogonHall(const UserID& userid) {
         }
     }
 
-    const auto setting = SettingMgr.GetRobotSetting(userid);
-    if (setting.userid == InvalidUserID) ASSERT_FALSE_RETURN;
-    const auto& password = setting.password;
-    const auto& nickname = setting.nickname;
-
-
-    //账号对应robot是否已经生成, 是否已经登入大厅
-    LOGON_USER_V2  logonUser = {};
-    logonUser.nUserID = userid;
-    xyGetHardID(logonUser.szHardID);  // 硬件ID
-    xyGetVolumeID(logonUser.szVolumeID);
-    xyGetMachineID(logonUser.szMachineID);
-    UwlGetSystemVersion(logonUser.dwSysVer);
-    logonUser.nAgentGroupID = RobotAgentGroupID; // 使用888作为组号
-    logonUser.dwLogonFlags |= FLAG_LOGON_INTER | FLAG_LOGON_ROBOT_TOOL;
-    logonUser.nLogonSvrID = 0;
-    logonUser.nHallBuildNO = 20160414;
-    logonUser.nHallNetDelay = 1;
-    logonUser.nHallRunCount = 1;
-    strcpy_s(logonUser.szPassword, sizeof logonUser.szPassword, password.c_str());
-    strcpy_s(logonUser.szUsername, sizeof logonUser.szUsername, nickname.c_str());
-
-    RequestID nResponse;
-    std::shared_ptr<void> pRetData;
-    int nDataLen = sizeof logonUser;
-    const auto result = SendRequestWithLock(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData);
-    if (kCommSucc != result) {
-        ASSERT_FALSE;
-        if (kOperationFailed == result) {
-            LOG_ERROR("hall ResetDataWithLock");
-            ResetDataWithLock();
-        }
-        return result;
-    }
-
-    if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
-        LOG_ERROR("userid  = [%d] GR_LOGON_USER_V2 FAIL", userid);
+    if (kCommSucc != LogonHallWithLock(userid)) {
         ASSERT_FALSE_RETURN;
     }
-
-    SetLogonStatusWithLock(userid, HallLogonStatusType::kLogon);
     return kCommSucc;
 }
-
 
 int RobotHallManager::SetDepositUpdate(const UserID& userid) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -125,6 +79,7 @@ int RobotHallManager::SetDepositUpdate(const UserID& userid) {
 }
 
 int RobotHallManager::GetUserGameInfo(const UserID& userid) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
     if (kCommSucc !=GetUserGameInfoWithLock(userid)) {
@@ -134,19 +89,15 @@ int RobotHallManager::GetUserGameInfo(const UserID& userid) {
 }
 
 int RobotHallManager::GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_ROOMID(roomid);
-    if (kCommSucc != CheckNotInnerThread()) {
-        ASSERT_FALSE_RETURN
-    }
     return GetHallRoomDataWithLock(roomid, hall_room_data);
 }
 
 int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    if (kCommSucc != CheckNotInnerThread()) {
-        ASSERT_FALSE_RETURN
-    }
 
     HallLogonMap temp_map;
     for (auto& kv : logon_status_map_) {
@@ -170,12 +121,13 @@ int RobotHallManager::GetRandomNotLogonUserID(UserID& random_userid) {
     return kCommSucc;
 }
 
+// 银子更新队列中 COPY 允许脏读
 RobotUserIDMap RobotHallManager::GetUpdateDepositMap() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return update_depost_map_;
 }
 
 int RobotHallManager::SetLogonStatus(const UserID& userid, const HallLogonStatusType& status) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     return SetLogonStatusWithLock(userid, status);
 }
@@ -189,7 +141,7 @@ int RobotHallManager::ThreadNotify() {
             auto pRequest = reinterpret_cast<LPREQUEST>(msg.lParam);
             const auto requestid = pRequest->head.nRequest;
 
-            OnHallNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen);
+            OnNotify(requestid, pRequest->pDataPtr, pRequest->nDataLen);
 
             SAFE_DELETE(pContext);
             UwlClearRequest(pRequest);
@@ -202,7 +154,7 @@ int RobotHallManager::ThreadNotify() {
     return kCommSucc;
 }
 
-int RobotHallManager::OnHallNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size) {
+int RobotHallManager::OnNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size) {
     CHECK_REQUESTID(requestid);
     if (requestid != PB_NOTIFY_TO_CLIENT) {
         if (connection_) {
@@ -232,7 +184,8 @@ int RobotHallManager::OnHallNotify(const RequestID& requestid, void* ntf_data_pt
 int RobotHallManager::OnDisconnect() {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_THREAD(notify_thread_);
-    LOG_WARN("OnDisconnect Hall");
+    ResetDataWithLock();
+    LOG_WARN("OnDisconnect Game Info");
     return kCommSucc;
 }
 
@@ -240,7 +193,7 @@ int RobotHallManager::SendPulse() {
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_THREAD(timer_thread_);
     const auto now = std::time(nullptr);
-    if (timestamp_ - now > HallPulseInterval) {
+    if (now - timestamp_ > HallPulseInterval) {
         timestamp_ = now;
         HALLUSER_PULSE hp;
         hp.nUserID = 0;
@@ -286,12 +239,6 @@ int RobotHallManager::ThreadTimer() {
 
             SendPulse();
 
-            const auto now = std::time(nullptr);
-            if (room_data_timestamp_ - now > GetAllRoomDataInterval) {
-                room_data_timestamp_ = now;
-                SendGetAllRoomData();
-            }
-
             SendUpdateUserDeposit();
         }
     }
@@ -306,8 +253,26 @@ int RobotHallManager::SendUpdateUserDeposit() {
         copy_map = update_depost_map_;
     }
     for (const auto& kv : copy_map) {
+#ifdef CURRENT_DELAY
+        //"正式版防止大量消息冲击后端服务器 [副作用] 正式版机器人启动较慢"
+        SLEEP_FOR(CurrentDealy);
+#endif
         const auto userid = kv.first;
+        //所有机器人大厅连接共用一个，防止某些机器人不在setting不发心跳
+        //每次刷新硬件码
+        if (kCommSucc != LogonHallWithLock(userid)) {
+            {// 操作失败 需要从队列中移除
+                std::lock_guard<std::mutex> lock(mutex_);
+                update_depost_map_.erase(userid);
+            }
+            continue;
+        }
+
         if (kCommSucc != GetUserGameInfoWithLock(userid)) {
+            {// 操作失败 需要从队列中移除
+                std::lock_guard<std::mutex> lock(mutex_);
+                update_depost_map_.erase(userid);
+            }
             continue;
         }
 
@@ -366,11 +331,11 @@ int RobotHallManager::SendRequestWithLock(const RequestID& requestid, int& data_
         return result;
     }
 
-    if (requestid != GR_HALLUSER_PULSE &&
-        requestid != GR_LOGON_USER_V2 &&
+    if (requestid != GR_LOGON_USER_V2 &&
+        //requestid != GR_HALLUSER_PULSE &&
         requestid != GR_GET_ROOM &&
         requestid != MR_QUERY_USER_GAMEINFO) {
-        LOG_INFO("connection [%x] [SEND] requestid [%d] [%s]", connection_.get(), requestid, REQ_STR(requestid));
+        LOG_INFO("hall [SEND] requestid [%d] [%s]", requestid, REQ_STR(requestid));
     }
 
     data_size = Response.nDataLen;
@@ -461,10 +426,6 @@ int RobotHallManager::SendGetRoomDataWithLock(const RoomID& roomid) {
 }
 
 int RobotHallManager::GetUserGameInfoWithLock(const UserID& userid) {
-    /*if (kCommSucc != CheckNotInnerThread()) {
-        ASSERT_FALSE_RETURN;
-        }
-        */
     // 只拉去机器人列表中的
     auto exist = false;
     if (kCommSucc != SettingMgr.IsRobotSettingExist(userid, exist)) {
@@ -556,7 +517,7 @@ int RobotHallManager::ResetDataWithLock() {
 int RobotHallManager::KeepConnection() {
     std::lock_guard<std::mutex> lock(mutex_);
     if (need_reconnect_) {
-        return ResetDataWithLock();
+        return InitDataWithLock();
     }
     return kCommSucc;
 }
@@ -568,7 +529,55 @@ bool RobotHallManager::IsInDepositUpdateProcess(const UserID& userid) {
     return false;
 }
 
+int RobotHallManager::LogonHallWithLock(const UserID& userid) {
+
+    const auto setting = SettingMgr.GetRobotSetting(userid);
+    if (setting.userid == InvalidUserID) ASSERT_FALSE_RETURN;
+    const auto& password = setting.password;
+    const auto& nickname = setting.nickname;
+
+
+    //账号对应robot是否已经生成, 是否已经登入大厅
+    LOGON_USER_V2  logonUser = {};
+    logonUser.nUserID = userid;
+    xyGetHardID(logonUser.szHardID);  // 硬件ID
+    xyGetVolumeID(logonUser.szVolumeID);
+    xyGetMachineID(logonUser.szMachineID);
+    UwlGetSystemVersion(logonUser.dwSysVer);
+    logonUser.nAgentGroupID = RobotAgentGroupID; // 使用888作为组号
+    logonUser.dwLogonFlags |= FLAG_LOGON_INTER | FLAG_LOGON_ROBOT_TOOL;
+    logonUser.nLogonSvrID = 0;
+    logonUser.nHallBuildNO = 20160414;
+    logonUser.nHallNetDelay = 1;
+    logonUser.nHallRunCount = 1;
+    strcpy_s(logonUser.szPassword, sizeof logonUser.szPassword, password.c_str());
+    strcpy_s(logonUser.szUsername, sizeof logonUser.szUsername, nickname.c_str());
+
+    RequestID nResponse;
+    std::shared_ptr<void> pRetData;
+    int nDataLen = sizeof logonUser;
+    const auto result = SendRequestWithLock(GR_LOGON_USER_V2, nDataLen, &logonUser, nResponse, pRetData);
+    if (kCommSucc != result) {
+        ASSERT_FALSE;
+        if (kOperationFailed == result) {
+            LOG_ERROR("hall ResetDataWithLock");
+            ResetDataWithLock();
+        }
+        return result;
+    }
+
+    if (!(nResponse == GR_LOGON_SUCCEEDED || nResponse == GR_LOGON_SUCCEEDED_V2)) {
+        LOG_ERROR("userid  = [%d] GR_LOGON_USER_V2 FAIL", userid);
+        ASSERT_FALSE_RETURN;
+    }
+
+    SetLogonStatusWithLock(userid, HallLogonStatusType::kLogon);
+    return kCommSucc;
+}
+
 int RobotHallManager::SnapShotObjectStatus() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+#ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     TCHAR szHallSvrIP[MAX_SERVERIP_LEN] = {};
     GetPrivateProfileString(_T("hall_server"), _T("ip"), _T(""), szHallSvrIP, sizeof szHallSvrIP, g_szIniFile);
@@ -620,11 +629,13 @@ int RobotHallManager::SnapShotObjectStatus() {
 
     LOG_INFO("on [%d] off [%d] unknow [%d]", status_on_count, status_off_count, status_unknow_count);
     LOG_INFO(" [%s]", str.c_str());
-
+#endif
     return kCommSucc;
 }
 
 int RobotHallManager::BriefInfo() const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+#ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("hall_logon_status_map_ size [%d]", logon_status_map_.size());
     auto status_on_count = 0;
@@ -657,12 +668,6 @@ int RobotHallManager::BriefInfo() const {
 
     LOG_INFO("on [%d] off [%d] unknow [%d]", status_on_count, status_off_count, status_unknow_count);
     LOG_INFO(" [%s]", str.c_str());
-    return kCommSucc;
-}
-
-
-int RobotHallManager::CheckNotInnerThread() {
-    CHECK_NOT_THREAD(notify_thread_);
-    CHECK_NOT_THREAD(timer_thread_);
+#endif
     return kCommSucc;
 }

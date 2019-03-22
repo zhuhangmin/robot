@@ -688,6 +688,13 @@ class RoomData : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::int32 min_player_count() const;
   void set_min_player_count(::google::protobuf::int32 value);
 
+  // optional int32 areaid = 10;
+  bool has_areaid() const;
+  void clear_areaid();
+  static const int kAreaidFieldNumber = 10;
+  ::google::protobuf::int32 areaid() const;
+  void set_areaid(::google::protobuf::int32 value);
+
   // @@protoc_insertion_point(class_scope:game.base.RoomData)
  private:
   void set_has_roomid();
@@ -708,6 +715,8 @@ class RoomData : public ::google::protobuf::Message /* @@protoc_insertion_point(
   void clear_has_max_deposit();
   void set_has_min_player_count();
   void clear_has_min_player_count();
+  void set_has_areaid();
+  void clear_has_areaid();
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::HasBits<1> _has_bits_;
@@ -721,6 +730,7 @@ class RoomData : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::int64 min_deposit_;
   ::google::protobuf::int64 max_deposit_;
   ::google::protobuf::int32 min_player_count_;
+  ::google::protobuf::int32 areaid_;
   friend struct ::protobuf_game_5fbase_2eproto::TableStruct;
   friend void ::protobuf_game_5fbase_2eproto::InitDefaultsRoomDataImpl();
 };
@@ -8556,6 +8566,30 @@ inline void RoomData::set_min_player_count(::google::protobuf::int32 value) {
   set_has_min_player_count();
   min_player_count_ = value;
   // @@protoc_insertion_point(field_set:game.base.RoomData.min_player_count)
+}
+
+// optional int32 areaid = 10;
+inline bool RoomData::has_areaid() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void RoomData::set_has_areaid() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void RoomData::clear_has_areaid() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void RoomData::clear_areaid() {
+  areaid_ = 0;
+  clear_has_areaid();
+}
+inline ::google::protobuf::int32 RoomData::areaid() const {
+  // @@protoc_insertion_point(field_get:game.base.RoomData.areaid)
+  return areaid_;
+}
+inline void RoomData::set_areaid(::google::protobuf::int32 value) {
+  set_has_areaid();
+  areaid_ = value;
+  // @@protoc_insertion_point(field_set:game.base.RoomData.areaid)
 }
 
 // -------------------------------------------------------------------

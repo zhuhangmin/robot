@@ -24,6 +24,12 @@ public:
     // 连接保活
     int KeepConnection();
 
+    // 单人结算
+    int ResultOneUser(const REQUEST &request);
+
+    // 正桌结算
+    int ResultTable(const REQUEST &request);
+
 public:
     // 属性接口
     UserID GetUserID() const;

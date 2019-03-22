@@ -3,9 +3,9 @@
 
 class RobotHallManager : public ISingletion<RobotHallManager> {
 public:
-    // 无WithLock后缀函数：如果方法有多线程可见数据 一般都需要加锁，除非业务层次允许脏读
+    // 无WithLock后缀函数：方法中有多线程可见数据,一般都需要加锁，除非业务层次允许脏读
     // 组合 lock + WithLock 函数组合而成, 保证不会获得多次mutex，std::mutex 为非递归锁
-    // 只对外部线程可见
+    // 只对外部线程可见 主线程 和 启动线程
     int Init();
 
     int Term();
@@ -28,7 +28,7 @@ public:
     // 随机选择没有登陆大厅的机器人
     int GetRandomNotLogonUserID(UserID& random_userid);
 
-    // 银子更新队列中 COPY
+    // 银子更新队列中 COPY 允许脏读
     RobotUserIDMap GetUpdateDepositMap() const;
 
 private:
@@ -42,7 +42,7 @@ private:
     int ThreadNotify();
 
     // 大厅 消息处理
-    int OnHallNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size);
+    int OnNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size);
 
     // 大厅 断开链接
     int OnDisconnect();
@@ -94,16 +94,15 @@ private:
     // 是否在银子更新队列中
     bool IsInDepositUpdateProcess(const UserID& userid);
 
+    // 大厅 登陆
+    int LogonHallWithLock(const UserID& userid);
+
 public:
     // 非业务 调试函数
     // 对象状态快照
     int SnapShotObjectStatus();
 
     int BriefInfo() const;
-
-private:
-    // 方法的线程可见性检查
-    int CheckNotInnerThread();
 
 protected:
     SINGLETION_CONSTRUCTOR(RobotHallManager);

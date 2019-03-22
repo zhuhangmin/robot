@@ -2,16 +2,27 @@
 #include "robot_define.h"
 class RobotStatistic : public ISingletion<RobotStatistic> {
 public:
-    void Event(const EventType& type, const EventKey& key);
+    // 埋点
+    int Event(const EventType& type, const EventKey& key);
 
-    void SnapShotObjectStatus();
+    int SnapShotObjectStatus();
+
+    // 运行时信息
+    int RobotStatistic::ProcessStatus();
 protected:
     SINGLETION_CONSTRUCTOR(RobotStatistic);
 
 private:
+    // 数据锁
     std::mutex mutex_;
+
+    // 发送消息统计
     SendMsgCountMap send_msg_count_map;
+
+    // 通知消息统计
     RecvNtfCountMap recv_msg_count_map;
+
+    // 消息错误统计
     ErrorCountMap error_msg_count_map;
 };
 

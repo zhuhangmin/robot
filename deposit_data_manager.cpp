@@ -3,12 +3,14 @@
 #include "robot_utils.h"
 
 int DepositDataManager::Init() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
     return kCommSucc;
 }
 
 int DepositDataManager::Term() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     user_game_info_map_.clear();
     LOG_INFO_FUNC("[EXIT]");
@@ -29,6 +31,7 @@ UserGameInfoMap DepositDataManager::GetUserGameDataMap() const {
 
 
 int DepositDataManager::GetDeposit(const int& userid, int64_t& deposit) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
     if (kCommSucc != GetDepositWithLock(userid, deposit)) {
@@ -77,15 +80,14 @@ int DepositDataManager::SetDepositWithLock(const int& userid, const int64_t& dep
     CHECK_USERID(userid);
     CHECK_DEPOSIT(deposit);
     const auto iter = user_game_info_map_.find(userid);
-    if (iter != user_game_info_map_.end()) {
-        user_game_info_map_[userid].nDeposit = deposit;
-        LOG_INFO("[DEPOSIT] userid [%d] deposit [%I64d]", userid, deposit);
-        return kCommSucc;
-    }
-    return kCommFaild;
+    user_game_info_map_[userid].nDeposit = deposit;
+    LOG_INFO("[DEPOSIT] userid [%d] deposit [%I64d]", userid, deposit);
+    return kCommSucc;
 }
 
 int DepositDataManager::SnapShotObjectStatus() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+#ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("user_game_info_map_ size [%d]", user_game_info_map_.size());
     for (auto& kv : user_game_info_map_) {
@@ -93,6 +95,6 @@ int DepositDataManager::SnapShotObjectStatus() {
         const auto game_info = kv.second;
         LOG_INFO("robot userid [%d] deposit [%I64d]", userid, game_info.nDeposit);
     }
-
+#endif
     return kCommSucc;
 }

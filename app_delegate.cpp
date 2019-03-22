@@ -7,20 +7,16 @@
 #include "deposit_http_manager.h"
 #include "robot_hall_manager.h"
 #include "robot_utils.h"
-#include "user_manager.h"
-#include "room_manager.h"
+//!!警告 请勿include 任何 data_manager 和 data 头文件
+//!!会引起死锁问题
+//!!只使用io_manager对象 setting 和 robotutils
 #include "deposit_data_manager.h"
+#include "user_manager.h"
 
 int AppDelegate::InitLanuch() const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     LOG_INFO_FUNC("\t[START]");
     g_hExitServer = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-    TCHAR szFullName[MAX_PATH];
-    GetModuleFileName(GetModuleHandle(NULL), szFullName, sizeof szFullName);
-    UwlSplitPath(szFullName, SPLIT_DRIVE_DIR, g_szIniFile);
-    g_curExePath = g_szIniFile;
-    lstrcat(g_szIniFile, "RobotTool");
-    lstrcat(g_szIniFile, _T(".ini"));
 
     TCHAR szPID[32];
     sprintf_s(szPID, _T("%d"), GetCurrentProcessId());
@@ -37,6 +33,7 @@ int AppDelegate::InitLanuch() const {
 }
 
 int AppDelegate::Init() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     LOG_INFO_FUNC("\t[START]");
     if (S_FALSE == CoInitialize(NULL))
         ASSERT_FALSE_RETURN;
@@ -98,12 +95,15 @@ int AppDelegate::Init() {
     // 请在【ThreadMainProc 单线程】实现调度
     // 无业务锁情况下，多线程构建业务会出现线程竞争问题
     timer_thread_.Initial(std::thread([this] {this->ThreadMainProc(); }));
+    ThreadID main_thread_id = timer_thread_.GetThreadID();
+    CHECK_THREADID(main_thread_id);
+    g_mainThreadID = main_thread_id;
 
     // 当前数据状态
     SettingMgr.BriefInfo();
     RobotMgr.BriefInfo();
     HallMgr.BriefInfo();
-    UserMgr.BriefInfo();
+    GameMgr.BriefInfo();
     DepositHttpMgr.SnapShotObjectStatus();
 
     // 初始化完毕
@@ -115,6 +115,7 @@ int AppDelegate::Init() {
 }
 
 int AppDelegate::Term() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     SetEvent(g_hExitServer);
 
     g_inited = false;
@@ -137,7 +138,6 @@ int AppDelegate::Term() {
 }
 
 int AppDelegate::ThreadMainProc() {
-
     LOG_INFO("\t[START] main timer thread [%d] started", GetCurrentThreadId());
 
     while (true) {
@@ -146,8 +146,14 @@ int AppDelegate::ThreadMainProc() {
             break;
         }
         if (WAIT_TIMEOUT == dwRet) {
-            if (!g_inited) continue;
-            if (!GameMgr.IsGameDataInited()) continue;
+            if (!g_inited) {
+                DEBUG_FUNC;
+                continue;
+            }
+            if (!GameMgr.IsGameDataInited()) {
+                DEBUG_FUNC;
+                continue;
+            };
 
             // 业务主流程
             MainProcess();
@@ -159,12 +165,18 @@ int AppDelegate::ThreadMainProc() {
 }
 
 int AppDelegate::MainProcess() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+    DEBUG_FUNC;
     // 获得需要匹配机器人的用户集合
     UserMap need_user_map;
     if (kCommSucc != GetRoomNeedUserMap(need_user_map)) ASSERT_FALSE_RETURN;
-    if (need_user_map.empty()) return kCommSucc;
+    if (need_user_map.empty()) {
+        DEBUG_FUNC;
+        return kCommSucc;
+    }
 
     // 机器人同步阻塞进入所有指定房间桌子
+    DEBUG_FUNC;
     for (auto& kv : need_user_map) {
         const auto userid = kv.first;
         const auto roomid = kv.second->get_room_id();
@@ -172,10 +184,10 @@ int AppDelegate::MainProcess() {
 
         int64_t max = 0;
         int64_t min = 0;
-        RoomMgr.GetTableDepositRange(roomid, tableno, max, min);
+        GameMgr.GetTableDepositRange(roomid, tableno, max, min);
         int64_t room_max = 0;
         int64_t room_min = 0;
-        RoomMgr.GetRoomDepositRange(room_max, room_min);
+        GameMgr.GetRoomDepositRange(room_max, room_min);
         LOG_INFO("[DEPOSIT] user [%d] roomid [%d] tableno [%d] chairno [%d], room_min [%I64d] room_max [%I64d], table deposit min [%I64d] max [%I64d] need robot",
                  userid, roomid, tableno, kv.second->get_chair_no(), room_min, room_max, min, max);
 
@@ -209,24 +221,43 @@ int AppDelegate::MainProcess() {
             if (kHall_InOtherGame == result) {
                 return result;
             }
-            ASSERT_FALSE_RETURN;
+            if (kHall_UserNotLogon == result) {
+                return result;
+            }
+            ASSERT_FALSE;
             continue;
         }
     }
-
+    DEBUG_FUNC;
     return kCommSucc;
 }
 
 int AppDelegate::RobotProcess(const UserID& userid, const RoomID& roomid, const TableNO& tableno) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     LOG_ROUTE("beg", roomid, InvalidTableNO, userid);
     CHECK_USERID(userid);
     CHECK_ROOMID(roomid);
     CHECK_ROOMID(tableno);
 
+    // 登陆大厅
     if (kCommSucc != LogonHall(userid)) {
         ASSERT_FALSE_RETURN;
     }
 
+    // LOG
+    LOG_ROUTE("enter game", roomid, tableno, userid);
+    int64_t deposit = 0;
+    DepositDataMgr.GetDeposit(userid, deposit);
+    int64_t max = 0;
+    int64_t min = 0;
+    GameMgr.GetTableDepositRange(roomid, tableno, max, min);
+    int64_t room_max = 0;
+    int64_t room_min = 0;
+    GameMgr.GetRoomDepositRange(room_max, room_min);
+    LOG_INFO("[DEPOSIT] enter game robot userid [%d] roomid [%d] tableno [%d] robot current deposit [%I64d] room_min [%I64d] room_max [%I64d], table deposit min [%I64d] max [%I64d] need robot",
+             userid, roomid, tableno, deposit, room_min, room_max, min, max);
+
+    // 进入游戏
     const auto result = EnterGame(userid, roomid, tableno);
     if (kCommSucc != result) {
         if (kTooLessDeposit == result || kTooMuchDeposit == result) {
@@ -238,6 +269,9 @@ int AppDelegate::RobotProcess(const UserID& userid, const RoomID& roomid, const 
         if (kHall_InOtherGame == result) {
             return result;
         }
+        if (kHall_UserNotLogon == result) {
+            return result;
+        }
         ASSERT_FALSE_RETURN;
     }
 
@@ -245,6 +279,7 @@ int AppDelegate::RobotProcess(const UserID& userid, const RoomID& roomid, const 
 }
 
 int AppDelegate::LogonHall(const UserID& userid) const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     CHECK_USERID(userid);
     LOG_ROUTE("LogonHall", InvalidRoomID, InvalidTableNO, userid);
 
@@ -255,6 +290,7 @@ int AppDelegate::LogonHall(const UserID& userid) const {
 }
 
 int AppDelegate::GetUserGameInfo(const UserID& userid) const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     CHECK_USERID(userid);
     LOG_ROUTE("GetUserGameInfo", InvalidRoomID, InvalidTableNO, userid);
 
@@ -265,21 +301,23 @@ int AppDelegate::GetUserGameInfo(const UserID& userid) const {
 }
 
 int AppDelegate::EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+    DEBUG_FUNC;
     CHECK_USERID(userid);
     CHECK_ROOMID(roomid);
     CHECK_TABLENO(tableno);
 
     LOG_ROUTE("enter game", roomid, tableno, userid);
-    const auto result = RobotMgr.EnterGame(userid, roomid, tableno);
+    const auto game_ip = RobotUtils::GetGameIP();
+    const auto game_port = RobotUtils::GetGamePort();
+    const auto result = RobotMgr.EnterGame(userid, roomid, tableno, game_ip, game_port);
 
     // 进游戏失败错误处理
     if (kCommSucc !=result) {
         LOG_ERROR("SendEnterGame resp error result [%d] str [%s], roomid [%d] userid [%d]", result, ERR_STR(result), roomid, userid);
         if (kTooLessDeposit == result) {
-            return kTooLessDeposit;
 
         } else if (kTooMuchDeposit == result) {
-            return kTooMuchDeposit;
 
         } else if (kHall_InOtherGame == result) {
             LOG_WARN("userid [%d] kHall_InOtherGame, add to filter list", userid);
@@ -315,13 +353,14 @@ int AppDelegate::EnterGame(const UserID& userid, const RoomID& roomid, const Tab
 }
 
 int AppDelegate::GetRandomQualifiedRobotUserID(const RoomID& roomid, const TableNO& tableno, UserID& random_userid) const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     // 过滤 不在游戏的机器人
     // 在游戏的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
     RobotUserIDMap not_logon_game_temp;
     auto robot_setting = SettingMgr.GetRobotSettingMap();
     for (auto& kv : robot_setting) {
         auto userid = kv.first;
-        if (UserMgr.IsRobotUserExist(userid)) {
+        if (kCommSucc == UserMgr.IsRobotUserExist(userid)) {
             LOG_DEBUG("robot userid [%d] in game", userid);
             continue;
         }
@@ -438,6 +477,8 @@ int AppDelegate::GetRandomQualifiedRobotUserID(const RoomID& roomid, const Table
 }
 
 int AppDelegate::GetRoomNeedUserMap(UserMap& need_user_map) {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+    DEBUG_FUNC;
     const int now = std::time(nullptr);
     const auto room_setting_map = SettingMgr.GetRoomSettingMap();
 
@@ -464,7 +505,7 @@ int AppDelegate::GetRoomNeedUserMap(UserMap& need_user_map) {
 
             // 判断桌上机器人是否达到了配置数量 
             auto robot_count_on_chair = 0;
-            if (kCommSucc != RoomMgr.GetRobotCountOnChairs(roomid, tableno, robot_count_on_chair)) {
+            if (kCommSucc != GameMgr.GetRobotCountOnChairs(roomid, tableno, robot_count_on_chair)) {
                 ASSERT_FALSE;
                 continue;
             }
@@ -477,7 +518,7 @@ int AppDelegate::GetRoomNeedUserMap(UserMap& need_user_map) {
 
             // 判断玩家等待时间，超过配置等待阈值
             ChairInfo info;
-            const auto result = RoomMgr.GetChairInfo(roomid, tableno, userid, info);
+            const auto result = GameMgr.GetChairInfo(roomid, tableno, userid, info);
             if (kCommSucc != result) {
                 if (kExceptionUserNotOnChair == result) {
                     continue;
@@ -506,6 +547,7 @@ int AppDelegate::GetRoomNeedUserMap(UserMap& need_user_map) {
 }
 
 int AppDelegate::GetWaittingUser(UserMap& filter_user_map) const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     // 获取真实玩家集合 
     UserMap normal_user_map;
     if (kCommSucc != UserMgr.GetNormalUserMap(normal_user_map)) {
@@ -520,20 +562,20 @@ int AppDelegate::GetWaittingUser(UserMap& filter_user_map) const {
         const auto roomid = user->get_room_id();
 
         if (0 == tableno || 0 == roomid) {
-            //LOG_WARN("userid [%d] tableno [%d] roomid [%d]", userid, tableno, roomid);
+            LOG_DEBUG("userid [%d] tableno [%d] roomid [%d]", userid, tableno, roomid);
             continue;
         }
 
         // 过滤已开局
         auto is_playing = true;
-        if (kCommSucc != RoomMgr.IsTablePlaying(roomid, tableno, is_playing)) {
+        if (kCommSucc != GameMgr.IsTablePlaying(roomid, tableno, is_playing)) {
             continue;
         }
         if (is_playing) continue;
 
         // 过滤非等待玩家
         ChairInfo info;
-        const auto result = RoomMgr.GetChairInfo(roomid, tableno, userid, info);
+        const auto result = GameMgr.GetChairInfo(roomid, tableno, userid, info);
         if (kCommSucc != result) {
             if (kExceptionUserNotOnChair == result) {
                 continue;
@@ -548,13 +590,13 @@ int AppDelegate::GetWaittingUser(UserMap& filter_user_map) const {
 
         // 过滤桌已经达到了最小开桌人数
         auto normal_count_on_chair = 0;
-        if (kCommSucc != RoomMgr.GetNormalCountOnChairs(roomid, tableno, normal_count_on_chair)) {
+        if (kCommSucc != GameMgr.GetNormalCountOnChairs(roomid, tableno, normal_count_on_chair)) {
             ASSERT_FALSE;
             continue;
         }
 
         auto min_playercount_per_table = 0;
-        if (kCommSucc != RoomMgr.GetMiniPlayers(roomid, min_playercount_per_table)) {
+        if (kCommSucc != GameMgr.GetMiniPlayers(roomid, min_playercount_per_table)) {
             ASSERT_FALSE;
             continue;
         }
@@ -571,6 +613,7 @@ int AppDelegate::GetWaittingUser(UserMap& filter_user_map) const {
 }
 
 int AppDelegate::ConnectHallForAllRobot() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     LOG_INFO_FUNC("\t[START]");
     const auto robot_map = SettingMgr.GetRobotSettingMap();
     for (auto& kv : robot_map) {
@@ -580,9 +623,9 @@ int AppDelegate::ConnectHallForAllRobot() {
             continue;
         }
 
-#ifndef _DEBUG
-        LOG_WARN("正式版防止大量消息冲击后端服务器 [副作用] 正式版机器人启动较慢");
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+#ifdef CURRENT_DELAY
+        //"正式版防止大量消息冲击后端服务器 [副作用] 正式版机器人启动较慢"
+        SLEEP_FOR(CurrentDealy);
 #endif
 
         // 登陆
@@ -596,16 +639,22 @@ int AppDelegate::ConnectHallForAllRobot() {
         if (kCommSucc != GetUserGameInfo(userid)) {
             LOG_ERROR("userid [userid] ConnectHallForAllRobot failed", userid);
             ASSERT_FALSE;
-            continue;
         }
     }
     return kCommSucc;
 }
 
 int AppDelegate::ConnectGameForRobotInGame() {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     LOG_INFO_FUNC("\t[START]");
     const auto users = UserMgr.GetAllUsers();
     for (auto& kv : users) {
+
+#ifdef CURRENT_DELAY
+        //"正式版防止大量消息冲击后端服务器 [副作用] 正式版机器人启动较慢"
+        SLEEP_FOR(CurrentDealy);
+#endif
+
         auto userid = kv.first;
         if (kCommSucc != RobotUtils::IsValidUserID(userid)) {
             ASSERT_FALSE;
@@ -642,17 +691,17 @@ int AppDelegate::ConnectGameForRobotInGame() {
                 continue;
             }
             ASSERT_FALSE;
-            continue;
         }
     }
     return kCommSucc;
 }
 
 int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game_temp) const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     if (not_logon_game_temp.empty()) return kCommFaild;
     int64_t max = 0;
     int64_t min = 0;
-    if (kCommSucc != RoomMgr.GetRoomDepositRange(max, min)) {
+    if (kCommSucc != GameMgr.GetRoomDepositRange(max, min)) {
         LOG_WARN("room deposit range min [%I64d] max [%I64d]", min, max);
         return kCommFaild;
     }
@@ -663,11 +712,18 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
         const auto deposit = kv.second.nDeposit;
         if (deposit < 0) ASSERT_FALSE_RETURN;
 
+
+        // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
+        if (kCommSucc == UserMgr.IsRobotUserExist(userid)) continue;
+
+        // 必须是机器人
         auto exist = false;
         if (kCommSucc != SettingMgr.IsRobotSettingExist(userid, exist)) {
             continue;
         }
-        if (!exist) continue;
+        if (!exist) {
+            continue;
+        }
 
         if (deposit < min) {
             not_logon_game_temp.erase(userid);
@@ -684,7 +740,6 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
             LOG_INFO("[DEPOSIT] ROOM robot userid [%d] deposit [%I64d] amount [%I64d]", userid, deposit, amount);
             if (amount < 0) { ASSERT_FALSE; continue; }
             DepositHttpMgr.SetDepositTypeAmount(userid, DepositType::kBack, amount);
-            continue;
         }
     }
 
@@ -692,11 +747,12 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
 }
 
 int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const TableNO& tableno, RobotUserIDMap& not_logon_game_temp) const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
     if (not_logon_game_temp.empty()) return kCommFaild;
 
     int64_t max = 0;
     int64_t min = 0;
-    if (kCommSucc != RoomMgr.GetTableDepositRange(roomid, tableno, max, min)) {
+    if (kCommSucc != GameMgr.GetTableDepositRange(roomid, tableno, max, min)) {
         ASSERT_FALSE_RETURN;
     }
     if (max < min) ASSERT_FALSE_RETURN;
@@ -710,11 +766,24 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
         const auto userid = kv.first;
         const auto user_info = kv.second;
         const auto deposit = user_info.nDeposit;
-        if (deposit < min) {
+
+        // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
+        if (kCommSucc == UserMgr.IsRobotUserExist(userid)) continue;
+
+        // 必须是机器人
+        auto exist = false;
+        if (kCommSucc != SettingMgr.IsRobotSettingExist(userid, exist)) {
+            continue;
+        }
+        if (!exist) {
+            continue;
+        }
+
+        if (deposit < min) { // 桌银区间左闭右开 <
             not_logon_game_temp.erase(userid);
             too_less_map[userid] = deposit;
         }
-        if (deposit > max) {
+        if (deposit >= max) { // 桌银区间左闭右开 >=
             not_logon_game_temp.erase(userid);
             too_much_map[userid] = deposit;
         }
@@ -734,10 +803,19 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
             const auto deposit = random_it->second;
 
             // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-            if (UserMgr.IsRobotUserExist(userid)) return kExceptionRobotNotInGame;
+            if (kCommSucc == UserMgr.IsRobotUserExist(userid)) return kExceptionRobotNotInGame;
+
+            // 必须是机器人
+            auto exist = false;
+            if (kCommSucc != SettingMgr.IsRobotSettingExist(userid, exist)) {
+                return kExceptionNotRobotType;
+            }
+            if (!exist) return kExceptionNotRobotType;;
 
             int64_t random_diff = 0;
-            if (kCommSucc != RobotUtils::GenRandInRange(min, max*0.7, random_diff)) {
+            const int64_t range_min = min;
+            const int64_t range_max = min + (max -min) * DepoistFactor;
+            if (kCommSucc != RobotUtils::GenRandInRange(range_min, range_max, random_diff)) {
                 ASSERT_FALSE_RETURN;
             }
             if (deposit < min && deposit > 0 && random_diff > 0) {
@@ -766,10 +844,19 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
             const auto deposit = random_it->second;
 
             // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-            if (UserMgr.IsRobotUserExist(userid)) return kExceptionRobotNotInGame;
+            if (kCommSucc == UserMgr.IsRobotUserExist(userid)) return kExceptionRobotNotInGame;
+
+            // 必须是机器人
+            auto exist = false;
+            if (kCommSucc != SettingMgr.IsRobotSettingExist(userid, exist)) {
+                return kExceptionNotRobotType;
+            }
+            if (!exist) return kExceptionNotRobotType;;
 
             int64_t random_diff = 0;
-            if (kCommSucc != RobotUtils::GenRandInRange(min, max*0.7, random_diff)) {
+            const int64_t range_min = min;
+            const int64_t range_max = min + (max -min) * DepoistFactor;
+            if (kCommSucc != RobotUtils::GenRandInRange(range_min, range_max, random_diff)) {
                 ASSERT_FALSE_RETURN;
             }
             if (deposit > max && deposit > 0 && random_diff > 0) {

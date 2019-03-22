@@ -50,6 +50,7 @@ public:
     // ¶ÔÏó×´Ì¬¿ìÕÕ
     int SnapShotObjectStatus();
 
+
 private:
     std::array<TablePtr, kMaxTableCountPerRoom> tables_;
     RoomID room_id_ = 0;
@@ -139,7 +140,7 @@ public:
         return min_playercount_per_table_;
     }
     void set_min_playercount_per_table(const int &val) {
-        min_playercount_per_table_ = 2;
+        min_playercount_per_table_ = val;
 
     }
 
