@@ -324,6 +324,7 @@ xcopy /y /f $(OutDir)$(TargetName).pdb .\..\_bin\</Command>
     <ClInclude Include="deposit_data_manager.h" />
     <ClInclude Include="game_base.pb.h" />
     <ClInclude Include="game_net_manager.h" />
+    <ClInclude Include="noncopyable.h" />
     <ClInclude Include="PBReq.h" />
     <ClInclude Include="process_info.h" />
     <ClInclude Include="robot_hall_manager.h" />

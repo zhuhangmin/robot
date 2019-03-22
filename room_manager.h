@@ -1,10 +1,11 @@
 #pragma once
 #include "base_room.h"
 #include "robot_define.h"
+#include "noncopyable.h"
 
 using GameRoomMap = std::hash_map<RoomID, RoomPtr>;
 
-class RoomManager : public ISingletion<RoomManager> {
+class RoomManager : public noncopyable {
 public:
     int GetRoom(const RoomID& roomid, RoomPtr& room) const;
 
@@ -31,14 +32,14 @@ public:
     // 桌银区间
     int GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min);
 
-    int AddRoomPB(const game::base::Room& room_pb) const;
+    int AddRoomPB(const game::base::Room& room_pb);
 
 private:
     int GetRoomWithLock(const RoomID& roomid, RoomPtr& room) const;
 
     int GetTableWithLock(const RoomID& roomid, const TableNO& tableno, TablePtr& table) const;
 
-    int AddRoomPBWithLock(const game::base::Room& room_pb) const;
+    int AddRoomPBWithLock(const game::base::Room& room_pb);
 
     int AddTablePBWithLock(const game::base::Table& table_pb, const TablePtr& table) const;
 
@@ -49,16 +50,8 @@ public:
     // 对象状态快照
     int SnapShotObjectStatus();
 
-protected:
-    SINGLETION_CONSTRUCTOR(RoomManager);
-
 private:
-    // 数据锁
-    mutable std::mutex mutex_;
-
     // 房间数据
     GameRoomMap rooms_;
 };
-
-#define RoomMgr RoomManager::Instance()
 

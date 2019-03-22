@@ -1,6 +1,8 @@
 #pragma once
 #include "robot_define.h"
 #include "table.h"
+#include "room_manager.h"
+#include "user_manager.h"
 class GameNetManager : public ISingletion<GameNetManager> {
 public:
     int Init(const std::string& game_ip, const int& game_port);
@@ -69,10 +71,10 @@ private:
     // 一般需要先更新user数据，触发table上的用户数据变化
 
     // 玩家进入游戏	BindPlayer
-    int OnPlayerEnterGame(const REQUEST &request) const;
+    int OnPlayerEnterGame(const REQUEST &request);
 
     // 旁观者进入游戏	BindLooker
-    int OnLookerEnterGame(const REQUEST &request) const;
+    int OnLookerEnterGame(const REQUEST &request);
 
     // 旁观转玩家	BindPlayer
     int OnLooker2Player(const REQUEST &request) const;
@@ -90,13 +92,13 @@ private:
     int OnFreshResult(const REQUEST &request) const;
 
     // 用户离开游戏	UnbindUser
-    int OnLeaveGame(const REQUEST &request) const;
+    int OnLeaveGame(const REQUEST &request);
 
     // 用户换桌	UnbindUser+BindPlaye
     int OnSwitchTable(const REQUEST &request) const;
 
     // 新房间创建
-    int OnNewRoom(const REQUEST &request) const;
+    int OnNewRoom(const REQUEST &request);
 
 private:
     // 辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex
@@ -157,6 +159,12 @@ private:
 
     // 初始化游戏数据层标签
     bool game_data_inited_{false};
+
+    // 游戏服务器所有用户
+    UserManager user_mgr_;
+
+    // 游戏服务器所有房间
+    RoomManager room_mgr_;
 };
 
 #define GameMgr GameNetManager::Instance()

@@ -4,18 +4,15 @@
 #include "deposit_data_manager.h"
 
 int UserManager::GetUser(const UserID& userid, UserPtr& user) const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     CHECK_USERID(userid);
     return GetUserWithLock(userid, user);
 }
 
 UserMap UserManager::GetAllUsers() const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     return user_map_;
 }
 
 int UserManager::DelUser(const UserID& userid) {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     CHECK_USERID(userid);
     UserPtr user;
     if (kCommSucc != GetUserWithLock(userid, user)) {
@@ -29,7 +26,6 @@ int UserManager::DelUser(const UserID& userid) {
 }
 
 int UserManager::AddUser(const UserID& userid, const UserPtr &user) {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     CHECK_USERID(userid);
     if (kCommSucc != AddUserWithLock(userid, user)) {
         ASSERT_FALSE_RETURN;
@@ -43,14 +39,12 @@ int UserManager::AddUser(const UserID& userid, const UserPtr &user) {
 }
 
 int UserManager::Reset() {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     user_map_.clear();
     return kCommSucc;
 }
 
 int UserManager::ResetDataAndReInit(const game::base::GetGameUsersResp& resp) {
     LOG_WARN("RESET Data UserManger And ReInit");
-    std::lock_guard<std::mutex> users_lock(mutex_);
     user_map_.clear();
     for (auto user_index = 0; user_index < resp.users_size(); user_index++) {
         if (kCommSucc != AddUserPBWithLock(resp.users(user_index))) {
@@ -61,7 +55,7 @@ int UserManager::ResetDataAndReInit(const game::base::GetGameUsersResp& resp) {
     return kCommSucc;
 }
 
-int UserManager::AddUserPBWithLock(const game::base::User& user_pb) const {
+int UserManager::AddUserPBWithLock(const game::base::User& user_pb) {
     const auto userid = user_pb.userid();
     const auto deposit = user_pb.deposit();
 
@@ -74,7 +68,7 @@ int UserManager::AddUserPBWithLock(const game::base::User& user_pb) const {
     user->set_deposit(user_pb.deposit());
     user->set_total_bout(user_pb.total_bout());
     user->set_offline_count(user_pb.offline_count());
-    if (kCommSucc != UserMgr.AddUserWithLock(user->get_user_id(), user)) {
+    if (kCommSucc != AddUserWithLock(user->get_user_id(), user)) {
         ASSERT_FALSE_RETURN;
     }
 
@@ -103,7 +97,6 @@ int UserManager::GetUserWithLock(const UserID& userid, UserPtr& user) const {
 }
 
 UserFilterMap UserManager::GetAllEnterUserID() const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     UserFilterMap filter_map;
     for (auto& kv : user_map_) {
         auto userid = kv.first;
@@ -114,7 +107,6 @@ UserFilterMap UserManager::GetAllEnterUserID() const {
 
 
 int UserManager::GetUserCountInRoom(const RoomID& roomid, int& count) const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         if (user->get_room_id() == roomid) {
@@ -125,7 +117,6 @@ int UserManager::GetUserCountInRoom(const RoomID& roomid, int& count) const {
 }
 
 int UserManager::GetRobotCountInRoom(const RoomID& roomid, int& count) const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         if (user->get_room_id() == roomid) {
@@ -138,7 +129,6 @@ int UserManager::GetRobotCountInRoom(const RoomID& roomid, int& count) const {
 }
 
 int UserManager::GetNormalUserCountInRoom(const RoomID& roomid, int& count) const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         if (user->get_room_id() == roomid) {
@@ -152,7 +142,6 @@ int UserManager::GetNormalUserCountInRoom(const RoomID& roomid, int& count) cons
 
 
 int UserManager::GetNormalUserMap(UserMap& normal_user_map) const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         const auto user_tpye = user->get_user_type();
@@ -164,7 +153,6 @@ int UserManager::GetNormalUserMap(UserMap& normal_user_map) const {
 }
 
 int UserManager::GetRobotUserMap(UserMap& robot_user_map) const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     for (auto& kv : user_map_) {
         const auto user = kv.second;
         if (user->get_user_type() == kUserRobot) {
@@ -175,7 +163,6 @@ int UserManager::GetRobotUserMap(UserMap& robot_user_map) const {
 }
 
 int UserManager::IsRobotUserExist(const UserID& userid) const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
     const auto iter = user_map_.find(userid);
     if (iter != user_map_.end()) {
         const auto user_ptr = iter->second;
@@ -188,10 +175,7 @@ int UserManager::IsRobotUserExist(const UserID& userid) const {
 
 int UserManager::SnapShotObjectStatus() {
 #ifdef _DEBUG
-    std::lock_guard<std::mutex> users_lock(mutex_);
-    LOG_INFO("OBJECT ADDRESS [%x]", this);
     LOG_INFO("users_ size [%d]", user_map_.size());
-
     for (auto& kv : user_map_) {
         auto user = kv.second;
         user->SnapShotObjectStatus();
@@ -200,21 +184,8 @@ int UserManager::SnapShotObjectStatus() {
     return kCommSucc;
 }
 
-int UserManager::SnapShotUser(const UserID& userid) const {
-    std::lock_guard<std::mutex> users_lock(mutex_);
-    UserPtr user;
-    if (kCommSucc != GetUserWithLock(userid, user)) {
-        ASSERT_FALSE_RETURN;
-    }
-
-    user->SnapShotObjectStatus();
-
-    return kCommSucc;
-}
-
 int UserManager::BriefInfo() const {
 #ifdef _DEBUG
-    std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("users_ size [%d]", user_map_.size());
     std::string str = "{";
     for (auto& kv : user_map_) {

@@ -1,10 +1,10 @@
 #pragma once
 #include "user.h"
 #include "robot_define.h"
+#include "noncopyable.h"
 
-class UserManager : public ISingletion<UserManager> {
+class UserManager : public noncopyable {
 public:
-
     // 重置对象
     int Reset();
 
@@ -50,25 +50,16 @@ public:
 
     int BriefInfo() const;
 
-    int SnapShotUser(const UserID& userid) const;
-
 private:
     int GetUserWithLock(const UserID& userid, UserPtr& user) const;
 
-    int AddUserPBWithLock(const game::base::User& user_pb) const;
+    int AddUserPBWithLock(const game::base::User& user_pb);
 
     // 添加用户
     int AddUserWithLock(const UserID& userid, const UserPtr &user);
 
-protected:
-    SINGLETION_CONSTRUCTOR(UserManager);
-
 private:
-    // 数据锁
-    mutable std::mutex mutex_;
-
     // 所有在游戏服务器用户数据
     UserMap user_map_;
 };
 
-#define UserMgr UserManager::Instance()

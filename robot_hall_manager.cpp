@@ -332,7 +332,7 @@ int RobotHallManager::SendRequestWithLock(const RequestID& requestid, int& data_
     }
 
     if (requestid != GR_LOGON_USER_V2 &&
-        //requestid != GR_HALLUSER_PULSE &&
+        requestid != GR_HALLUSER_PULSE &&
         requestid != GR_GET_ROOM &&
         requestid != MR_QUERY_USER_GAMEINFO) {
         LOG_INFO("hall [SEND] requestid [%d] [%s]", requestid, REQ_STR(requestid));

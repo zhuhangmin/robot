@@ -5,11 +5,10 @@
 #include "robot_utils.h"
 #include "base_room.h"
 #include "user.h"
-#include "room_manager.h"
-#include "user_manager.h"
 #include "robot_statistic.h"
 #include "PBReq.h"
 #include "deposit_data_manager.h"
+#include "table.h"
 
 
 int GameNetManager::Init(const std::string& game_ip, const int& game_port) {
@@ -233,12 +232,12 @@ int GameNetManager::SendGetGameInfoWithLock() {
     if (0 == resp.rooms_size()) {
         LOG_WARN("No Room From Game Server!")
     }
-    RoomMgr.ResetDataAndReInit(resp);
+    room_mgr_.ResetDataAndReInit(resp);
 
     if (0 == resp.users_size()) {
         LOG_WARN("No Users From Game Server!")
     }
-    UserMgr.ResetDataAndReInit(resp);
+    user_mgr_.ResetDataAndReInit(resp);
 
     return kCommSucc;
 }
@@ -269,8 +268,8 @@ int GameNetManager::ResetDataWithLock() {
     }
     timeout_count_ = 0;
     need_reconnect_ = true;
-    UserMgr.Reset();
-    RoomMgr.Reset();
+    user_mgr_.Reset();
+    room_mgr_.Reset();
     game_data_inited_ = false;
     return kCommFaild;
 }
@@ -312,7 +311,7 @@ int GameNetManager::KeepConnection() {
     return kCommSucc;
 }
 
-int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
+int GameNetManager::OnPlayerEnterGame(const REQUEST &request) {
     game::base::RS_UserEnterGameNotify ntf;
     const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -354,14 +353,14 @@ int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
     user->set_hard_id(hardid);
     user->set_nick_name(nick_name);
 
-    if (kCommSucc != UserMgr.AddUser(userid, user)) {
+    if (kCommSucc != user_mgr_.AddUser(userid, user)) {
         ASSERT_FALSE_RETURN;
     }
 
     //更新房间
     const auto& room_data = ntf.room_data();
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(room_data.roomid(), room)) {
+    if (kCommSucc != room_mgr_.GetRoom(room_data.roomid(), room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
@@ -404,7 +403,7 @@ int GameNetManager::OnPlayerEnterGame(const REQUEST &request) const {
     return kCommSucc;
 }
 
-int GameNetManager::OnLookerEnterGame(const REQUEST &request) const {
+int GameNetManager::OnLookerEnterGame(const REQUEST &request) {
     game::base::RS_UserEnterGameNotify ntf;
     const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -445,7 +444,7 @@ int GameNetManager::OnLookerEnterGame(const REQUEST &request) const {
     user->set_hard_id(hardid);
     user->set_nick_name(nick_name);
 
-    if (kCommSucc != UserMgr.AddUser(userid, user)) {
+    if (kCommSucc != user_mgr_.AddUser(userid, user)) {
         ASSERT_FALSE_RETURN;
     }
 
@@ -456,7 +455,7 @@ int GameNetManager::OnLookerEnterGame(const REQUEST &request) const {
     //更新房间
     const auto& room_data = ntf.room_data();
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(room_data.roomid(), room)) {
+    if (kCommSucc != room_mgr_.GetRoom(room_data.roomid(), room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
@@ -514,13 +513,13 @@ int GameNetManager::OnLooker2Player(const REQUEST &request) const {
     LOG_INFO("userid [%d] roomid [%d] tableno [%d] [%s]", userid, roomid, tableno, REQ_STR(request.head.nRequest));
 
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+    if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
 
     UserPtr user;
-    if (kCommSucc != UserMgr.GetUser(userid, user)) {
+    if (kCommSucc != user_mgr_.GetUser(userid, user)) {
         ASSERT_FALSE_RETURN;
     }
     user->set_room_id(roomid);
@@ -551,13 +550,13 @@ int GameNetManager::OnPlayer2Looker(const REQUEST &request) const {
     LOG_INFO("userid [%d] roomid [%d] tableno [%d] [%s]", userid, roomid, tableno, REQ_STR(request.head.nRequest));
 
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+    if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
 
     UserPtr user;
-    if (kCommSucc != UserMgr.GetUser(userid, user)) {
+    if (kCommSucc != user_mgr_.GetUser(userid, user)) {
         ASSERT_FALSE_RETURN;
     }
     user->set_room_id(roomid);
@@ -586,7 +585,7 @@ int GameNetManager::OnStartGame(const REQUEST &request) const {
     LOG_INFO("roomid [%d] tableno [%d] [%s]", roomid, tableno, REQ_STR(request.head.nRequest));
 
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+    if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
@@ -614,7 +613,7 @@ int GameNetManager::OnUserFreshResult(const REQUEST &request) const {
     LOG_INFO("userid [%d] roomid [%d] tableno [%d] [%s]", userid, roomid, tableno, REQ_STR(request.head.nRequest));
 
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+    if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
@@ -642,7 +641,7 @@ int GameNetManager::OnFreshResult(const REQUEST &request) const {
     LOG_INFO("roomid [%d] tableno [%d] [%s]", roomid, tableno, REQ_STR(request.head.nRequest));
 
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+    if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
@@ -657,7 +656,7 @@ int GameNetManager::OnFreshResult(const REQUEST &request) const {
     return kCommSucc;
 }
 
-int GameNetManager::OnLeaveGame(const REQUEST &request) const {
+int GameNetManager::OnLeaveGame(const REQUEST &request) {
     game::base::RS_UserLeaveGameNotify ntf;
     const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -699,7 +698,7 @@ int GameNetManager::OnLeaveGame(const REQUEST &request) const {
     user->set_nick_name(nick_name);
 
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+    if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed roomid [%d]", roomid);
         ASSERT_FALSE_RETURN;
     }
@@ -711,7 +710,7 @@ int GameNetManager::OnLeaveGame(const REQUEST &request) const {
     if (!room)ASSERT_FALSE_RETURN;
     room->UserLeaveGame(userid, tableno);
 
-    if (kCommSucc != UserMgr.DelUser(userid)) {
+    if (kCommSucc != user_mgr_.DelUser(userid)) {
         ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
@@ -734,7 +733,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
     LOG_INFO("roomid [%d] old_tableno [%d] new_tableno [%d] [%s]", roomid, old_tableno, new_tableno, REQ_STR(request.head.nRequest));
 
     UserPtr user;
-    if (kCommSucc != UserMgr.GetUser(userid, user)) {
+    if (kCommSucc != user_mgr_.GetUser(userid, user)) {
         ASSERT_FALSE_RETURN;
     }
     user->set_room_id(roomid);
@@ -742,7 +741,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
     user->set_chair_no(new_chairno);
 
     RoomPtr room;
-    if (kCommSucc != RoomMgr.GetRoom(roomid, room)) {
+    if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
         LOG_WARN("GetRoom failed room");
         ASSERT_FALSE_RETURN;
     }
@@ -755,7 +754,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
 
 }
 
-int GameNetManager::OnNewRoom(const REQUEST &request) const {
+int GameNetManager::OnNewRoom(const REQUEST &request) {
     game::base::RS_NewRoomNotify ntf;
     const auto parse_ret = ParseFromRequest(request, ntf);
     if (kCommSucc != parse_ret) {
@@ -768,7 +767,7 @@ int GameNetManager::OnNewRoom(const REQUEST &request) const {
     const auto roomid = room_data_pb.roomid();
     LOG_INFO("roomid [%d] [%s]", roomid, REQ_STR(request.head.nRequest));
 
-    if (kCommSucc != RoomMgr.AddRoomPB(room_pb)) {
+    if (kCommSucc != room_mgr_.AddRoomPB(room_pb)) {
         ASSERT_FALSE_RETURN
     }
 
@@ -803,55 +802,55 @@ bool GameNetManager::IsGameDataInited() const {
 int GameNetManager::GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min) {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return RoomMgr.GetTableDepositRange(roomid, tableno, max, min);
+    return room_mgr_.GetTableDepositRange(roomid, tableno, max, min);
 }
 
 int GameNetManager::GetRoomDepositRange(int64_t& max, int64_t& min) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return RoomMgr.GetRoomDepositRange(max, min);
+    return room_mgr_.GetRoomDepositRange(max, min);
 }
 
 int GameNetManager::GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return RoomMgr.GetRobotCountOnChairs(roomid, tableno, count);
+    return room_mgr_.GetRobotCountOnChairs(roomid, tableno, count);
 }
 
 int GameNetManager::GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return RoomMgr.GetChairInfo(roomid, tableno, userid, info);
+    return room_mgr_.GetChairInfo(roomid, tableno, userid, info);
 }
 
 int GameNetManager::IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return RoomMgr.IsTablePlaying(roomid, tableno, result);
+    return room_mgr_.IsTablePlaying(roomid, tableno, result);
 }
 
 int GameNetManager::GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return RoomMgr.GetNormalCountOnChairs(roomid, tableno, count);
+    return room_mgr_.GetNormalCountOnChairs(roomid, tableno, count);
 }
 
 int GameNetManager::GetMiniPlayers(const RoomID& roomid, int& mini) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return RoomMgr.GetMiniPlayers(roomid, mini);
+    return room_mgr_.GetMiniPlayers(roomid, mini);
 }
 
 int GameNetManager::IsRobotUserExist(const UserID& userid) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return UserMgr.IsRobotUserExist(userid);
+    return user_mgr_.IsRobotUserExist(userid);
 }
 
 int GameNetManager::GetNormalUserMap(UserMap& normal_user_map) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
-    return UserMgr.GetNormalUserMap(normal_user_map);
+    return user_mgr_.GetNormalUserMap(normal_user_map);
 }
 
 
@@ -861,7 +860,7 @@ UserMap GameNetManager::GetAllUsers() const {
         ASSERT_FALSE;
     }
     std::lock_guard<std::mutex> lock(mutex_);
-    return UserMgr.GetAllUsers();
+    return user_mgr_.GetAllUsers();
 }
 
 int GameNetManager::SnapShotObjectStatus() const {
@@ -883,7 +882,7 @@ int GameNetManager::SnapShotObjectStatus() const {
 
 
 int GameNetManager::BriefInfo() const {
-    return UserMgr.BriefInfo();
+    return user_mgr_.BriefInfo();
 }
 
 int GameNetManager::IsConnected(BOOL& is_connected) const {

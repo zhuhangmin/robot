@@ -4,7 +4,6 @@
 #include "setting_manager.h"
 
 int RoomManager::GetRoom(const RoomID& roomid, RoomPtr& room) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     const auto iter = rooms_.find(roomid);
     if (iter == rooms_.end()) {
         ASSERT_FALSE_RETURN;
@@ -14,7 +13,6 @@ int RoomManager::GetRoom(const RoomID& roomid, RoomPtr& room) const {
 }
 
 int RoomManager::AddRoom(const RoomID& roomid, const RoomPtr &room) {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (kCommSucc != AddRoomWithLock(roomid, room)) {
         ASSERT_FALSE_RETURN;
     }
@@ -22,14 +20,12 @@ int RoomManager::AddRoom(const RoomID& roomid, const RoomPtr &room) {
 }
 
 int RoomManager::Reset() {
-    std::lock_guard<std::mutex> lock(mutex_);
     LOG_WARN("Reset RoomManager");
     rooms_.clear();
     return kCommSucc;
 }
 
 int RoomManager::ResetDataAndReInit(const game::base::GetGameUsersResp& resp) {
-    std::lock_guard<std::mutex> lock(mutex_);
     LOG_WARN("RESET Data RoomManger And ReInit");
     rooms_.clear();
 
@@ -42,8 +38,7 @@ int RoomManager::ResetDataAndReInit(const game::base::GetGameUsersResp& resp) {
     return kCommSucc;
 }
 
-int RoomManager::AddRoomPB(const game::base::Room& room_pb) const {
-    std::lock_guard<std::mutex> lock(mutex_);
+int RoomManager::AddRoomPB(const game::base::Room& room_pb) {
     if (kCommSucc != AddRoomPBWithLock(room_pb)) {
         ASSERT_FALSE_RETURN;
     }
@@ -51,7 +46,6 @@ int RoomManager::AddRoomPB(const game::base::Room& room_pb) const {
 }
 
 int RoomManager::GetChairInfo(const RoomID& roomid, const TableNO& tableno, const int& userid, ChairInfo& info) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
         ASSERT_FALSE_RETURN;
@@ -69,7 +63,7 @@ int RoomManager::GetChairInfo(const RoomID& roomid, const TableNO& tableno, cons
 }
 
 int RoomManager::GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const {
-    std::lock_guard<std::mutex> lock(mutex_);
+
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
         ASSERT_FALSE_RETURN;
@@ -83,7 +77,6 @@ int RoomManager::GetRobotCountOnChairs(const RoomID& roomid, const TableNO& tabl
 }
 
 int RoomManager::GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tableno, int& count) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
         ASSERT_FALSE_RETURN;
@@ -102,7 +95,6 @@ int RoomManager::GetNormalCountOnChairs(const RoomID& roomid, const TableNO& tab
 }
 
 int RoomManager::IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bool& result) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     CHECK_ROOMID(roomid);
     CHECK_TABLENO(tableno);
     TablePtr table;
@@ -115,7 +107,6 @@ int RoomManager::IsTablePlaying(const RoomID& roomid, const TableNO& tableno, bo
 }
 
 int RoomManager::GetMiniPlayers(const RoomID& roomid, int& mini) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     RoomPtr room;
     if (kCommSucc != GetRoomWithLock(roomid, room)) {
         ASSERT_FALSE_RETURN;
@@ -146,7 +137,7 @@ int RoomManager::GetTableWithLock(const RoomID& roomid, const TableNO& tableno, 
     return kCommSucc;
 }
 
-int RoomManager::AddRoomPBWithLock(const game::base::Room& room_pb) const {
+int RoomManager::AddRoomPBWithLock(const game::base::Room& room_pb) {
     const auto& room_data_pb = room_pb.room_data();
     const auto roomid = room_data_pb.roomid();
 
@@ -178,7 +169,7 @@ int RoomManager::AddRoomPBWithLock(const game::base::Room& room_pb) const {
     }
 
     // ROOM
-    if (kCommSucc != RoomMgr.AddRoomWithLock(roomid, room)) {
+    if (kCommSucc != AddRoomWithLock(roomid, room)) {
         ASSERT_FALSE_RETURN;
     }
     return kCommSucc;
@@ -234,7 +225,6 @@ int RoomManager::AddRoomWithLock(const RoomID& roomid, const RoomPtr &room) {
 
 int RoomManager::SnapShotObjectStatus() {
 #ifdef _DEBUG
-    std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("rooms_ size [%d]", rooms_.size());
     for (auto& kv : rooms_) {
         const auto room = kv.second;
@@ -245,7 +235,6 @@ int RoomManager::SnapShotObjectStatus() {
 }
 
 int RoomManager::GetRoomDepositRange(int64_t& max, int64_t& min) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     for (auto& kv : rooms_) {
         const auto room = kv.second;
         const auto max_deposit = room->get_max_deposit();
@@ -260,7 +249,6 @@ int RoomManager::GetRoomDepositRange(int64_t& max, int64_t& min) const {
 }
 
 int RoomManager::GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min) {
-    std::lock_guard<std::mutex> lock(mutex_);
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
         ASSERT_FALSE_RETURN;
