@@ -8,8 +8,6 @@
 #include "game_net_manager.h"
 #include "deposit_http_manager.h"
 #include "robot_hall_manager.h"
-#include "user_manager.h"
-#include "room_manager.h"
 #include "process_info.h"
 #include "robot_utils.h"
 #include "robot_statistic.h"
@@ -85,8 +83,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         GameMgr.SnapShotObjectStatus();
         DepositHttpMgr.SnapShotObjectStatus();
         HallMgr.SnapShotObjectStatus();
-        UserMgr.SnapShotObjectStatus();
-        RoomMgr.SnapShotObjectStatus();
+        GameMgr.SnapShotObjectStatus();
         LOG_INFO("-------------[STATUS SNAPSHOT END]-------------");
     }
 
@@ -95,7 +92,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         SettingMgr.BriefInfo();
         RobotMgr.BriefInfo();
         HallMgr.BriefInfo();
-        UserMgr.BriefInfo();
+        GameMgr.BriefInfo();
         LOG_INFO("-------------[STATUS SNAPSHOT END]-------------");
     }
 
@@ -105,7 +102,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
         for (auto& kv : robot_setting_map) {
             auto userid = kv.first;
             // 在游戏中的机器人不触发补银 会导致业务异常
-            if (kCommSucc == UserMgr.IsRobotUserExist(userid)) return;
+            if (kCommSucc == GameMgr.IsRobotUserExist(userid)) return;
             DepositHttpMgr.SetDepositTypeAmount(userid, DepositType::kGain, 10000);
         }
 
@@ -167,29 +164,6 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
 
     if (cmd == 'A') {
         LOG_INFO("-------------[ADD ALL ROBOT TEST BEG]-------------");
-        auto setting_map = SettingMgr.GetRobotSettingMap();
-        auto room_map = SettingMgr.GetRoomSettingMap();
-        auto room_size = room_map.size();
-        for (auto& kv : setting_map) {
-            auto userid = kv.first;
-            auto setting = kv.second;
-
-            int64_t random = 0;
-            RobotUtils::GenRandInRange(0, room_size-1, random);
-            const auto random_it = std::next(std::begin(room_map), random);
-            auto roomid = random_it->first;
-
-            RoomPtr room;
-            RoomMgr.GetRoom(roomid, room);
-            if (!room) continue;
-
-            //auto max_table_cout = room->get_max_table_cout();
-            auto max_table_cout = 10;
-            int64_t tableno = InvalidTableNO;
-            RobotUtils::GenRandInRange(1, max_table_cout, tableno);
-            app_delegate.TestLogonHall(userid);
-            app_delegate.SendTestRobot(userid, roomid, tableno);
-        }
 
         LOG_INFO("-------------[ADD ALL ROBOT TEST END]-------------");
     }
@@ -200,13 +174,13 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
 
         int64_t max = 0;
         int64_t min = 0;
-        if (kCommSucc == RoomMgr.GetRoomDepositRange(max, min)) {
+        if (kCommSucc == GameMgr.GetRoomDepositRange(max, min)) {
             LOG_INFO("room min [%I64d] max [%I64d] ", min, max);
         }
         for (auto tableno = 1; tableno < 1000; tableno = tableno + 100) {
             int64_t max = 0;
             int64_t min = 0;
-            if (kCommSucc == RoomMgr.GetTableDepositRange(7972, tableno, max, min)) {
+            if (kCommSucc == GameMgr.GetTableDepositRange(7972, tableno, max, min)) {
                 LOG_INFO("tableno [%d] min [%I64d] max [%I64d] ", tableno, min, max);
             }
         }

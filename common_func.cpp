@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "common_func.h"
-#include "robot_define.h"
 #include "robot_utils.h"
-
-
 
 std::string GetConfigFilePath() {
     static std::string config_path;

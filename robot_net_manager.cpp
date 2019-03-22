@@ -3,7 +3,6 @@
 #include "main.h"
 #include "robot_utils.h"
 #include "robot_define.h"
-#include "user_manager.h"
 #include "game_net_manager.h"
 
 int RobotNetManager::Init() {
@@ -244,7 +243,7 @@ int RobotNetManager::SnapShotObjectStatus() {
         auto token = InvalidTokenID;
         if (kCommSucc != robot->GetTokenID(token))  continue;
 
-        if (kCommSucc == UserMgr.IsRobotUserExist(userid)) {
+        if (kCommSucc == GameMgr.IsRobotUserExist(userid)) {
             robot_in_game++;
             in_game_str += "userid";
             in_game_str += "[";

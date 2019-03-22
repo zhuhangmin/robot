@@ -38,6 +38,9 @@ public:
     // 获取所有正常用户集合 返回copy 不返回被mutex保护对象引用
     int GetNormalUserMap(UserMap& normal_user_map) const;
 
+    // 获取所有的用户 返回copy 不返回被mutex保护对象引用
+    UserMap GetAllUsers() const;
+
 private:
     // 游戏 定时消息
     int ThreadTimer();

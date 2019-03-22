@@ -854,6 +854,16 @@ int GameNetManager::GetNormalUserMap(UserMap& normal_user_map) const {
     return UserMgr.GetNormalUserMap(normal_user_map);
 }
 
+
+UserMap GameNetManager::GetAllUsers() const {
+    ThreadID thread_id = GetCurrentThreadId();
+    if (thread_id != g_launchThreadID || thread_id != g_mainThreadID) {
+        ASSERT_FALSE;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    return UserMgr.GetAllUsers();
+}
+
 int GameNetManager::SnapShotObjectStatus() const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
 #ifdef _DEBUG

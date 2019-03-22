@@ -11,7 +11,6 @@
 //!!会引起死锁问题
 //!!只使用io_manager对象 setting 和 robotutils
 #include "deposit_data_manager.h"
-#include "user_manager.h"
 
 int AppDelegate::InitLanuch() const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
@@ -360,7 +359,7 @@ int AppDelegate::GetRandomQualifiedRobotUserID(const RoomID& roomid, const Table
     auto robot_setting = SettingMgr.GetRobotSettingMap();
     for (auto& kv : robot_setting) {
         auto userid = kv.first;
-        if (kCommSucc == UserMgr.IsRobotUserExist(userid)) {
+        if (kCommSucc == GameMgr.IsRobotUserExist(userid)) {
             LOG_DEBUG("robot userid [%d] in game", userid);
             continue;
         }
@@ -550,7 +549,7 @@ int AppDelegate::GetWaittingUser(UserMap& filter_user_map) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     // 获取真实玩家集合 
     UserMap normal_user_map;
-    if (kCommSucc != UserMgr.GetNormalUserMap(normal_user_map)) {
+    if (kCommSucc != GameMgr.GetNormalUserMap(normal_user_map)) {
         ASSERT_FALSE_RETURN;
     }
     if (normal_user_map.empty()) return kCommSucc;
@@ -647,7 +646,7 @@ int AppDelegate::ConnectHallForAllRobot() {
 int AppDelegate::ConnectGameForRobotInGame() {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     LOG_INFO_FUNC("\t[START]");
-    const auto users = UserMgr.GetAllUsers();
+    const auto users = GameMgr.GetAllUsers();
     for (auto& kv : users) {
 
 #ifdef CURRENT_DELAY
@@ -714,7 +713,7 @@ int AppDelegate::FilterRobotNotInRoomDepositRange(RobotUserIDMap& not_logon_game
 
 
         // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-        if (kCommSucc == UserMgr.IsRobotUserExist(userid)) continue;
+        if (kCommSucc == GameMgr.IsRobotUserExist(userid)) continue;
 
         // 必须是机器人
         auto exist = false;
@@ -768,7 +767,7 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
         const auto deposit = user_info.nDeposit;
 
         // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-        if (kCommSucc == UserMgr.IsRobotUserExist(userid)) continue;
+        if (kCommSucc == GameMgr.IsRobotUserExist(userid)) continue;
 
         // 必须是机器人
         auto exist = false;
@@ -803,7 +802,7 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
             const auto deposit = random_it->second;
 
             // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-            if (kCommSucc == UserMgr.IsRobotUserExist(userid)) return kExceptionRobotNotInGame;
+            if (kCommSucc == GameMgr.IsRobotUserExist(userid)) return kExceptionRobotNotInGame;
 
             // 必须是机器人
             auto exist = false;
@@ -844,7 +843,7 @@ int AppDelegate::FilterRobotNotInTableDepositRange(const RoomID& roomid, const T
             const auto deposit = random_it->second;
 
             // 在游戏中的机器人 不做银子操作 容易引起游戏结算错误 业务表现异样
-            if (kCommSucc == UserMgr.IsRobotUserExist(userid)) return kExceptionRobotNotInGame;
+            if (kCommSucc == GameMgr.IsRobotUserExist(userid)) return kExceptionRobotNotInGame;
 
             // 必须是机器人
             auto exist = false;
