@@ -37,7 +37,7 @@
 
 # 设计图
 
-![image](http://gitlab.comfun.org/ZhenLuGe/rumm-sever/blob/develop-wjl-new/robottoolrumm/image/design.png)
+![image](https://github.com/zhuhangmin/robot/blob/master/image/design.png)
 
 
 # 使用
