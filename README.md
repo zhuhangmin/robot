@@ -150,7 +150,7 @@
 * 机器人连接n个，执行调度行为
 * 补银还银http，通过后台活动实现
 
-# 数据管理类
+# 数据管理类io_manager，封装网络，线程安全
 * RobotTool.ini                  运维配置文件，不含任何具体游戏业务
 * setting/setting_manager        机器人工具配置文件robot.setting
 * data/user_manager              管理游戏服务器所有用户数据（包括机器人）
