@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "deposit_data_manager.h"
 #include "robot_utils.h"
+#include "main.h"
 
 int DepositDataManager::Init() {
     CHECK_MAIN_OR_LAUNCH_THREAD();
@@ -17,18 +18,14 @@ int DepositDataManager::Term() {
     return kCommSucc;
 }
 
-int DepositDataManager::SetUserGameData(const int& userid, USER_GAMEINFO_MB* info) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_USERID(userid);
-    user_game_info_map_[userid] = *info;
-    return kCommSucc;
-}
-
-UserGameInfoMap DepositDataManager::GetUserGameDataMap() const {
+UserDepositMap DepositDataManager::GetUserDepositMap() const {
+    ThreadID thread_id = GetCurrentThreadId();
+    if (thread_id != g_launchThreadID && thread_id != g_mainThreadID) {
+        ASSERT_FALSE;
+    }
     std::lock_guard<std::mutex> lock(mutex_);
     return user_game_info_map_;
 }
-
 
 int DepositDataManager::GetDeposit(const int& userid, int64_t& deposit) {
     CHECK_MAIN_OR_LAUNCH_THREAD();
@@ -70,7 +67,7 @@ int DepositDataManager::GetDepositWithLock(const int& userid, int64_t& deposit) 
     CHECK_USERID(userid);
     const auto iter = user_game_info_map_.find(userid);
     if (iter != user_game_info_map_.end()) {
-        deposit = user_game_info_map_[userid].nDeposit;
+        deposit = user_game_info_map_[userid];
         return kCommSucc;
     }
     return kCommFaild;
@@ -80,20 +77,19 @@ int DepositDataManager::SetDepositWithLock(const int& userid, const int64_t& dep
     CHECK_USERID(userid);
     CHECK_DEPOSIT(deposit);
     const auto iter = user_game_info_map_.find(userid);
-    user_game_info_map_[userid].nDeposit = deposit;
+    user_game_info_map_[userid] = deposit;
     LOG_INFO("[DEPOSIT] userid [%d] deposit [%I64d]", userid, deposit);
     return kCommSucc;
 }
 
 int DepositDataManager::SnapShotObjectStatus() {
-    CHECK_MAIN_OR_LAUNCH_THREAD();
 #ifdef _DEBUG
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO("user_game_info_map_ size [%d]", user_game_info_map_.size());
     for (auto& kv : user_game_info_map_) {
         const auto userid = kv.first;
-        const auto game_info = kv.second;
-        LOG_INFO("robot userid [%d] deposit [%I64d]", userid, game_info.nDeposit);
+        const auto deposit = kv.second;
+        LOG_INFO("robot userid [%d] deposit [%I64d]", userid, deposit);
     }
 #endif
     return kCommSucc;

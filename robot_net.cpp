@@ -4,7 +4,6 @@
 #include "robot_utils.h"
 #include "setting_manager.h"
 #include "robot_statistic.h"
-#include "deposit_data_manager.h"
 
 RobotNet::RobotNet(const UserID& userid) :
 userid_(userid) {
@@ -12,7 +11,6 @@ userid_(userid) {
 }
 
 int RobotNet::Connect(const std::string& game_ip, const int& game_port, const ThreadID& game_notify_thread_id) {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (connection_) {
         if (connection_->IsConnected()) {
             return kCommSucc;
@@ -30,7 +28,6 @@ int RobotNet::Connect(const std::string& game_ip, const int& game_port, const Th
 }
 
 int RobotNet::IsConnected(BOOL& is_connected) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (!connection_) {
         is_connected = false;
         return kCommSucc;
@@ -41,7 +38,6 @@ int RobotNet::IsConnected(BOOL& is_connected) const {
 
 int RobotNet::SendGameRequestWithLock(const RequestID& requestid, const google::protobuf::Message &val, REQUEST& response, const bool& need_echo /*= true*/) const {
     CHECK_REQUESTID(requestid);
-
     if (!connection_) {
         LOG_ERROR("connection not exist");
         return kCommFaild;
@@ -56,7 +52,6 @@ int RobotNet::SendGameRequestWithLock(const RequestID& requestid, const google::
 }
 
 int RobotNet::OnDisconnect() {
-    std::lock_guard<std::mutex> lock(mutex_);
     LOG_WARN("OnDisconnect Game Robot");
     ResetDataWithLock();
     return kCommSucc;
@@ -64,6 +59,7 @@ int RobotNet::OnDisconnect() {
 
 int RobotNet::ResetDataWithLock() {
     if (connection_) {
+        LOG_WARN("token [%d] [%s] DestroyEx", connection_->GetTokenID(), __FUNCTION__);
         connection_->DestroyEx();
     }
     timeout_count_ = 0;
@@ -90,13 +86,12 @@ int RobotNet::InitDataWithLock() {
 
 // 具体业务
 int RobotNet::SendEnterGame(const RoomID& roomid, const TableNO& tableno) {
-    std::lock_guard<std::mutex> lock(mutex_);
     CHECK_ROOMID(roomid);
     TCHAR hard_id[32];
     xyGetHardID(hard_id);
     game::base::EnterNormalGameReq val;
     val.set_userid(userid_);
-    val.set_gameid(SettingMgr.GetGameID());
+    val.set_gameid(SettingConfig.GetGameID());
     val.set_target(tableno);// 
     val.set_roomid(roomid);
     val.set_flag(kEnterWithTargetTable);
@@ -132,6 +127,10 @@ int RobotNet::SendEnterGame(const RoomID& roomid, const TableNO& tableno) {
             LOG_WARN("userid[%d] kHall_UserNotLogon, need hall logon", userid_);
         }
 
+        if (kNoFreeChair == code) {
+            LOG_WARN("userid[%d] kNoFreeChair, no free chair", userid_);
+        }
+
         if (kTooLessDeposit == code || kTooMuchDeposit == code) {
             LOG_ERROR("[DEPOSIT] userid [%d] roomid [%d] requestid [%d] [%s] content [%s] failed, resp error code [%d] [%s]", userid_, roomid, requestid, REQ_STR(requestid), GetStringFromPb(val).c_str(), code, ERR_STR(code));
         }
@@ -141,107 +140,21 @@ int RobotNet::SendEnterGame(const RoomID& roomid, const TableNO& tableno) {
 
         if (kHall_InvalidHardID == code) {
         }
-        ASSERT_FALSE;
         return code;
     }
 
     return kCommSucc;
 }
 
-int RobotNet::SendPulse() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    game::base::PulseReq val;
-    val.set_id(userid_);
-    REQUEST response = {};
-    const auto result = SendGameRequestWithLock(GR_RS_PULSE, val, response); // 游戏心跳需要回包
-    if (kCommSucc != result) {
-        LOG_ERROR("robot userid [%d] send GR_RS_PULSE fail", userid_);
-        ASSERT_FALSE;
-        if (result == kOperationFailed) {
-            ResetDataWithLock();
-        }
-        return result;
-    }
-    return kCommSucc;
-}
-
-
 int RobotNet::KeepConnection() {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (need_reconnect_) {
         return InitDataWithLock();
     }
     return kCommSucc;
 }
 
-
-int RobotNet::ResultOneUser(const REQUEST &request) {
-    game::base::GameResultNotify ntf;
-    const auto parse_ret = ParseFromRequest(request, ntf);
-    if (kCommSucc != parse_ret) {
-        LOG_WARN("ParseFromRequest failed.");
-        ASSERT_FALSE_RETURN;
-    }
-
-    // 更新用户
-    const auto& user_results = ntf.user_results();
-    const auto size = ntf.user_results_size();
-    for (auto result_index = 0; result_index < size; result_index++) {
-        const auto& result = user_results[result_index];
-        const auto userid = result.userid();
-        const auto chairno = result.chairno();
-        int64_t old_deposit = result.old_deposit();
-        int64_t diff_deposit = result.diff_deposit();
-        const auto fee = result.fee();
-        CHECK_DEPOSIT(old_deposit);
-        int64_t cur_deposit = old_deposit + diff_deposit;
-        CHECK_DEPOSIT(cur_deposit);
-        if (userid_ == userid) {
-            LOG_INFO("ResultOneUser userid [%d] old_deposit [%I64d] diff_deposit [%I64d]",
-                     userid, old_deposit, diff_deposit);
-            if (kCommSucc != DepositDataMgr.SetDeposit(userid, cur_deposit)) {
-                ASSERT_FALSE_RETURN;
-            }
-        }
-    }
-    return kCommSucc;
-}
-
-int RobotNet::ResultTable(const REQUEST &request) {
-    game::base::GameResultNotify ntf;
-    const auto parse_ret = ParseFromRequest(request, ntf);
-    if (kCommSucc != parse_ret) {
-        LOG_WARN("ParseFromRequest failed.");
-        ASSERT_FALSE_RETURN;
-    }
-
-    // 更新用户
-    const auto& user_results = ntf.user_results();
-    const auto size = ntf.user_results_size();
-    for (auto result_index = 0; result_index < size; result_index++) {
-        const auto& result = user_results[result_index];
-        const auto userid = result.userid();
-        const auto chairno = result.chairno();
-        int64_t old_deposit = result.old_deposit();
-        int64_t diff_deposit = result.diff_deposit();
-        const auto fee = result.fee();
-        CHECK_DEPOSIT(old_deposit);
-        int64_t cur_deposit = old_deposit + diff_deposit;
-        CHECK_DEPOSIT(cur_deposit);
-        if (userid_ == userid) {
-            LOG_INFO("[DEPOSIT] ResultTable userid [%d] old_deposit [%I64d] diff_deposit [%I64d]",
-                     userid, old_deposit, diff_deposit);
-            if (kCommSucc != DepositDataMgr.SetDeposit(userid, cur_deposit)) {
-                ASSERT_FALSE_RETURN;
-            }
-        }
-    }
-    return kCommSucc;
-}
-
 // 属性接口 
 int RobotNet::GetTokenID(TokenID& token) const {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (!connection_) return kCommFaild;
     token = connection_->GetTokenID();
     return kCommSucc;
@@ -253,19 +166,16 @@ UserID RobotNet::GetUserID() const {
 }
 
 TimeStamp RobotNet::GetTimeStamp() const {
-    std::lock_guard<std::mutex> lock(mutex_);
     return timestamp_;
 }
 
 void RobotNet::SetTimeStamp(const TimeStamp& val) {
-    std::lock_guard<std::mutex> lock(mutex_);
     timestamp_ = val;
 }
 
 int RobotNet::SnapShotObjectStatus() const {
-    CHECK_MAIN_OR_LAUNCH_THREAD();
 #ifdef _DEBUG
-    std::lock_guard<std::mutex> lock(mutex_);
+
     if (connection_) {
         LOG_INFO("token = %x", connection_->GetTokenID());
     }

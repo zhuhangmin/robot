@@ -314,6 +314,13 @@ message UserDepositChangeNotify
 	optional int64 diff_deposit	= 2;	// 银子变化值
 	optional int64 own_deposit	= 3;	// 银子余额
 }
+
+// 游戏结算失败通知
+message RefreshResultFaildNotify
+{
+	optional int32 roomid	= 1;
+	optional int32 tableno	= 2;
+}
 //==================================== 商城 ==========================================//
 // 商品信息
 message MallProduct

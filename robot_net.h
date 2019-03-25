@@ -18,17 +18,8 @@ public:
     // 进入游戏
     int SendEnterGame(const RoomID& roomid, const TableNO& tableno);
 
-    // 发送心跳
-    int SendPulse();
-
     // 连接保活
     int KeepConnection();
-
-    // 单人结算
-    int ResultOneUser(const REQUEST &request);
-
-    // 正桌结算
-    int ResultTable(const REQUEST &request);
 
 public:
     // 属性接口
@@ -55,9 +46,6 @@ public:
 private:
     // 配置机器人ID 初始化后不在改变,不需要锁保护
     UserID userid_{0};
-
-    // 数据锁
-    mutable std::mutex mutex_;
 
     // 机器人游戏服务器连接
     CDefSocketClientPtr connection_;

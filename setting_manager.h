@@ -43,9 +43,6 @@ public:
     // 还银url
     std::string& GetDepositBackUrl();
 
-    // 定时消息
-    int ThreadTimer();
-
     // 检查房间配置是否存在
     int IsRoomSettingExist(const RoomID& roomid, bool& exist);
 
@@ -99,4 +96,4 @@ private:
     std::string deposit_back_url_;
 };
 
-#define SettingMgr  SettingManager::Instance()
+#define SettingConfig  SettingManager::Instance()

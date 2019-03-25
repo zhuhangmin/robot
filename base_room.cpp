@@ -129,27 +129,22 @@ int BaseRoom::UserGiveUp(const UserID& userid, const TableNO& tableno) {
 int BaseRoom::Looker2Player(const UserPtr& user) {
     CHECK_USER(user);
 
+    const auto userid = user->get_user_id();
     const auto tableno = user->get_table_no();
     TablePtr table;
     if (kCommSucc != GetTable(tableno, table)) {
-        LOG_WARN("GetTable faild. userid  [%d], tableno  [%d]", user->get_user_id(), tableno);
+        LOG_WARN("GetTable faild. userid [%d] tableno [%d]", userid, tableno);
         ASSERT_FALSE_RETURN;
     }
 
-    if (!IsValidTable(table->get_table_no())) {
-        LOG_WARN("Get table[%d] faild", user->get_table_no());
+    if (!IsValidTable(tableno)) {
+        LOG_WARN("IsValidTable faild. userid [%d] tableno [%d]", userid, tableno);
         ASSERT_FALSE_RETURN;
     }
 
-    if (!table->IsTableUser(user->get_user_id())) {
-        LOG_WARN("user[%d] is not in table[%d]", user->get_user_id(), user->get_table_no());
+    if (!table->IsTableUser(userid)) {
+        LOG_WARN("IsTableUser faild. userid [%d] tableno [%d]", userid, tableno);
         ASSERT_FALSE_RETURN;
-    }
-
-    if (table->IsTablePlayer(user->get_user_id())) {
-        LOG_WARN("Looker2Player succ. but user[%d] is player.", user->get_user_id());
-        user->set_chair_no(table->GetUserChair(user->get_user_id()));
-        return kCommSucc;
     }
 
     const auto ret = table->BindPlayer(user);

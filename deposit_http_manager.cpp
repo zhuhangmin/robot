@@ -31,7 +31,7 @@ int DepositHttpManager::ThreadDeposit() {
     LOG_INFO("\t[START] deposit thread [%d] started", GetCurrentThreadId());
 
     while (true) {
-        const auto dwRet = WaitForSingleObject(g_hExitServer, SettingMgr.GetDepositInterval());
+        const auto dwRet = WaitForSingleObject(g_hExitServer, SettingConfig.GetDepositInterval());
         if (WAIT_OBJECT_0 == dwRet) {
             break;
         }
@@ -107,7 +107,6 @@ int DepositHttpManager::SendDepositRequest() {
                 HallMgr.SetDepositUpdate(userid);
             } else {
                 assert(false);
-                continue;
             }
         }
     }
@@ -119,14 +118,14 @@ int DepositHttpManager::RobotGainDeposit(const UserID& userid, const int64_t& am
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
-    const auto game_id = SettingMgr.GetGameID();
+    const auto game_id = SettingConfig.GetGameID();
     CHECK_GAMEID(game_id);
 
-    auto active_id = SettingMgr.GetDepositActiveID();
+    auto active_id = SettingConfig.GetDepositActiveID();
     if (active_id.empty()) ASSERT_FALSE_RETURN;
     const auto szValue = active_id.c_str();
 
-    auto url = SettingMgr.GetDepositGainUrl();
+    auto url = SettingConfig.GetDepositGainUrl();
     if (url.empty()) ASSERT_FALSE_RETURN;
     const auto szHttpUrl = url.c_str();
 
@@ -151,6 +150,7 @@ int DepositHttpManager::RobotGainDeposit(const UserID& userid, const int64_t& am
     const auto ret_code = _root["Code"].asInt();
     if (0 != ret_code) {
         LOG_ERROR("[DEPOSIT] userid [%d] gain deposit fail, code  [%d], strResult [%s]", userid, _root["Code"].asInt(), strResult);
+        LOG_ERROR("[DEPOSIT] RobotGainDeposit failed userid [%d] amount [%I64d]", userid, amount);
         ASSERT_FALSE_RETURN;
     }
     LOG_INFO("[DEPOSIT] RobotGainDeposit END userid [%d] amount [%I64d]", userid, amount);
@@ -162,14 +162,14 @@ int DepositHttpManager::RobotBackDeposit(const UserID& userid, const int64_t& am
     CHECK_USERID(userid);
     if (amount <= 0) ASSERT_FALSE_RETURN;
 
-    const auto game_id = SettingMgr.GetGameID();
+    const auto game_id = SettingConfig.GetGameID();
     CHECK_GAMEID(game_id);
 
-    auto active_id = SettingMgr.GetDepositActiveID();
+    auto active_id = SettingConfig.GetDepositActiveID();
     if (active_id.empty()) ASSERT_FALSE_RETURN;
     const auto szValue = active_id.c_str();
 
-    auto url = SettingMgr.GetDepositBackUrl();
+    auto url = SettingConfig.GetDepositBackUrl();
     if (url.empty()) ASSERT_FALSE_RETURN;
     const auto szHttpUrl = url.c_str();
 
@@ -193,6 +193,7 @@ int DepositHttpManager::RobotBackDeposit(const UserID& userid, const int64_t& am
 
     if (_root["Code"].asInt() != 0) {
         LOG_ERROR("[DEPOSIT] userid [%d] gain deposit fail, code [%d], strResult [%s]", userid, _root["Code"].asInt(), strResult);
+        LOG_ERROR("[DEPOSIT] RobotBackDeposit failed userid [%d] amount [%I64d]", userid, amount);
         ASSERT_FALSE_RETURN;
     }
 

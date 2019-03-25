@@ -1,4 +1,4 @@
-
+#pragma once
 #define		PB_REQ_BASE          100000         //此数据值必须固定,应对版本升级
 
 #define     PB_GET_FRIENDS_LIST					(PB_REQ_BASE +    1)  // 获取好友列表

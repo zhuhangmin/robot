@@ -59,7 +59,7 @@ const int64_t GainAmount = 200000;
 
 const int64_t BackAmount = 200000;
 
-const int64_t MaxAmount = 1000000000; // 后台同事确认最大补银。后台可配置
+const int64_t MaxAmount = 200000000; // 后台同事确认正式最大补银。后台可配置
 
 const float DepoistFactor = 0.7f; // rummy 补银业务参数
 
@@ -204,7 +204,7 @@ using HallLogonMap = std::unordered_map<UserID, HallLogonStatusType>;
 
 using HallRoomDataMap = std::unordered_map<RoomID, HallRoomData>;
 
-using UserGameInfoMap = std::unordered_map<UserID, USER_GAMEINFO_MB>;
+using UserDepositMap = std::unordered_map<UserID, int64_t>;
 
 using DepositMap = std::unordered_map<UserID, DepositData>;
 

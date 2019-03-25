@@ -11,7 +11,7 @@ public:
     int Term();
 
     // 机器人 连接 发送进入游戏
-    int EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno, std::string game_ip, int game_port);
+    int EnterGame(const UserID& userid, const RoomID& roomid, const TableNO& tableno, const std::string& game_ip, const int& game_port);
 
 private:
     // 机器人 定时消息
@@ -23,11 +23,14 @@ private:
     // 机器人 消息处理
     int OnNotify(const RequestID& requestid, const REQUEST& request, const TokenID& token_id);
 
-    // 机器人 发送心跳
-    int SendPulse();
-
     // 机器人 连接保活
     int KeepConnection();
+
+    // 单人结算
+    int ResultOneUserWithLock(const UserID& robot_userid, const REQUEST &request) const;
+
+    // 正桌结算
+    int ResultTableWithLock(const UserID& robot_userid, const REQUEST &request) const;
 
 private:
     //辅助函数 WithLock 标识调用前需要获得此对象的数据锁mutex

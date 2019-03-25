@@ -78,7 +78,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
 #ifdef _DEBUG
     if (cmd == 'S') {
         LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
-        SettingMgr.SnapShotObjectStatus();
+        SettingConfig.SnapShotObjectStatus();
         RobotMgr.SnapShotObjectStatus();
         GameMgr.SnapShotObjectStatus();
         DepositHttpMgr.SnapShotObjectStatus();
@@ -89,7 +89,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
 
     if (cmd == 'B') {
         LOG_INFO("-------------[STATUS SNAPSHOT BEG]-------------");
-        SettingMgr.BriefInfo();
+        SettingConfig.BriefInfo();
         RobotMgr.BriefInfo();
         HallMgr.BriefInfo();
         GameMgr.BriefInfo();
@@ -98,7 +98,7 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
 
     if (cmd == 'D') {
         LOG_INFO("-------------[DEPOSIT TEST BEG]-------------");
-        auto robot_setting_map = SettingMgr.GetRobotSettingMap();
+        auto robot_setting_map = SettingConfig.GetRobotSettingMap();
         for (auto& kv : robot_setting_map) {
             auto userid = kv.first;
             // 在游戏中的机器人不触发补银 会导致业务异常
@@ -190,9 +190,6 @@ extern void Test(char cmd, AppDelegate& app_delegate) {
 }
 
 int main(int argc, TCHAR* argv[], TCHAR* envp[]) {
-    ThreadID launch_thread_id = GetCurrentThreadId();
-    CHECK_THREADID(launch_thread_id);
-    g_launchThreadID = launch_thread_id;
     TCLOG_INIT();
     LOG_INFO("\n ===================================SERVER START===================================");
     LOG_INFO("*********[START BEG]*********");

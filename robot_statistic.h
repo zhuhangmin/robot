@@ -8,14 +8,11 @@ public:
     int SnapShotObjectStatus();
 
     // 运行时信息
-    int RobotStatistic::ProcessStatus();
+    int ProcessStatus();
 protected:
     SINGLETION_CONSTRUCTOR(RobotStatistic);
 
 private:
-    // 数据锁
-    std::mutex mutex_;
-
     // 发送消息统计
     SendMsgCountMap send_msg_count_map;
 

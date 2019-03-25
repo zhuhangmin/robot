@@ -19,9 +19,6 @@ public:
     // 获得配置游戏服务器地址
     static std::string GetGameIP();
 
-    // 获得动态游戏服务器端口
-    static int GetGamePort();
-
     // 线程阻塞ms 一般用于测试和限流
     static int Sleep(const uint32_t& milli_seconds);
 

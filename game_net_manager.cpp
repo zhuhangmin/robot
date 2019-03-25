@@ -42,6 +42,7 @@ int GameNetManager::Term() {
     need_reconnect_ = false;
     game_data_inited_ = false;
     if (connection_) {
+        LOG_WARN("token [%d] [%s] DestroyEx", connection_->GetTokenID(), __FUNCTION__);
         connection_->DestroyEx();
     }
 
@@ -79,19 +80,24 @@ int GameNetManager::ThreadNotify() {
 }
 
 int GameNetManager::OnNotify(const RequestID& requestid, const REQUEST &request) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    CHECK_REQUESTID(requestid);
-    if (PB_NOTIFY_TO_CLIENT != requestid) {
-        if (connection_) {
-            LOG_INFO("token [%d] [RECV] [%d] [%s]", connection_->GetTokenID(), requestid, REQ_STR(requestid));
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        CHECK_REQUESTID(requestid);
+        if (PB_NOTIFY_TO_CLIENT != requestid) {
+            if (connection_) {
+                if (UR_SOCKET_ERROR == requestid || UR_SOCKET_CLOSE == requestid) {
+                    LOG_WARN("token [%d] [RECV] [%d] [%s]", connection_->GetTokenID(), requestid, REQ_STR(requestid));
+                } else {
+                    LOG_INFO("token [%d] [RECV] [%d] [%s]", connection_->GetTokenID(), requestid, REQ_STR(requestid));
+                }
+            }
         }
-    }
 
-    //TODO 应该没有warn
-    if (!game_data_inited_) {
-        LOG_WARN("game room and user data has inited yet kExceptionGameDataNotInited");
-        LOG_WARN("token [%d] [RECV] [%d] [%s]", connection_->GetTokenID(), requestid, REQ_STR(requestid));
-        return kExceptionGameDataNotInited;
+        if (!game_data_inited_) {
+            LOG_WARN("game room and user data has inited yet kExceptionGameDataNotInited");
+            LOG_WARN("token [%d] [RECV] [%d] [%s]", connection_->GetTokenID(), requestid, REQ_STR(requestid));
+            return kExceptionGameDataNotInited;
+        }
     }
 
     int result = kCommSucc;
@@ -264,6 +270,7 @@ int GameNetManager::InitDataWithLock() {
 
 int GameNetManager::ResetDataWithLock() {
     if (connection_) {
+        LOG_WARN("token [%d] [%s] DestroyEx", connection_->GetTokenID(), __FUNCTION__);
         connection_->DestroyEx();
     }
     timeout_count_ = 0;
@@ -282,10 +289,8 @@ int GameNetManager::SendPulse() {
         game::base::PulseReq val;
         val.set_id(g_nClientID);
         REQUEST response = {};
-
-        //@zhuhangmin 大厅模板需要支持 清僵尸机制
-        const auto result = RobotUtils::SendRequestWithLock(connection_, GR_RS_PULSE, val, response); // 游戏心跳需要回包
-
+        // 机器人总连接心跳需要回包
+        const auto result = RobotUtils::SendRequestWithLock(connection_, GR_RS_PULSE, val, response);
         if (kCommSucc != result) {
             if (result != kConnectionTimeOut) {
                 ResetDataWithLock();
@@ -509,8 +514,8 @@ int GameNetManager::OnLooker2Player(const REQUEST &request) const {
     const auto roomid = ntf.roomid();
     const auto tableno = ntf.tableno();
     const auto chairno = ntf.chairno();
-
-    LOG_INFO("userid [%d] roomid [%d] tableno [%d] [%s]", userid, roomid, tableno, REQ_STR(request.head.nRequest));
+    assert(chairno != 0);
+    LOG_INFO("userid [%d] roomid [%d] tableno [%d] chairno [%d] [%s]", userid, roomid, tableno, chairno, REQ_STR(request.head.nRequest));
 
     RoomPtr room;
     if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
@@ -547,7 +552,7 @@ int GameNetManager::OnPlayer2Looker(const REQUEST &request) const {
     const auto tableno = ntf.tableno();
     const auto chairno = ntf.chairno();
 
-    LOG_INFO("userid [%d] roomid [%d] tableno [%d] [%s]", userid, roomid, tableno, REQ_STR(request.head.nRequest));
+    LOG_INFO("userid [%d] roomid [%d] tableno [%d] chairno [%d] [%s]", userid, roomid, tableno, chairno, REQ_STR(request.head.nRequest));
 
     RoomPtr room;
     if (kCommSucc != room_mgr_.GetRoom(roomid, room)) {
@@ -680,7 +685,7 @@ int GameNetManager::OnLeaveGame(const REQUEST &request) {
     const auto& hardid = user_data.hardid();
     const auto& nick_name = user_data.nick_name();
 
-    LOG_INFO("roomid [%d] tableno [%d] [%s]", roomid, tableno, REQ_STR(request.head.nRequest));
+    LOG_INFO("userid [%d] roomid [%d] tableno [%d] chairno [%d] [%s]", userid, roomid, tableno, chairno, REQ_STR(request.head.nRequest));
 
     auto user = std::make_shared<User>();
     user->set_user_id(userid);
@@ -730,7 +735,7 @@ int GameNetManager::OnSwitchTable(const REQUEST &request) const {
     const auto new_tableno = ntf.new_tableno();
     const auto new_chairno = ntf.new_chairno();
 
-    LOG_INFO("roomid [%d] old_tableno [%d] new_tableno [%d] [%s]", roomid, old_tableno, new_tableno, REQ_STR(request.head.nRequest));
+    LOG_INFO("userid [%d] roomid [%d] old_tableno [%d] new_tableno [%d] [%s]", userid, roomid, old_tableno, new_tableno, REQ_STR(request.head.nRequest));
 
     UserPtr user;
     if (kCommSucc != user_mgr_.GetUser(userid, user)) {
@@ -856,7 +861,7 @@ int GameNetManager::GetNormalUserMap(UserMap& normal_user_map) const {
 
 UserMap GameNetManager::GetAllUsers() const {
     ThreadID thread_id = GetCurrentThreadId();
-    if (thread_id != g_launchThreadID || thread_id != g_mainThreadID) {
+    if (thread_id != g_launchThreadID && thread_id != g_mainThreadID) {
         ASSERT_FALSE;
     }
     std::lock_guard<std::mutex> lock(mutex_);

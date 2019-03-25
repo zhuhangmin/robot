@@ -1,6 +1,6 @@
 #pragma once
-#include "user.h"
 #include "robot_define.h"
+class User;
 class TableUserInfo {
 public:
     int get_userid() const {
@@ -193,9 +193,9 @@ public:
     Table(const Table&) = delete;
 
     // 玩家和桌子进行绑定
-    virtual int BindPlayer(const UserPtr &user);
+    virtual int BindPlayer(const std::shared_ptr<User> &user);
     // 旁观者和桌子进行绑定
-    int BindLooker(const UserPtr &user);
+    int BindLooker(const std::shared_ptr<User> &user);
     // 解除用户（玩家\旁观者）和桌子的绑定关系
     int UnbindUser(const int& user);
     // 解除玩家和桌子的绑定关系

@@ -3,7 +3,7 @@
 const DWORD dwWaitFinished = 5000; // time to wait for threads to finish up
 
 CMainService::CMainService(const TCHAR* szServiceName, const TCHAR* szDisplayName,
-                           const int iMajorVersion, const int iMinorVersion)
+                           const int& iMajorVersion, const int& iMinorVersion)
                            :CNTService(szServiceName, szDisplayName, iMajorVersion, iMinorVersion) {
     m_iStartParam = 0;
     m_iIncParam = 1;

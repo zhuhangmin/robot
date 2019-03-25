@@ -32,7 +32,6 @@ int RoomManager::ResetDataAndReInit(const game::base::GetGameUsersResp& resp) {
     for (auto room_index = 0; room_index < resp.rooms_size(); room_index++) {
         if (kCommSucc != AddRoomPBWithLock(resp.rooms(room_index))) {
             ASSERT_FALSE;
-            continue;
         }
     }
     return kCommSucc;
@@ -142,7 +141,7 @@ int RoomManager::AddRoomPBWithLock(const game::base::Room& room_pb) {
     const auto roomid = room_data_pb.roomid();
 
     auto exist = false;
-    if (kCommSucc!= SettingMgr.IsRoomSettingExist(roomid, exist)) {
+    if (kCommSucc!= SettingConfig.IsRoomSettingExist(roomid, exist)) {
         ASSERT_FALSE_RETURN;
     }
     if (!exist) LOG_WARN("roomid [%d] not eixst in robot.setting", roomid);
@@ -164,7 +163,10 @@ int RoomManager::AddRoomPBWithLock(const game::base::Room& room_pb) {
         const auto& table_pb = room_pb.tables(table_index);
         const auto tableno = table_pb.tableno();
         auto table = std::make_shared<Table>();
-        AddTablePBWithLock(table_pb, table);
+        if (kCommSucc != AddTablePBWithLock(table_pb, table)) {
+            LOG_ERROR("roomid [%d] tableno [%d] set table pb failed", roomid, tableno);
+            continue;
+        }
         room->AddTable(tableno, table);
     }
 
@@ -248,7 +250,7 @@ int RoomManager::GetRoomDepositRange(int64_t& max, int64_t& min) const {
     return kCommSucc;
 }
 
-int RoomManager::GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min) {
+int RoomManager::GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min) const {
     TablePtr table;
     if (kCommSucc != GetTableWithLock(roomid, tableno, table)) {
         ASSERT_FALSE_RETURN;

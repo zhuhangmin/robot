@@ -4,7 +4,7 @@
 class DepositHttpManager : public ISingletion<DepositHttpManager> {
 public:
     // 无WithLock后缀函数：方法中有多线程可见数据,一般都需要加锁，除非业务层次允许脏读
-    // 组合 lock + WithLock 函数组合而成, 保证不会获得多次mutex，std::mutex 为非递归锁
+    // 组合 lock + WithLock 函数组合而成, 保证不会获得多次mutex为非递归锁
     // 只对外部线程可见 主线程 和 启动线程
     int Init();
 

@@ -4,7 +4,7 @@
 class RobotHallManager : public ISingletion<RobotHallManager> {
 public:
     // 无WithLock后缀函数：方法中有多线程可见数据,一般都需要加锁，除非业务层次允许脏读
-    // 组合 lock + WithLock 函数组合而成, 保证不会获得多次mutex，std::mutex 为非递归锁
+    // 组合 lock + WithLock 函数组合而成, 保证不会获得多次mutex 为非递归锁
     // 只对外部线程可见 主线程 和 启动线程
     int Init();
 
@@ -23,13 +23,16 @@ public:
     int SetDepositUpdate(const UserID& userid);
 
     // 获得大厅房间数据 返回 hall_room_data COPY
-    int GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data);
+    int GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data) const;
 
     // 随机选择没有登陆大厅的机器人
     int GetRandomNotLogonUserID(UserID& random_userid);
 
     // 银子更新队列中 COPY 允许脏读
     RobotUserIDMap GetUpdateDepositMap() const;
+
+    // 获得动态游戏服务器端口
+    int GetGamePort() const;
 
 private:
     // 大厅 定时消息

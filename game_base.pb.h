@@ -36,7 +36,7 @@ namespace protobuf_game_5fbase_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[59];
+  static const ::google::protobuf::internal::ParseTable schema[60];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -126,6 +126,8 @@ void InitDefaultsUserLeaveNotifyImpl();
 void InitDefaultsUserLeaveNotify();
 void InitDefaultsUserDepositChangeNotifyImpl();
 void InitDefaultsUserDepositChangeNotify();
+void InitDefaultsRefreshResultFaildNotifyImpl();
+void InitDefaultsRefreshResultFaildNotify();
 void InitDefaultsMallProductImpl();
 void InitDefaultsMallProduct();
 void InitDefaultsGetMallProductsReqImpl();
@@ -203,6 +205,7 @@ inline void InitDefaults() {
   InitDefaultsUserStandUpNotify();
   InitDefaultsUserLeaveNotify();
   InitDefaultsUserDepositChangeNotify();
+  InitDefaultsRefreshResultFaildNotify();
   InitDefaultsMallProduct();
   InitDefaultsGetMallProductsReq();
   InitDefaultsGetMallProductsResp();
@@ -344,6 +347,9 @@ extern RS_UserLeaveGameNotifyDefaultTypeInternal _RS_UserLeaveGameNotify_default
 class RS_UserRefreshResultNotify;
 class RS_UserRefreshResultNotifyDefaultTypeInternal;
 extern RS_UserRefreshResultNotifyDefaultTypeInternal _RS_UserRefreshResultNotify_default_instance_;
+class RefreshResultFaildNotify;
+class RefreshResultFaildNotifyDefaultTypeInternal;
+extern RefreshResultFaildNotifyDefaultTypeInternal _RefreshResultFaildNotify_default_instance_;
 class RobotSvrValidateReq;
 class RobotSvrValidateReqDefaultTypeInternal;
 extern RobotSvrValidateReqDefaultTypeInternal _RobotSvrValidateReq_default_instance_;
@@ -6036,6 +6042,126 @@ class UserDepositChangeNotify : public ::google::protobuf::Message /* @@protoc_i
 };
 // -------------------------------------------------------------------
 
+class RefreshResultFaildNotify : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:game.base.RefreshResultFaildNotify) */ {
+ public:
+  RefreshResultFaildNotify();
+  virtual ~RefreshResultFaildNotify();
+
+  RefreshResultFaildNotify(const RefreshResultFaildNotify& from);
+
+  inline RefreshResultFaildNotify& operator=(const RefreshResultFaildNotify& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  RefreshResultFaildNotify(RefreshResultFaildNotify&& from) noexcept
+    : RefreshResultFaildNotify() {
+    *this = ::std::move(from);
+  }
+
+  inline RefreshResultFaildNotify& operator=(RefreshResultFaildNotify&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _internal_metadata_.unknown_fields();
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return _internal_metadata_.mutable_unknown_fields();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const RefreshResultFaildNotify& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const RefreshResultFaildNotify* internal_default_instance() {
+    return reinterpret_cast<const RefreshResultFaildNotify*>(
+               &_RefreshResultFaildNotify_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    42;
+
+  void Swap(RefreshResultFaildNotify* other);
+  friend void swap(RefreshResultFaildNotify& a, RefreshResultFaildNotify& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline RefreshResultFaildNotify* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  RefreshResultFaildNotify* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const RefreshResultFaildNotify& from);
+  void MergeFrom(const RefreshResultFaildNotify& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(RefreshResultFaildNotify* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional int32 roomid = 1;
+  bool has_roomid() const;
+  void clear_roomid();
+  static const int kRoomidFieldNumber = 1;
+  ::google::protobuf::int32 roomid() const;
+  void set_roomid(::google::protobuf::int32 value);
+
+  // optional int32 tableno = 2;
+  bool has_tableno() const;
+  void clear_tableno();
+  static const int kTablenoFieldNumber = 2;
+  ::google::protobuf::int32 tableno() const;
+  void set_tableno(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:game.base.RefreshResultFaildNotify)
+ private:
+  void set_has_roomid();
+  void clear_has_roomid();
+  void set_has_tableno();
+  void clear_has_tableno();
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::HasBits<1> _has_bits_;
+  mutable int _cached_size_;
+  ::google::protobuf::int32 roomid_;
+  ::google::protobuf::int32 tableno_;
+  friend struct ::protobuf_game_5fbase_2eproto::TableStruct;
+  friend void ::protobuf_game_5fbase_2eproto::InitDefaultsRefreshResultFaildNotifyImpl();
+};
+// -------------------------------------------------------------------
+
 class MallProduct : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:game.base.MallProduct) */ {
  public:
   MallProduct();
@@ -6078,7 +6204,7 @@ class MallProduct : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_MallProduct_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    42;
+    43;
 
   void Swap(MallProduct* other);
   friend void swap(MallProduct& a, MallProduct& b) {
@@ -6254,7 +6380,7 @@ class GetMallProductsReq : public ::google::protobuf::Message /* @@protoc_insert
                &_GetMallProductsReq_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    43;
+    44;
 
   void Swap(GetMallProductsReq* other);
   friend void swap(GetMallProductsReq& a, GetMallProductsReq& b) {
@@ -6374,7 +6500,7 @@ class GetMallProductsResp : public ::google::protobuf::Message /* @@protoc_inser
                &_GetMallProductsResp_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    44;
+    45;
 
   void Swap(GetMallProductsResp* other);
   friend void swap(GetMallProductsResp& a, GetMallProductsResp& b) {
@@ -6497,7 +6623,7 @@ class MallShopingReq : public ::google::protobuf::Message /* @@protoc_insertion_
                &_MallShopingReq_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    45;
+    46;
 
   void Swap(MallShopingReq* other);
   friend void swap(MallShopingReq& a, MallShopingReq& b) {
@@ -6627,7 +6753,7 @@ class MallShopingResp : public ::google::protobuf::Message /* @@protoc_insertion
                &_MallShopingResp_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    46;
+    47;
 
   void Swap(MallShopingResp* other);
   friend void swap(MallShopingResp& a, MallShopingResp& b) {
@@ -6757,7 +6883,7 @@ class RobotSvrValidateReq : public ::google::protobuf::Message /* @@protoc_inser
                &_RobotSvrValidateReq_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    47;
+    48;
 
   void Swap(RobotSvrValidateReq* other);
   friend void swap(RobotSvrValidateReq& a, RobotSvrValidateReq& b) {
@@ -6867,7 +6993,7 @@ class RobotSvrValidateResp : public ::google::protobuf::Message /* @@protoc_inse
                &_RobotSvrValidateResp_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    48;
+    49;
 
   void Swap(RobotSvrValidateResp* other);
   friend void swap(RobotSvrValidateResp& a, RobotSvrValidateResp& b) {
@@ -6977,7 +7103,7 @@ class GetGameUsersReq : public ::google::protobuf::Message /* @@protoc_insertion
                &_GetGameUsersReq_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    49;
+    50;
 
   void Swap(GetGameUsersReq* other);
   friend void swap(GetGameUsersReq& a, GetGameUsersReq& b) {
@@ -7097,7 +7223,7 @@ class GetGameUsersResp : public ::google::protobuf::Message /* @@protoc_insertio
                &_GetGameUsersResp_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    50;
+    51;
 
   void Swap(GetGameUsersResp* other);
   friend void swap(GetGameUsersResp& a, GetGameUsersResp& b) {
@@ -7233,7 +7359,7 @@ class RS_UserEnterGameNotify : public ::google::protobuf::Message /* @@protoc_in
                &_RS_UserEnterGameNotify_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    51;
+    52;
 
   void Swap(RS_UserEnterGameNotify* other);
   friend void swap(RS_UserEnterGameNotify& a, RS_UserEnterGameNotify& b) {
@@ -7387,7 +7513,7 @@ class RS_SwitchLookerPlayerNotify : public ::google::protobuf::Message /* @@prot
                &_RS_SwitchLookerPlayerNotify_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    52;
+    53;
 
   void Swap(RS_SwitchLookerPlayerNotify* other);
   friend void swap(RS_SwitchLookerPlayerNotify& a, RS_SwitchLookerPlayerNotify& b) {
@@ -7527,7 +7653,7 @@ class RS_StartGameNotify : public ::google::protobuf::Message /* @@protoc_insert
                &_RS_StartGameNotify_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    53;
+    54;
 
   void Swap(RS_StartGameNotify* other);
   friend void swap(RS_StartGameNotify& a, RS_StartGameNotify& b) {
@@ -7660,7 +7786,7 @@ class RS_UserRefreshResultNotify : public ::google::protobuf::Message /* @@proto
                &_RS_UserRefreshResultNotify_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    54;
+    55;
 
   void Swap(RS_UserRefreshResultNotify* other);
   friend void swap(RS_UserRefreshResultNotify& a, RS_UserRefreshResultNotify& b) {
@@ -7800,7 +7926,7 @@ class RS_RefreshResultNotify : public ::google::protobuf::Message /* @@protoc_in
                &_RS_RefreshResultNotify_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    55;
+    56;
 
   void Swap(RS_RefreshResultNotify* other);
   friend void swap(RS_RefreshResultNotify& a, RS_RefreshResultNotify& b) {
@@ -7920,7 +8046,7 @@ class RS_UserLeaveGameNotify : public ::google::protobuf::Message /* @@protoc_in
                &_RS_UserLeaveGameNotify_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    56;
+    57;
 
   void Swap(RS_UserLeaveGameNotify* other);
   friend void swap(RS_UserLeaveGameNotify& a, RS_UserLeaveGameNotify& b) {
@@ -8032,7 +8158,7 @@ class RS_SwitchTableNotify : public ::google::protobuf::Message /* @@protoc_inse
                &_RS_SwitchTableNotify_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    57;
+    58;
 
   void Swap(RS_SwitchTableNotify* other);
   friend void swap(RS_SwitchTableNotify& a, RS_SwitchTableNotify& b) {
@@ -8182,7 +8308,7 @@ class RS_NewRoomNotify : public ::google::protobuf::Message /* @@protoc_insertio
                &_RS_NewRoomNotify_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    58;
+    59;
 
   void Swap(RS_NewRoomNotify* other);
   friend void swap(RS_NewRoomNotify& a, RS_NewRoomNotify& b) {
@@ -12378,6 +12504,58 @@ inline void UserDepositChangeNotify::set_own_deposit(::google::protobuf::int64 v
 
 // -------------------------------------------------------------------
 
+// RefreshResultFaildNotify
+
+// optional int32 roomid = 1;
+inline bool RefreshResultFaildNotify::has_roomid() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void RefreshResultFaildNotify::set_has_roomid() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void RefreshResultFaildNotify::clear_has_roomid() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void RefreshResultFaildNotify::clear_roomid() {
+  roomid_ = 0;
+  clear_has_roomid();
+}
+inline ::google::protobuf::int32 RefreshResultFaildNotify::roomid() const {
+  // @@protoc_insertion_point(field_get:game.base.RefreshResultFaildNotify.roomid)
+  return roomid_;
+}
+inline void RefreshResultFaildNotify::set_roomid(::google::protobuf::int32 value) {
+  set_has_roomid();
+  roomid_ = value;
+  // @@protoc_insertion_point(field_set:game.base.RefreshResultFaildNotify.roomid)
+}
+
+// optional int32 tableno = 2;
+inline bool RefreshResultFaildNotify::has_tableno() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void RefreshResultFaildNotify::set_has_tableno() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void RefreshResultFaildNotify::clear_has_tableno() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void RefreshResultFaildNotify::clear_tableno() {
+  tableno_ = 0;
+  clear_has_tableno();
+}
+inline ::google::protobuf::int32 RefreshResultFaildNotify::tableno() const {
+  // @@protoc_insertion_point(field_get:game.base.RefreshResultFaildNotify.tableno)
+  return tableno_;
+}
+inline void RefreshResultFaildNotify::set_tableno(::google::protobuf::int32 value) {
+  set_has_tableno();
+  tableno_ = value;
+  // @@protoc_insertion_point(field_set:game.base.RefreshResultFaildNotify.tableno)
+}
+
+// -------------------------------------------------------------------
+
 // MallProduct
 
 // optional int32 productid = 1;
@@ -13821,6 +13999,8 @@ inline void RS_NewRoomNotify::set_allocated_room(::game::base::Room* room) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

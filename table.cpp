@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "table.h"
-#include "user.h"
 #include "robot_utils.h"
 
 Table::Table(const int& tableno, const int& roomid, const int& chair_count, const int& min_player_count, const INT64& base_deposit)
@@ -187,7 +186,8 @@ bool Table::IsValidChairno(const int& chairno) {
     if (chairno > 0 && chairno <= get_chair_count() && chairno <= chairs_.size()) {
         return true;
     }
-    LOG_WARN("chairno [%d] chair_count_ [%d] chairs_.size [%d]", chairno, get_chair_count(), chairs_.size());
+    assert(false);
+    LOG_WARN("invalid chairno [%d] chair_count_ [%d] chairs_.size [%d]", chairno, get_chair_count(), chairs_.size());
     return false;
 }
 

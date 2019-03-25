@@ -4,7 +4,7 @@
 class CMainService : public CNTService {
 public:
     CMainService(const TCHAR* szServiceName, const TCHAR* szDisplayName,
-                 const int iMajorVersion, const int iMinorVersion);
+                 const int& iMajorVersion, const int& iMinorVersion);
     BOOL OnInit() override;
     void Run() override;
     void OnStop() override;

@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "robot_utils.h"
 #include "main.h"
-#include "setting_manager.h"
-#include "robot_hall_manager.h"
 #include "robot_define.h"
 #include "common_func.h"
 #include "robot_statistic.h"
@@ -37,6 +35,9 @@ int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const
 
     EVENT_TRACK(EventType::kSend, requestid);
     BOOL timeout = false;
+    if (requestid != GR_RS_PULSE) {
+        LOG_INFO("token [%d] [SEND] [%d] [%s]", connection->GetTokenID(), requestid, REQ_STR(requestid));
+    }
     const auto result = connection->SendRequest(&context_head, &request, &response, timeout, RequestTimeOut);
     EVENT_TRACK(EventType::kRecv, requestid);
 
@@ -53,9 +54,7 @@ int RobotUtils::SendRequestWithLock(const CDefSocketClientPtr& connection, const
         return kOperationFailed;
     }
 
-    if (requestid != GR_RS_PULSE) {
-        LOG_INFO("token [%d] [SEND] [%d] [%s]", connection->GetTokenID(), requestid, REQ_STR(requestid));
-    }
+
 
     const auto responseid = response.head.nRequest;
     if (need_echo) {
@@ -100,7 +99,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
             }
         }
     } catch (...) {
-        LOG_ERROR(_T("ExecHttpRequestPost catch: [%s] retcode: [%d] error: [%d]"), url, retcode, GetLastError());
+        LOG_ERROR(_T("ExecHttpRequestPost catch: [%S] retcode: [%d] error: [%d]"), url, retcode, GetLastError());
         assert(false);
         return "";
     }
@@ -110,7 +109,7 @@ CString RobotUtils::ExecHttpRequestPost(const CString& url, const CString& param
     if (pSession) { pSession->Close();  delete   pSession;   pSession = NULL; }
 
     if (result_str == "") {
-        LOG_ERROR(_T("ExecHttpRequestPost urlPath: [%s] retcode: [%d] error: [%d]"), url, retcode, GetLastError());
+        LOG_ERROR(_T("ExecHttpRequestPost urlPath: [%S] retcode: [%d] error: [%d]"), url, retcode, GetLastError());
         assert(false);
         return "";
 
@@ -130,11 +129,11 @@ int RobotUtils::GenRandInRange(const int64_t& min_value, const int64_t& max_valu
 }
 
 std::string RobotUtils::GetGameIP() {
-    ThreadID thread_id = GetCurrentThreadId();
+    const ThreadID thread_id = GetCurrentThreadId();
     if (thread_id <= InvalidThreadID) {
         ASSERT_FALSE;
         return "";
-    };
+    }
 
     if (thread_id != g_launchThreadID && thread_id != g_mainThreadID) {
         ASSERT_FALSE;
@@ -147,39 +146,6 @@ std::string RobotUtils::GetGameIP() {
         g_localGameIP = std::string(game_ip_str);
     }
     return g_localGameIP;
-}
-
-int RobotUtils::GetGamePort() {
-    CHECK_MAIN_OR_LAUNCH_THREAD();
-    auto room_setting_map = SettingMgr.GetRoomSettingMap();
-    if (room_setting_map.empty()) {
-        LOG_ERROR(_T("room_setting_map empty"));
-        ASSERT_FALSE_RETURN;
-    }
-
-    auto game_port = InvallidPort;
-    for (auto& kv: room_setting_map) {
-        const auto roomid = kv.first;
-        HallRoomData hall_room_data = {};
-        if (kCommSucc != HallMgr.GetHallRoomData(roomid, hall_room_data)) {
-            LOG_ERROR("GetHallRoomData room id  = [%d] failed", roomid);
-            ASSERT_FALSE_RETURN;
-        }
-        auto port = hall_room_data.room.nGamePort;
-        LOG_INFO("[CHECK GAME PORT] roomid [%d] game port [%d]", roomid, port);
-        if (InvalidPort == port) continue;
-
-        if (game_port == InvallidPort) {
-            game_port = port; // 第一个房间
-        } else {
-            if (game_port != port) { // 第二个房间 检查是否所有房间 game port 一致
-                LOG_WARN("[CHECK GAME PORT] roomid [%d] game port [%d] diff with later one [%d], all room should have the same game port!", roomid, game_port, port);
-                ASSERT_FALSE_RETURN;
-            }
-        }
-    }
-
-    return game_port;
 }
 
 int RobotUtils::Sleep(const uint32_t& milli_seconds) {
@@ -256,7 +222,7 @@ int RobotUtils::NotThisThread(YQThread& thread) {
 }
 
 int RobotUtils::IsAllowedThreadID() {
-    ThreadID thread_id = GetCurrentThreadId();
+    const ThreadID thread_id = GetCurrentThreadId();
     CHECK_THREADID(thread_id);
 
     if (thread_id == g_launchThreadID) {
@@ -266,17 +232,14 @@ int RobotUtils::IsAllowedThreadID() {
     if (thread_id == g_mainThreadID) {
         return kCommSucc;
     }
-
+    LOG_ERROR("cur thread id [%d] does not match the allow main thread id [%d], launch thread id [%d]", g_mainThreadID, g_launchThreadID);
     assert(false);
     return kCommFaild;
 }
 
 int RobotUtils::TraceStack() {
-#ifdef _DEBUG
     static const int MAX_STACK_FRAMES = 5;
-
     void *pStack[MAX_STACK_FRAMES];
-
     HANDLE process = GetCurrentProcess();
     SymInitialize(process, NULL, TRUE);
     WORD frames = CaptureStackBackTrace(0, MAX_STACK_FRAMES, pStack, NULL);
@@ -305,7 +268,6 @@ int RobotUtils::TraceStack() {
     }
 
     LOG_INFO("[STACK] %s", oss.str().c_str());
-#endif
     return kCommSucc;
 }
 
@@ -342,6 +304,9 @@ std::string RobotUtils::ErrorCodeInfo(int code) {
             break;
         case kTooLessDeposit:
             error_string = "kTooLessDeposit";
+            break;
+        case kNoFreeChair:
+            error_string = "kNoFreeChair";
             break;
         case kHall_UserNotLogon:
             error_string = "kHall_UserNotLogon";

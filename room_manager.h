@@ -30,7 +30,7 @@ public:
     int GetRoomDepositRange(int64_t& max, int64_t& min) const;
 
     // ×ÀÒøÇø¼ä
-    int GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min);
+    int GetTableDepositRange(const RoomID& roomid, const TableNO& tableno, int64_t& max, int64_t& min) const;
 
     int AddRoomPB(const game::base::Room& room_pb);
 

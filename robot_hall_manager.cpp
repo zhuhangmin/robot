@@ -14,7 +14,7 @@ int RobotHallManager::Init() {
     std::lock_guard<std::mutex> lock(mutex_);
     LOG_INFO_FUNC("\t[START]");
 
-    auto setting = SettingMgr.GetRobotSettingMap();
+    auto setting = SettingConfig.GetRobotSettingMap();
     for (auto& kv : setting) {
         auto userid = kv.first;
         logon_status_map_[userid] = HallLogonStatusType::kNotLogon;
@@ -44,6 +44,7 @@ int RobotHallManager::Term() {
     timestamp_ = 0;
     room_data_timestamp_ = 0;
     if (connection_) {
+        LOG_WARN("token [%d] [%s] DestroyEx", connection_->GetTokenID(), __FUNCTION__);
         connection_->DestroyEx();
     }
 
@@ -71,10 +72,11 @@ int RobotHallManager::LogonHall(const UserID& userid) {
 }
 
 int RobotHallManager::SetDepositUpdate(const UserID& userid) {
+    // 允许deposit_http_manager调用。
+    // 注意RobotHallManager内不要使用DepositHttpManager容易嵌套死锁
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_USERID(userid);
     update_depost_map_[userid] = userid;
-
     return kCommSucc;
 }
 
@@ -88,7 +90,7 @@ int RobotHallManager::GetUserGameInfo(const UserID& userid) {
     return kCommSucc;
 }
 
-int RobotHallManager::GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data) {
+int RobotHallManager::GetHallRoomData(const RoomID& roomid, HallRoomData& hall_room_data) const {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
     CHECK_ROOMID(roomid);
@@ -126,6 +128,40 @@ RobotUserIDMap RobotHallManager::GetUpdateDepositMap() const {
     return update_depost_map_;
 }
 
+int RobotHallManager::GetGamePort() const {
+    CHECK_MAIN_OR_LAUNCH_THREAD();
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto room_setting_map = SettingConfig.GetRoomSettingMap();
+    if (room_setting_map.empty()) {
+        LOG_ERROR(_T("room_setting_map empty"));
+        ASSERT_FALSE_RETURN;
+    }
+
+    auto game_port = InvallidPort;
+    for (auto& kv: room_setting_map) {
+        const auto roomid = kv.first;
+        HallRoomData hall_room_data = {};
+        if (kCommSucc != GetHallRoomDataWithLock(roomid, hall_room_data)) {
+            LOG_ERROR("GetHallRoomData room id  = [%d] failed", roomid);
+            ASSERT_FALSE_RETURN;
+        }
+        const auto port = hall_room_data.room.nGamePort;
+        LOG_INFO("[CHECK GAME PORT] roomid [%d] game port [%d]", roomid, port);
+        if (InvalidPort == port) continue;
+
+        if (game_port == InvallidPort) {
+            game_port = port; // 第一个房间
+        } else {
+            if (game_port != port) { // 第二个房间 检查是否所有房间 game port 一致
+                LOG_WARN("[CHECK GAME PORT] roomid [%d] game port [%d] diff with later one [%d], all room should have the same game port!", roomid, game_port, port);
+                ASSERT_FALSE_RETURN;
+            }
+        }
+    }
+
+    return game_port;
+}
+
 int RobotHallManager::SetLogonStatus(const UserID& userid, const HallLogonStatusType& status) {
     CHECK_MAIN_OR_LAUNCH_THREAD();
     std::lock_guard<std::mutex> lock(mutex_);
@@ -155,10 +191,13 @@ int RobotHallManager::ThreadNotify() {
 }
 
 int RobotHallManager::OnNotify(const RequestID& requestid, void* ntf_data_ptr, const int& data_size) {
-    CHECK_REQUESTID(requestid);
-    if (requestid != PB_NOTIFY_TO_CLIENT) {
-        if (connection_) {
-            LOG_INFO("HALL token [%d] [RECV] requestid [%d] [%s]", connection_->GetTokenID(), requestid, REQ_STR(requestid));
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        CHECK_REQUESTID(requestid);
+        if (requestid != PB_NOTIFY_TO_CLIENT) {
+            if (connection_) {
+                LOG_INFO("HALL token [%d] [RECV] requestid [%d] [%s]", connection_->GetTokenID(), requestid, REQ_STR(requestid));
+            }
         }
     }
 
@@ -379,13 +418,12 @@ int RobotHallManager::ConnectWithLock() const {
 }
 
 int RobotHallManager::SendGetAllRoomDataWithLock() {
-    auto setting = SettingMgr.GetRoomSettingMap();
+    auto setting = SettingConfig.GetRoomSettingMap();
     for (auto& kv : setting) {
         const auto roomid = kv.first;
         if (kCommSucc != SendGetRoomDataWithLock(roomid)) {
             LOG_ERROR("cannnot get hall room data  = [%d]", roomid);
             ASSERT_FALSE;
-            continue;
         }
     }
 
@@ -394,7 +432,7 @@ int RobotHallManager::SendGetAllRoomDataWithLock() {
 
 int RobotHallManager::SendGetRoomDataWithLock(const RoomID& roomid) {
     CHECK_ROOMID(roomid);
-    const auto game_id = SettingMgr.GetGameID();
+    const auto game_id = SettingConfig.GetGameID();
     CHECK_GAMEID(game_id);
     GET_ROOM  gr = {};
     gr.nGameID = game_id;
@@ -428,14 +466,14 @@ int RobotHallManager::SendGetRoomDataWithLock(const RoomID& roomid) {
 int RobotHallManager::GetUserGameInfoWithLock(const UserID& userid) {
     // 只拉去机器人列表中的
     auto exist = false;
-    if (kCommSucc != SettingMgr.IsRobotSettingExist(userid, exist)) {
+    if (kCommSucc != SettingConfig.IsRobotSettingExist(userid, exist)) {
         ASSERT_FALSE_RETURN;
     }
     if (!exist) ASSERT_FALSE_RETURN;
 
     QUERY_USER_GAMEINFO query = {};
     query.nUserID = userid;
-    query.nGameID = SettingMgr.GetGameID();
+    query.nGameID = SettingConfig.GetGameID();
     query.dwQueryFlags = FLAG_QUERYUSERGAMEINFO_HANDPHONE;
     UWL_ADDR stIPAddr;
     if (!UwlGetSockAddr(connection_->GetSocket(), stIPAddr)) {
@@ -461,7 +499,8 @@ int RobotHallManager::GetUserGameInfoWithLock(const UserID& userid) {
         ASSERT_FALSE_RETURN;
     }
 
-    DepositDataMgr.SetUserGameData(userid, static_cast<USER_GAMEINFO_MB*>(pRetData.get()));
+    const auto& game_info = static_cast<USER_GAMEINFO_MB*>(pRetData.get());
+    DepositDataMgr.SetDeposit(userid, game_info->nDeposit);
     return kCommSucc;
 }
 
@@ -501,6 +540,7 @@ int RobotHallManager::SetHallRoomDataWithLock(const RoomID& roomid, HallRoomData
 
 int RobotHallManager::ResetDataWithLock() {
     if (connection_) {
+        LOG_WARN("token [%d] [%s] DestroyEx", connection_->GetTokenID(), __FUNCTION__);
         connection_->DestroyEx();
     }
 
@@ -531,7 +571,7 @@ bool RobotHallManager::IsInDepositUpdateProcess(const UserID& userid) {
 
 int RobotHallManager::LogonHallWithLock(const UserID& userid) {
 
-    const auto setting = SettingMgr.GetRobotSetting(userid);
+    const auto setting = SettingConfig.GetRobotSetting(userid);
     if (setting.userid == InvalidUserID) ASSERT_FALSE_RETURN;
     const auto& password = setting.password;
     const auto& nickname = setting.nickname;

@@ -49,7 +49,6 @@ int UserManager::ResetDataAndReInit(const game::base::GetGameUsersResp& resp) {
     for (auto user_index = 0; user_index < resp.users_size(); user_index++) {
         if (kCommSucc != AddUserPBWithLock(resp.users(user_index))) {
             ASSERT_FALSE;
-            continue;
         }
     }
     return kCommSucc;

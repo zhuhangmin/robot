@@ -29,6 +29,17 @@
 * 对集中消息发送，需要做限流处理，典型的如大量机器人启动时，断线重连，集中心跳
 * 使用 #define CURRENT_DELAY // 限流延时标签 默认为100ms间隔
 
+# [!注意已知bug!]300个机器人测试时发现已知问题
+* 1600多次enter game消息中1次失败，原因是机器人网络自己产生了一个Socket Error。
+
+# [!注意已知bug!]2个小时的400机器人的暴力测试，机器人服务总连接收到20次 Socket Error
+* 因是机器人网络自己产生了Socket Error，目前使用这个已知bug来兜底重新同步游戏服务器所有数据
+
+# 设计图
+
+![image](http://gitlab.comfun.org/ZhenLuGe/rumm-sever/blob/develop-wjl-new/robottoolrumm/image/design.png)
+
+
 # 使用
 * 配置[robot.setting], [RobotTool.ini] 见配置详细说明
 * 默认提供模式是随机指定n个机器人进入m个房间，并保持数量
@@ -42,10 +53,11 @@
 * ReleaseS 需要在ini文件中填写xxx具体游戏后缀 EX:
   service_name=robottoolxxx（robottoolrumm）
   display_name=robottoolxxx（robottoolrumm）
+* 游戏监听端口和黑大厅game port 应一致， telnet检测
 
 # robot.setting 业务配置说明
 * game_id               // 游戏id
-* main_interval         // 业务主线程定时器间隔  单位ms
+* main_interval         // 业务主线程定时器间隔 单位ms
 * deposit_interval      // 补银单线程定时器间隔 单位ms
 * deposit_active_id     // 后台配置补银还银活动ID
 * deposit_gain_url      // 后台补银服务地址
@@ -58,43 +70,42 @@
 * 机器人 userid        // 机器人平台用户id
 * 机器人 password      // 机器人平台用户密码
 
-# 机器人的头像，昵称
+# 机器人的头像，昵称已废弃
 * 由后台同事负责,机器人工具不用配置
 
-# robottool.ini 运维配置
+# robottool.ini 运维同事配置
 *大厅服务ip port
-*[hall_server]
-*ip=192.168.103.108
-*port=30626
+ [hall_server]
+ ip=192.168.103.108
+ port=30626
 *连接游戏ip, 不支持域名, 网络库不支持ipv6解析
-*[local_ip]
-*ip=192.168.44.41
+[local_ip]
+ip=192.168.44.41
 *正式部署的服务名,显示名
-*[service]
-*service_name=robottoolrumm
-*display_name=robottoolrumm
-*是否定时打印运行时信息 1 min
-*[process_info]
-*open=0
+[service]
+service_name=robottoolrumm
+display_name=robottoolrumm
+
 
 # 线程类型定义：
-* 启动线程1条：可以获得任意锁，但只启动和退出时
+* 启动线程1条：可以获得任意锁，但只启动和退出时，(服务模式会单独启动一条线程)
 * 业务线程1条：可以获得任意锁，在启动完毕之后
-* 内部线程n条：只能获取对象内部锁，不允许获得别的锁
+* 内部线程n条：只能获取对象内部锁和（最后获得）银子锁，不允许获得别的数据锁
 
 # 业务开发：
 * 每次编译前先更新到模板最新的pb定义 game_base.pb.h game_base.pb.cc game_base.proto
 * 在业务层 app_delegate 的定时器 [MainProcess] 中开发业务逻辑
 * 不用考虑[线程安全], [数据时效性]，[网络异常]，[无业务锁]和[业务单线程]客户端类似
 * 只使用提供的基础管理类开发业务，保证线程安全
-* 不直接使用 应该被锁保护的引用对象
+* 不直接使用应该被锁保护的引用对象
 * 数据管理类都是实时保持后端同步
 * 网络管理类内部心跳保活重新，连接层的异常处理自恢复
 * [MainProcess]业务开发过程不关心网络消息接口
-* 游戏监听端口和黑大厅game port 应一致， telnet检测
+
 
 # 关于银子
 * 银子只用大厅和游戏
+* 银子数据锁只内部线程使用时，保证调用顺序，是最后一把锁
 * 银子的生命周期常驻对应平台数据层，不随大厅和游戏的内存变化而变化
 * 桌银区间 左闭右开 [20000, 20001) 
 * 补银大小限制  (1,000,000,000后台确认)
@@ -130,7 +141,8 @@
 * 桌银上下限区间[左闭右开）
 * 注意机器人是默认随机单核运行
 
-# 后端拓扑结构，决定了IO数量途径，如大厅网络IO，游戏网络IO，后台，本地文件
+# 后端拓扑结构，决定了IO结构，
+* 如大厅网络IO，游戏网络IO，后台，本地文件
 * IO输入输出产生程序的内存数据，加锁封装成mutex对象，如文件IO
 * 从IO角度划分数据对象, 对应数据锁, 控制数据生命周期
 
@@ -158,9 +170,8 @@
 * 补银还银http，通过后台活动实现
 
 # 资源和消息控制
-* 网络库每个连接生成一条线程
-* 绑定cpu单核，避免过度抢占cpu
-
+* 网络库每个连接生成一条线程，导致500的线程频繁切换
+* 绑定cpu单核，避免过度抢占所有cpu
 
 # 数据管理类
 * common/robot_utils             无状态类,无任何成员变量线程安全
@@ -176,7 +187,7 @@
 * app_delegate                   业务主线程管理类
 
 # 对象设计：
-* 三点： 1 线程安全, 2 数据时效性，3网络异常自恢复
+* 四点： 1 线程安全, 2 数据时效性，3网络异常自恢复, 4 数据调用层次封装
 
 # 线程安全
 * 保持一个对象一把锁对应关系,防止多把锁嵌套造成死锁
@@ -198,6 +209,11 @@
 * 均匀的心跳发送，避免500个心跳集中发送造成压力
 * 消息发送错误后，自动Reset对象数据，并重新初始化
 * 提供对象状态快照API : SnapShotObjectStatus
+
+# 数据调用层次封装
+* 管理类封装只读数据对象，保证了从逻辑线程调用时的强制顺序
+* 逻辑线程-> 管理类（mutex）-> 只读数据类（无锁）
+* 封装保证执行流的顺序，强制保证了各个锁的获取顺序，避免死锁
 
 # 机器人工具在线重启后
 * 1 所有机器人登陆大厅
@@ -222,12 +238,10 @@
 * 注意游戏开始后，会有桌子上的玩家下局准备玩的玩家，状态是waitting
 * TableUserInfo 包括旁观
 * 机器人离开游戏时，模板层主动断开连接，降低游戏连接数
-
-
-# SUPPORT
-* 支持通过游戏服务器断线续玩DXXW
+* 内部线程里请无调用其他有锁对象（银子除外），保证业务独立，避免死锁
 
 # NOT_SUPPORT
+* 500个机器人不发心跳,因为机器人工具部署在内网，不通过代理服务器
 * 不支持robot.setting的热更新
 * 不支持robot.setting中配置的房间ip port不一致，必须一样
 * 不支持多个游戏服务器
@@ -253,95 +267,13 @@
 * const的使用 参数，方法，返回值三处都应添加
 * const的方法对多线程“读”安全，可重入
 * 检查所有用户user类型为kRobot，防止误操作真实用户
-* 记录本机HardID方便大厅排查问题 b06ebf33dfaf0000000000000000000 
-
-
-# FAQ:
+* 记录本机HardID方便大厅排查问题
+* 数据对象，管理器，业务层次封装分明，强制保证执行流顺序，避免死锁
 
 # TODO
-* 有锁的对象如Manager之间不应该互相调用，会死锁
-* Manager 对象里都有锁不能互相调用 会死锁
-* 每个机器人进入游戏的次数 和 失败次数 类型
-* 测试大量重连对游戏大厅的瞬时压力，是否有雪崩效应 sleep 100ms
-* 配置文件应分3份：内网develop，外网内测candidate，正式release
-* 保证代码覆盖率在main中加入测试用例 CODE COVERAGE
-* robot.setting 字段说明
-* 加注释
-* 调度效率测试
-* socket如断线次数
-* 接入钉钉报警 如cpu,机器人消耗完等
-* 数据流图
-* thread local 组织错误码
-* 抽象mixin ，timer mixin， connect mixin
-* 兜底机制的加强：不然容易产生僵尸 
-不仅是连接层面，业务层面也需要兜底
-如一些机器人不应该存在的状态，像“旁观”状态长时间后，也应踢掉机器人
+* release网络库无日志的错误
+* 机器人进入游戏失败统计
+* 接入钉钉报警如cpu过高,机器人消耗完等
+* thread local 重构错误码
+* 抽象mixin, 如timer, connect, config代码复用度更高
 
-
-# NEED SUPPORT
-登陆报错 -1  kCommFaild
-03/21/19 14:33:33:446[46952][ERROR][robot_net.cpp:126] 
-userid [684155] roomid [7977] requestid [10020001] [GR_ENTER_NORMAL_GAME] 
-content [userid: 684155gameid: 1001roomid: 7977flag: 512target: 501hardid: "b06ebf33dfaf0000000000000000000"] failed, 
-resp error code [-1] [kCommFaild] 
-
-03/21/19 14:33:33:461[46952][INFO][robot_utils.cpp:278] [STACK]     RobotUtils::TraceStack at f:\rummy_server\rummy_server\robottoolrumm\robot_utils.cpp:253(0x32ae30)
-    RobotNet::SendEnterGame at f:\rummy_server\rummy_server\robottoolrumm\robot_net.cpp:145(0x3172d0)
-    RobotNetManager::EnterGame at f:\rummy_server\rummy_server\robottoolrumm\robot_net_manager.cpp:70(0x31a8f0)
-    AppDelegate::EnterGame at f:\rummy_server\rummy_server\robottoolrumm\app_delegate.cpp:272(0x3447c0)
-    AppDelegate::RobotProcess at f:\rummy_server\rummy_server\robottoolrumm\app_delegate.cpp:226(0x3418d0)
-
-
-int CheckClient::OnEnterNormalGame(const CONTEXT_HEAD &context, const hall::base::EnterGameResp &hall_resp)
-{
-    FUNC_TRACE();
-    LOG_DEBUG("OnEnterNormalGame from check: %s", GetStringFromPb_Controlled(hall_resp).c_str());
-
-    game::base::EnterNormalGameReq enter_req;
-    bool is_succ = enter_req.ParseFromArray(hall_resp.additinal_data().data().c_str(), hall_resp.additinal_data().data_len());
-    if (false == is_succ) {
-        LOG_ERROR("ParseFromArray faild.");
-        return kCommFaild;
-    }
-
-    game::base::EnterNormalGameResp enter_resp;
-    /////////////////////////////
-    enter_resp.set_code(hall_resp.code());
-    /////////////////////////////
-    enter_resp.set_gameid(hall_resp.gameid());
-
-#TODO 
-LEVEL
-  Helper:
-  
-  可见性分层
-
-  Setting: 全可见
-  setting_manager
-
-  DATA: 只对DATA_MANAGER 可见
-  base_room
-  table
-  user
-  robot_net
-
-
-  DATA_MANAGER: 只对IO MANAGER 可见
-  deposit_data_manager
-  room_manager
-  user_manager
-  robot_net
-  
-
-  IO_MANAGER: 只对主线程 可见
-  deposit_http_manager
-  game_net_manager
-  robot_hall_manager
-  robot_net_manager
-
-
-  robot_statistic
-
-  Main AppDelegate
-
-#TODO
